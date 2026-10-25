@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,15 +17,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, getAuthContext, homeFor } from "@/lib/auth";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, clearAuthContext, getAuthContext, homeFor } from "@/lib/auth";
 
-async function afterAuth(navigate: ReturnType<typeof useNavigate>) {
+/**
+ * Wipes every cached read (the previous user's teams, roster, roles) before
+ * navigating, so switching accounts never renders stale data from the last
+ * session. Route guards re-derive roles from the fresh session.
+ */
+async function resetAndNavigate(
+  queryClient: ReturnType<typeof useQueryClient>,
+  navigate: ReturnType<typeof useNavigate>,
+  to?: string,
+) {
+  await queryClient.cancelQueries();
+  queryClient.clear();
+  clearAuthContext();
+  if (to) {
+    await navigate({ to });
+    return;
+  }
   const ctx = await getAuthContext();
   await navigate({ to: homeFor(ctx?.roles ?? []) });
 }
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loadingDemo, setLoadingDemo] = useState<string | null>(null);
 
   async function demoSignIn(email: string) {
@@ -41,7 +59,7 @@ export function AuthPage() {
     try {
       // Demo accounts have known destinations — skip role discovery.
       const account = DEMO_ACCOUNTS.find((a) => a.email === email);
-      await navigate({ to: account?.home ?? "/dashboard" });
+      await resetAndNavigate(queryClient, navigate, account?.home ?? "/dashboard");
     } finally {
       setLoadingDemo(null);
     }
@@ -77,10 +95,10 @@ export function AuthPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="signin">
-              <SignInForm onDone={() => afterAuth(navigate)} />
+              <SignInForm onDone={() => resetAndNavigate(queryClient, navigate)} />
             </TabsContent>
             <TabsContent value="signup">
-              <StudentSignUpForm onSignedUp={() => navigate({ to: "/dashboard" })} />
+              <StudentSignUpForm onSignedUp={() => resetAndNavigate(queryClient, navigate, "/dashboard")} />
             </TabsContent>
           </Tabs>
           <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
