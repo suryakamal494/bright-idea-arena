@@ -14,6 +14,7 @@ import {
   Sprout,
   Users,
 } from "lucide-react";
+import icorgLogo from "@/assets/icorg-logo.png.asset.json";
 import { cn } from "@/lib/utils";
 import { signOutEverywhere, type AppRole } from "@/lib/auth";
 import {
@@ -48,18 +49,35 @@ const NAV: Record<string, NavItem[]> = {
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link to="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest text-linen">
-        <Sprout className="h-5 w-5" />
-      </span>
+    <Link
+      to="/"
+      aria-label="Social Innovation Ideathon, organized by ICORG"
+      className="flex items-center gap-3"
+    >
+      <img src={icorgLogo.url} alt="ICORG" className="h-6 w-auto shrink-0" />
       {!compact && (
-        <span className="font-display text-[15px] font-semibold leading-tight text-forest">
-          Social Innovation
-          <br />
-          Ideathon
-        </span>
+        <>
+          <span className="h-7 w-px bg-border" aria-hidden />
+          <span className="leading-tight">
+            <span className="block font-display text-[15px] font-semibold text-forest">
+              Social Innovation Ideathon
+            </span>
+            <span className="block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Organized by ICORG
+            </span>
+          </span>
+        </>
       )}
     </Link>
+  );
+}
+
+export function OrgFooter() {
+  return (
+    <footer className="no-print border-t border-border py-5 text-center text-xs text-muted-foreground">
+      Organized by <span className="font-semibold text-forest">ICORG</span> · Social Innovation
+      Ideathon
+    </footer>
   );
 }
 
