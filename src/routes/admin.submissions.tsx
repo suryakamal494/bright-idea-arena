@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SubmissionDetails } from "@/components/submission-details";
+import { printOnePager } from "@/lib/onepager";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/admin/submissions")({
   head: () => ({
@@ -39,6 +41,7 @@ type Row = {
   track_name: string | null;
   school: string | null;
   member_count: number;
+  attachment_count: number;
 };
 
 const PAGE_SIZE = 10;
@@ -51,6 +54,48 @@ function SubmissionsManager() {
   const [status, setStatus] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Row | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const pageSize = 100;
+      const all: Row[] = [];
+      let page = 0;
+      for (;;) {
+        const { data, error } = await supabase.rpc("admin_submission_directory", {
+          p_page: page,
+          p_page_size: pageSize,
+          ...(search.trim() ? { p_search: search.trim() } : {}),
+          ...(trackId === "all" ? {} : { p_track_id: trackId }),
+          ...(stage === "all" ? {} : { p_stage: Number(stage) }),
+          ...(status === "all" ? {} : { p_status: status }),
+        });
+        if (error) throw error;
+        const res = data as unknown as { total: number; rows: Row[] };
+        all.push(...res.rows);
+        if (res.rows.length < pageSize || all.length >= res.total || all.length >= 5000) break;
+        page++;
+      }
+      const header = ["team_code", "team_name", "school", "theme", "title", "stage", "status", "members", "attachments", "submitted_at"];
+      const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const csv = [
+        header.join(","),
+        ...all.map((r) =>
+          [r.team_code, r.team_name, r.school, r.track_name, r.title, r.stage, r.status, r.member_count, r.attachment_count, r.submitted_at].map(esc).join(","),
+        ),
+      ].join("\n");
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `submissions-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // Debounced search: one query per settled term, not per keystroke.
   useEffect(() => {
