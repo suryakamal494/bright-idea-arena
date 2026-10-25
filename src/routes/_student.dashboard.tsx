@@ -75,39 +75,82 @@ function Dashboard() {
 
 function NoTeamCards() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-clay/12 text-clay">
-            <Users className="h-5 w-5" />
-          </span>
-          <CardTitle className="font-display text-xl">Create a team</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Lead a team of 2–5 students, pick an innovation track and share your join code.
-          </p>
-          <Button asChild className="mt-4 bg-clay hover:bg-clay/90">
-            <Link to="/team">Create a team</Link>
-          </Button>
+    <div className="space-y-4">
+      <Card className="border-clay/30 bg-clay/5">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-clay">
+              You're registered — step 1 of 3
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-foreground">
+              Every team has 2–5 members. One member creates the team and becomes its captain; the
+              others join with the 6-digit code the captain shares.
+            </p>
+          </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/12 text-sage">
-            <Trophy className="h-5 w-5" />
-          </span>
-          <CardTitle className="font-display text-xl">Join a team</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Have a 6-digit join code from a teammate? Enter it and you're in.
-          </p>
-          <Button asChild variant="outline" className="mt-4">
-            <Link to="/team">Join a team</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-clay/12 text-clay">
+              <Users className="h-5 w-5" />
+            </span>
+            <CardTitle className="font-display text-xl">Create a team</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Lead your team: pick an innovation track, get your join code and share it with
+              teammates.
+            </p>
+            <Button asChild className="mt-4 bg-clay hover:bg-clay/90">
+              <Link to="/team">Create a team</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/12 text-sage">
+              <Trophy className="h-5 w-5" />
+            </span>
+            <CardTitle className="font-display text-xl">Join a team</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Have the 6-digit join code from your team captain? Enter it and you're in.
+            </p>
+            <Button asChild variant="outline" className="mt-4">
+              <Link to="/team">Join a team</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardContent className="pt-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Step 2 · Study the problem briefs
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Read the guides and past examples in the Learning Center before picking your track —
+              no team needed to start.
+            </p>
+            <Button asChild variant="link" className="mt-1 h-auto p-0 text-clay">
+              <Link to="/learning">Open Learning Center →</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Step 3 · Submit your concept note
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Stage 1 unlocks as soon as your team is formed. You'll draft the problem statement,
+              methodology and sketches together.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
