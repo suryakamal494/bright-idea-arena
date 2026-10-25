@@ -50,6 +50,13 @@
       "when": 1792919403353,
       "tag": "0006_seed_submissions_b",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792919416552,
+      "tag": "0007_seed_extras",
+      "breakpoints": true
     }
   ]
 }
