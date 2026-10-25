@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StudentRouteImport } from './routes/_student'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CoordinatorRouteImport } from './routes/coordinator'
 import { Route as ParentRevokeRouteImport } from './routes/parent-revoke'
 import { Route as SchoolRegisterRouteImport } from './routes/school-register'
 import { Route as StudentDashboardRouteImport } from './routes/_student.dashboard'
@@ -42,6 +43,11 @@ const AdminRoute = AdminRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoordinatorRoute = CoordinatorRouteImport.update({
+  id: '/coordinator',
+  path: '/coordinator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentRevokeRoute = ParentRevokeRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/coordinator': typeof CoordinatorRoute
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
   '/dashboard': typeof StudentDashboardRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/coordinator': typeof CoordinatorRoute
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
   '/dashboard': typeof StudentDashboardRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/_student': typeof StudentRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/coordinator': typeof CoordinatorRoute
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
   '/_student/dashboard': typeof StudentDashboardRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/coordinator'
     | '/parent-revoke'
     | '/school-register'
     | '/dashboard'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/coordinator'
     | '/parent-revoke'
     | '/school-register'
     | '/dashboard'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_student'
     | '/admin'
     | '/auth'
+    | '/coordinator'
     | '/parent-revoke'
     | '/school-register'
     | '/_student/dashboard'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   StudentRoute: typeof StudentRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CoordinatorRoute: typeof CoordinatorRoute
   ParentRevokeRoute: typeof ParentRevokeRoute
   SchoolRegisterRoute: typeof SchoolRegisterRoute
 }
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coordinator': {
+      id: '/coordinator'
+      path: '/coordinator'
+      fullPath: '/coordinator'
+      preLoaderRoute: typeof CoordinatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parent-revoke': {
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudentRoute: StudentRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  CoordinatorRoute: CoordinatorRoute,
   ParentRevokeRoute: ParentRevokeRoute,
   SchoolRegisterRoute: SchoolRegisterRoute,
 }
