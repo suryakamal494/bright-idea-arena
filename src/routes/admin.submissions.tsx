@@ -216,7 +216,10 @@ function SubmissionsManager() {
               {(data?.rows ?? []).map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => setSelectedId(s.id)}
+                  onClick={() => {
+                    setSelectedId(s.id);
+                    setSelectedRow(s);
+                  }}
                   className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50"
                 >
                   <div className="min-w-0">
@@ -269,7 +272,7 @@ function SubmissionsManager() {
           <SheetHeader>
             <SheetTitle>Submission inspection</SheetTitle>
           </SheetHeader>
-          {selectedId && <SubmissionInspector submissionId={selectedId} />}
+          {selectedId && <SubmissionInspector submissionId={selectedId} row={selectedRow} />}
         </SheetContent>
       </Sheet>
     </div>
