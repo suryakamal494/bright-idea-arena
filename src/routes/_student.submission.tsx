@@ -385,7 +385,8 @@ function StageEditor({
       const raw = localStorage.getItem(backupKey);
       if (!raw) return;
       const b = JSON.parse(raw) as { at: number; fields: typeof fields; sutras: string[] };
-      const serverAt = existing?.updated_at ? new Date(existing.updated_at).getTime() : 0;
+      const updatedAt = (existing as { updated_at?: string | null } | null | undefined)?.updated_at;
+      const serverAt = updatedAt ? new Date(updatedAt).getTime() : 0;
       if (b.at <= serverAt) { localStorage.removeItem(backupKey); return; }
       setFields((f) => ({ ...f, ...b.fields }));
       setSelectedSutras(b.sutras ?? []);
