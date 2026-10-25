@@ -102,7 +102,7 @@ function ResetPasswordPage() {
                 This reset link has expired or was already used. Request a new one from the sign-in page.
               </p>
               <Button asChild className="w-full bg-clay hover:bg-clay/90">
-                <Link to="/" search={{ forgot: 1 } as never}>Request a new link</Link>
+                <Link to="/">Request a new link</Link>
               </Button>
             </div>
           )}
