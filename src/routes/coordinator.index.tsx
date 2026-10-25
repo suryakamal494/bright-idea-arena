@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileSpreadsheet, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/coordinator/index")({
+export const Route = createFileRoute("/coordinator/")({
   head: () => ({
     meta: [{ title: "School roster — Social Innovation Ideathon" }],
   }),
