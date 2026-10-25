@@ -63,7 +63,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
         <>
           <span className="h-7 w-px bg-border" aria-hidden />
           <span className="leading-tight">
-            <span className="block font-display text-[15px] font-semibold text-forest">
+            <span className="block whitespace-nowrap font-display text-[14px] font-semibold text-forest">
               Social Innovation Ideathon
             </span>
             <span className="block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
