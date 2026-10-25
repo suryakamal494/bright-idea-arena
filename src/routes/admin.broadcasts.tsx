@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Megaphone, Trash2 } from "lucide-react";
 import { useState } from "react";
