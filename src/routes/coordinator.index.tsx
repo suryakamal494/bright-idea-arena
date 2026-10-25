@@ -63,7 +63,7 @@ function CoordinatorPortal() {
   async function handleCsv(file: File) {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
-    const start = /name/i.test(lines[0]) ? 1 : 0;
+    const start = /name/i.test(lines[0] ?? "") ? 1 : 0;
     const seeds: StudentSeed[] = [];
     for (const line of lines.slice(start)) {
       const cols = line.split(/[,;\t]/).map((c) => c.trim());
