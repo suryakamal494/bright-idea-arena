@@ -8,6 +8,13 @@
       "when": 1792919226770,
       "tag": "0000_init_ideathon_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792919249296,
+      "tag": "0001_init_ideathon_policies",
+      "breakpoints": true
     }
   ]
 }
