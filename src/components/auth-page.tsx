@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, LogIn } from "lucide-react";
@@ -170,15 +170,16 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgot, setForgot] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (err) {
       setBusy(false);
-      setError(err.message);
+      setError(/invalid login/i.test(err.message) ? "Incorrect email or password." : err.message);
       return;
     }
     try {
@@ -188,20 +189,93 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
     }
   }
 
+  if (forgot) return <ForgotPasswordForm initialEmail={email} onBack={() => setForgot(false)} />;
+
   return (
     <form onSubmit={submit} className="mt-4 space-y-4">
       <div className="space-y-1.5">
         <Label>Email</Label>
-        <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.in" />
+        <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.in" />
       </div>
       <div className="space-y-1.5">
-        <Label>Password</Label>
-        <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+        <div className="flex items-center justify-between">
+          <Label>Password</Label>
+          <button type="button" onClick={() => setForgot(true)} className="text-xs font-medium text-clay hover:underline">
+            Forgot password?
+          </button>
+        </div>
+        <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
         {busy ? "Signing in…" : "Sign in"}
       </Button>
+    </form>
+  );
+}
+
+function ForgotPasswordForm({ initialEmail, onBack }: { initialEmail: string; onBack: () => void }) {
+  const [email, setEmail] = useState(initialEmail);
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldown]);
+
+  const clean = email.trim().toLowerCase();
+  const isDemo = clean.endsWith("@demo.in");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (isDemo) return;
+    setBusy(true);
+    setError(null);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(clean, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (err && /rate|security purposes|429/i.test(err.message)) {
+      setError("Too many requests. Please wait a minute before trying again.");
+      setCooldown(60);
+      return;
+    }
+    // Same message whether or not the account exists, so emails can't be probed.
+    setSent(true);
+    setCooldown(60);
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-4 space-y-4">
+      <div>
+        <h3 className="font-semibold text-forest">Reset your password</h3>
+        <p className="text-sm text-muted-foreground">Enter your account email and we'll send you a reset link.</p>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Email</Label>
+        <Input type="email" autoComplete="email" required value={email} onChange={(e) => { setEmail(e.target.value); setSent(false); }} placeholder="you@school.in" />
+      </div>
+      {isDemo && (
+        <p className="rounded-lg border border-border bg-muted p-3 text-sm">
+          Demo accounts can't be reset. Their password is <span className="font-mono">{DEMO_PASSWORD}</span>.
+        </p>
+      )}
+      {sent && !isDemo && (
+        <p className="rounded-lg border border-border bg-muted p-3 text-sm" role="status">
+          If an account exists for this email, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour.
+        </p>
+      )}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+      <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy || isDemo || cooldown > 0}>
+        {busy ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : sent ? "Resend link" : "Send reset link"}
+      </Button>
+      <button type="button" onClick={onBack} className="block w-full text-center text-sm text-muted-foreground hover:text-foreground">
+        ← Back to sign in
+      </button>
     </form>
   );
 }

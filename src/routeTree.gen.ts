@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CoordinatorRouteImport } from './routes/coordinator'
 import { Route as JudgeRouteImport } from './routes/judge'
 import { Route as ParentRevokeRouteImport } from './routes/parent-revoke'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SchoolRegisterRouteImport } from './routes/school-register'
 import { Route as StudentDashboardRouteImport } from './routes/_student.dashboard'
 import { Route as StudentLearningRouteImport } from './routes/_student.learning'
@@ -63,6 +64,11 @@ const JudgeRoute = JudgeRouteImport.update({
 const ParentRevokeRoute = ParentRevokeRouteImport.update({
   id: '/parent-revoke',
   path: '/parent-revoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SchoolRegisterRoute = SchoolRegisterRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/coordinator': typeof CoordinatorRouteWithChildren
   '/judge': typeof JudgeRouteWithChildren
   '/parent-revoke': typeof ParentRevokeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/school-register': typeof SchoolRegisterRoute
   '/dashboard': typeof StudentDashboardRoute
   '/learning': typeof StudentLearningRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent-revoke': typeof ParentRevokeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/school-register': typeof SchoolRegisterRoute
   '/dashboard': typeof StudentDashboardRoute
   '/learning': typeof StudentLearningRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/coordinator': typeof CoordinatorRouteWithChildren
   '/judge': typeof JudgeRouteWithChildren
   '/parent-revoke': typeof ParentRevokeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/school-register': typeof SchoolRegisterRoute
   '/_student/dashboard': typeof StudentDashboardRoute
   '/_student/learning': typeof StudentLearningRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/coordinator'
     | '/judge'
     | '/parent-revoke'
+    | '/reset-password'
     | '/school-register'
     | '/dashboard'
     | '/learning'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/parent-revoke'
+    | '/reset-password'
     | '/school-register'
     | '/dashboard'
     | '/learning'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/coordinator'
     | '/judge'
     | '/parent-revoke'
+    | '/reset-password'
     | '/school-register'
     | '/_student/dashboard'
     | '/_student/learning'
@@ -277,6 +289,7 @@ export interface RootRouteChildren {
   CoordinatorRoute: typeof CoordinatorRouteWithChildren
   JudgeRoute: typeof JudgeRouteWithChildren
   ParentRevokeRoute: typeof ParentRevokeRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SchoolRegisterRoute: typeof SchoolRegisterRoute
 }
 
@@ -329,6 +342,13 @@ declare module '@tanstack/react-router' {
       path: '/parent-revoke'
       fullPath: '/parent-revoke'
       preLoaderRoute: typeof ParentRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/school-register': {
@@ -501,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoordinatorRoute: CoordinatorRouteWithChildren,
   JudgeRoute: JudgeRouteWithChildren,
   ParentRevokeRoute: ParentRevokeRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SchoolRegisterRoute: SchoolRegisterRoute,
 }
 export const routeTree = rootRouteImport

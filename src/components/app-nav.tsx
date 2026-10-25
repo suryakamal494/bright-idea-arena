@@ -11,6 +11,7 @@ import {
   Home,
   Inbox,
   LayoutDashboard,
+  KeyRound,
   LogOut,
   Megaphone,
   PenLine,
@@ -29,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
 
 type NavItem = { to: string; label: string; icon: typeof Home };
 
@@ -107,6 +109,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
     });
   }
 
+  const [pwOpen, setPwOpen] = useState(false);
   async function handleSignOut() {
     setBusy(true);
     await queryClient.cancelQueries();
@@ -205,6 +208,9 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
             <DropdownMenuContent align="start" side="top" className="w-56">
               <DropdownMenuLabel className="text-muted-foreground">{name}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setPwOpen(true)}>
+                <KeyRound className="mr-2 h-4 w-4" /> Change password
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut} disabled={busy}>
                 <LogOut className="mr-2 h-4 w-4" /> Sign out
               </DropdownMenuItem>
@@ -261,6 +267,9 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="text-muted-foreground">{name}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setPwOpen(true)}>
+                <KeyRound className="mr-2 h-4 w-4" /> Change password
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut} disabled={busy}>
                 <LogOut className="mr-2 h-4 w-4" /> Sign out
               </DropdownMenuItem>
@@ -269,6 +278,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
         </div>
       </header>
 
+      <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
       {/* Mobile bottom thumb navigation */}
       <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-md">
