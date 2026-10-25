@@ -23,3 +23,6 @@
 - `MIN_TEAM_SIZE = 3` (src/lib/team.ts) gates the submission form in the UI only when the roster query has succeeded with fewer members — a failed/short fetch must never lock a full team out; `upsert_submission` enforces the same rule server-side.
 - Deadline policy: any team member may edit until the stage deadline, then the draft auto-finalises (finalize RPC + daily reconciliation job); after submit the roster and entry lock.
 - Demo seed accounts share the password Ideathon2026! and must keep their @demo.in emails.
+- Auth context and the admin overview are read via single-roundtrip SECURITY DEFINER RPCs (`get_auth_context`, `admin_overview_kpis`) instead of parallel client queries — every extra network roundtrip is amplified by user latency; keep the fallback two-query path in `src/lib/auth.ts` in case the RPC is unavailable.
+- Sign-out navigates first and clears the query cache + auth context synchronously; the remote `signOut()` call runs in the background and failures surface as a toast, never a silent success.
+- Unreferenced `evidence`-bucket objects are deleted daily by the HTTP cron schedule `reconcile-evidence-files` → `/api/public/cron/reconcile-files` (bearer-secret auth, 24h grace period); keep the grace period when editing.
