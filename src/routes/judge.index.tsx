@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/judge/index")({
+export const Route = createFileRoute("/judge/")({
   head: () => ({
     meta: [{ title: "Evaluation queue — Social Innovation Ideathon" }],
   }),
