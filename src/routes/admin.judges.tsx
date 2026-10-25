@@ -60,11 +60,11 @@ function JudgeAssignment() {
   });
 
   async function assign() {
-    if (!judgeId || !trackId) return toast.error("Choose a judge and a track");
+    if (!judgeId || !trackId) { toast.error("Choose a judge and a track"); return; }
     setBusy(true);
     const { error } = await supabase.from("judge_assignments").insert({ judge_id: judgeId, track_id: trackId });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Judge assigned to track");
     setJudgeId("");
     setTrackId("");
@@ -73,7 +73,7 @@ function JudgeAssignment() {
 
   async function unassign(id: string) {
     const { error } = await supabase.from("judge_assignments").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     queryClient.invalidateQueries({ queryKey: ["admin-assignments"] });
   }
 

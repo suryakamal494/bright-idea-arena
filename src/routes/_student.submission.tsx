@@ -251,13 +251,13 @@ function StageEditor({
     );
     if (upErr) {
       setUploading(false);
-      return toast.error(upErr.message);
+      { toast.error(upErr.message); return; }
     }
     const { error: insErr } = await supabase
       .from("submission_files")
       .insert({ submission_id: existing.id, name: file.name, url: path });
     setUploading(false);
-    if (insErr) return toast.error(insErr.message);
+    if (insErr) { toast.error(insErr.message); return; }
     toast.success("Attachment uploaded");
     onRefresh();
   }

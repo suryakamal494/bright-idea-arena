@@ -38,7 +38,7 @@ function CoordinatorPortal() {
 
   async function createAccounts() {
     const valid = rows.filter((r) => r.full_name.trim() && r.email.trim());
-    if (valid.length === 0) return toast.error("Add at least one student with name and email.");
+    if (valid.length === 0) { toast.error("Add at least one student with name and email."); return; }
     setBusy(true);
     try {
       const results = await createStudentAccounts({ data: { students: valid } });
@@ -75,7 +75,7 @@ function CoordinatorPortal() {
         parent_email: cols[3] || undefined,
       });
     }
-    if (!seeds.length) return toast.error("No valid rows found (need name, email, grade columns).");
+    if (!seeds.length) { toast.error("No valid rows found (need name, email, grade columns)."); return; }
     setRows((r) => [...r.filter((x) => x.full_name || x.email), ...seeds]);
     toast.info(`${seeds.length} rows loaded from CSV — review and press "Create accounts".`);
   }

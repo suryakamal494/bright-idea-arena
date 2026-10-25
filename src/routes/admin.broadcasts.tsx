@@ -72,7 +72,7 @@ function Broadcasts() {
       created_by: user?.id ?? null,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Published to every student feed");
     setTitle("");
     setBody("");
@@ -82,7 +82,7 @@ function Broadcasts() {
 
   async function remove(id: string) {
     const { error } = await supabase.from("announcements").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
   }
 

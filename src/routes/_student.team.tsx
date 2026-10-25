@@ -71,14 +71,14 @@ function TeamRoster({
   async function transfer() {
     if (!transferTo) return;
     const { error } = await supabase.rpc("transfer_captaincy", { p_user_id: transferTo });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Captaincy transferred");
     onChanged();
   }
 
   async function leave() {
     const { error } = await supabase.rpc("leave_team");
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("You left the team");
     onChanged();
   }
@@ -86,7 +86,7 @@ function TeamRoster({
   async function disband() {
     if (!window.confirm("Disband this team? All members will be removed. This cannot be undone.")) return;
     const { error } = await supabase.rpc("disband_team");
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Team disbanded");
     onChanged();
   }
@@ -258,14 +258,14 @@ function CreateTeamForm({ onDone }: { onDone: () => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!trackId) return toast.error("Choose an innovation track");
+    if (!trackId) { toast.error("Choose an innovation track"); return; }
     setBusy(true);
     const { data, error } = await supabase.rpc("create_team", {
       p_name: name,
       p_track_id: trackId,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`Team created — join code ${data?.join_code ?? "generated"}`);
     onDone();
   }
@@ -307,7 +307,7 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
     setBusy(true);
     const { error } = await supabase.rpc("join_team", { p_code: code.trim() });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Welcome to the team!");
     onDone();
   }

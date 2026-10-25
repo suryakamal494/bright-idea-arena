@@ -77,7 +77,7 @@ function DeadlineCard({ row, onSaved }: { row: SettingRow; onSaved: () => void }
       })
       .eq("id", row.id);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(row.track ? `${row.track.name} windows saved` : "Global windows saved");
     onSaved();
   }
