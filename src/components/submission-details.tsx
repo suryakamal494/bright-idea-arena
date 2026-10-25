@@ -19,9 +19,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function SubmissionDetails({
   submission,
   files,
+  theme,
 }: {
   submission: Submission;
   files: SubmissionFile[];
+  theme?: string | null;
 }) {
   const { data: sutras } = useQuery({ queryKey: ["sutras"], queryFn: fetchSutras });
   const sutraNames = (submission.sutra_ids ?? [])
@@ -61,7 +63,7 @@ export function SubmissionDetails({
 
       <div className="space-y-5">
         <Section title="Theme">
-          <p className="text-sm text-foreground/90">{submission.theme_name ?? "—"}</p>
+          <p className="text-sm text-foreground/90">{theme ?? "—"}</p>
         </Section>
         {sutraNames.length > 0 && (
           <Section title="Swarna Andhra Sutras">
