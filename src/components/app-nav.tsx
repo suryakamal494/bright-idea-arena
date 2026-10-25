@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   BookOpen,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
   CalendarClock,
   Home,
   Inbox,
@@ -32,19 +36,19 @@ const NAV: Record<string, NavItem[]> = {
   student: [
     { to: "/dashboard", label: "Home", icon: Home },
     { to: "/team", label: "Team", icon: Users },
-    { to: "/submission", label: "Entry", icon: PenLine },
-    { to: "/learning", label: "Learn", icon: BookOpen },
+    { to: "/submission", label: "Submission form", icon: PenLine },
+    { to: "/learning", label: "Resources", icon: BookOpen },
   ],
   admin: [
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/directory", label: "Directory", icon: Users },
-    { to: "/admin/submissions", label: "Entries", icon: Inbox },
+    { to: "/admin/submissions", label: "Submissions", icon: Inbox },
     { to: "/admin/deadlines", label: "Deadlines", icon: CalendarClock },
     { to: "/admin/judges", label: "Judges", icon: Scale },
     { to: "/admin/broadcasts", label: "Broadcast", icon: Megaphone },
   ],
-  judge: [{ to: "/judge", label: "Queue", icon: Inbox }],
-  coordinator: [{ to: "/coordinator", label: "Roster", icon: Users }],
+  judge: [{ to: "/judge", label: "Evaluation queue", icon: Inbox }],
+  coordinator: [{ to: "/coordinator", label: "School roster", icon: Users }],
 };
 
 export function Brand({ compact = false }: { compact?: boolean }) {
@@ -81,12 +85,29 @@ export function OrgFooter() {
   );
 }
 
+const MOBILE_SHORT: Record<string, string> = {
+  "Submission form": "Submission",
+  "Evaluation queue": "Queue",
+  "School roster": "Roster",
+};
+
 export function AppNav({ role, name }: { role: AppRole; name: string }) {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = NAV[role] ?? [];
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("sii-sidebar") === "collapsed");
+  }, []);
+  function toggle() {
+    setCollapsed((c) => {
+      localStorage.setItem("sii-sidebar", c ? "expanded" : "collapsed");
+      return !c;
+    });
+  }
 
   async function handleSignOut() {
     setBusy(true);
@@ -96,43 +117,81 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
     router.navigate({ to: "/auth", replace: true });
   }
 
+  const home = items[0];
   const isActive = (to: string) =>
-    to === "/admin" || to === "/judge" || to === "/coordinator" || to === "/dashboard"
-      ? pathname === to
-      : pathname.startsWith(to);
+    to === home?.to ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+  const current =
+    [...items].sort((a, b) => b.to.length - a.to.length).find((i) => isActive(i.to)) ?? home;
+  const isHome = pathname === home?.to;
+  // Deeper than a nav item (e.g. /judge/evaluate/x) → back goes to that section.
+  const deeper = current && pathname !== current.to;
+  const backTo = deeper ? current.to : home?.to;
+
+  const avatar = (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-clay/15 text-sm font-semibold text-clay">
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  );
 
   return (
     <>
-      {/* Desktop top navigation */}
-      <header className="no-print sticky top-0 z-40 hidden border-b border-border bg-linen/90 backdrop-blur md:block">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <Brand />
-          <nav className="flex items-center gap-1">
-            {items.map((item) => (
+      {/* Desktop left sidebar */}
+      <aside
+        data-app-sidebar={collapsed ? "collapsed" : "expanded"}
+        className={cn(
+          "no-print fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-border bg-card transition-[width] duration-200 md:flex",
+          collapsed ? "w-[4.5rem]" : "w-60",
+        )}
+      >
+        <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-4")}>
+          {collapsed ? (
+            <img src={icorgLogo.url} alt="ICORG" className="h-4 w-auto" />
+          ) : (
+            <Brand />
+          )}
+        </div>
+        <nav className="flex-1 space-y-1 p-3" aria-label="Main">
+          {!collapsed && (
+            <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Menu
+            </p>
+          )}
+          {items.map((item) => {
+            const active = current?.to === item.to;
+            return (
               <Link
                 key={item.to}
                 to={item.to}
+                title={collapsed ? item.label : undefined}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  isActive(item.to)
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  collapsed && "justify-center px-0",
+                  active
                     ? "bg-forest text-linen"
-                    : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                    : "text-foreground/75 hover:bg-muted hover:text-foreground",
                 )}
               >
-                {item.label}
+                <item.icon className="h-[18px] w-[18px] shrink-0" />
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
-            ))}
-          </nav>
+            );
+          })}
+        </nav>
+        <div className="space-y-1 border-t border-border p-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 px-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-clay/15 text-sm font-semibold text-clay">
-                  {name.slice(0, 1).toUpperCase()}
-                </span>
-                <span className="max-w-32 truncate text-sm font-medium">{name}</span>
-              </Button>
+              <button
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-muted",
+                  collapsed && "justify-center px-0",
+                )}
+              >
+                {avatar}
+                {!collapsed && <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>}
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="start" side="top" className="w-56">
               <DropdownMenuLabel className="text-muted-foreground">{name}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} disabled={busy}>
@@ -140,17 +199,60 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <button
+            onClick={toggle}
+            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
+              collapsed && "justify-center px-0",
+            )}
+          >
+            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            {!collapsed && "Collapse menu"}
+          </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Mobile top bar */}
-      <header className="no-print sticky top-0 z-40 border-b border-border bg-linen/90 backdrop-blur md:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Brand />
+      {/* Top bar: back button + breadcrumb (all sizes) */}
+      <header className="no-print sticky top-0 z-30 border-b border-border bg-linen/90 backdrop-blur">
+        <div className="flex h-14 items-center gap-2 px-3 md:h-16 md:px-8">
+          {!isHome && backTo ? (
+            <Button variant="ghost" size="sm" asChild className="-ml-1 shrink-0 gap-1.5 px-2">
+              <Link to={backTo} aria-label="Go back">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Back</span>
+              </Link>
+            </Button>
+          ) : (
+            <span className="md:hidden">
+              <Brand compact />
+            </span>
+          )}
+          <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-sm">
+            {home && !isHome && (
+              <>
+                <Link to={home.to} className="hidden shrink-0 text-muted-foreground hover:text-foreground sm:inline">
+                  {home.label}
+                </Link>
+                <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:inline" />
+              </>
+            )}
+            {deeper && current && current !== home && (
+              <>
+                <Link to={current.to} className="hidden shrink-0 text-muted-foreground hover:text-foreground sm:inline">
+                  {current.label}
+                </Link>
+                <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:inline" />
+              </>
+            )}
+            <span className="truncate font-semibold text-forest">
+              {deeper ? "Details" : current?.label}
+            </span>
+          </nav>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex h-9 w-9 items-center justify-center rounded-full bg-clay/15 text-sm font-semibold text-clay">
-                {name.slice(0, 1).toUpperCase()}
+              <button className="shrink-0 md:hidden" aria-label="Account">
+                {avatar}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -173,11 +275,11 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
               to={item.to}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium transition-colors",
-                isActive(item.to) ? "text-clay" : "text-muted-foreground",
+                current?.to === item.to ? "text-clay" : "text-muted-foreground",
               )}
             >
               <item.icon className="h-5 w-5" />
-              {item.label}
+              {MOBILE_SHORT[item.label] ?? item.label}
             </Link>
           ))}
         </div>
