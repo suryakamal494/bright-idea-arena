@@ -87,6 +87,7 @@ const MOBILE_SHORT: Record<string, string> = {
   "Submission form": "Submission",
   "Evaluation queue": "Queue",
   "School roster": "Roster",
+  Registrations: "Students",
 };
 
 export function AppNav({ role, name }: { role: AppRole; name: string }) {
