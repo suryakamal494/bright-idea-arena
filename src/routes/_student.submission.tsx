@@ -171,10 +171,10 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
         <Tabs defaultValue="1">
           <TabsList className="w-full">
             <TabsTrigger value="1" className="flex-1">
-              Stage 1 · Project one-pager
+              Stage 1 · One-pager
             </TabsTrigger>
             <TabsTrigger value="2" className="flex-1" disabled={!s2Open && !s2}>
-              Stage 2 · Final submission
+              Stage 2 · Final
             </TabsTrigger>
           </TabsList>
           <TabsContent value="1">

@@ -170,6 +170,6 @@
 
 /* App shell: left sidebar offset on desktop (collapsible). */
 @media (min-width: 768px) {
-  .app-shell:has([data-app-sidebar="expanded"]) { padding-left: 15rem; }
+  .app-shell:has([data-app-sidebar="expanded"]) { padding-left: 16rem; }
   .app-shell:has([data-app-sidebar="collapsed"]) { padding-left: 4.5rem; }
 }

@@ -140,7 +140,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
         data-app-sidebar={collapsed ? "collapsed" : "expanded"}
         className={cn(
           "no-print fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-border bg-card transition-[width] duration-200 md:flex",
-          collapsed ? "w-[4.5rem]" : "w-60",
+          collapsed ? "w-[4.5rem]" : "w-64",
         )}
       >
         <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-4")}>
