@@ -10,13 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudentRouteImport } from './routes/_student'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRevokeRouteImport } from './routes/parent-revoke'
 import { Route as SchoolRegisterRouteImport } from './routes/school-register'
+import { Route as StudentDashboardRouteImport } from './routes/_student.dashboard'
+import { Route as StudentTeamRouteImport } from './routes/_student.team'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudentRoute = StudentRouteImport.update({
+  id: '/_student',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -34,36 +41,74 @@ const SchoolRegisterRoute = SchoolRegisterRouteImport.update({
   path: '/school-register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentDashboardRoute = StudentDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentTeamRoute = StudentTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => StudentRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
+  '/dashboard': typeof StudentDashboardRoute
+  '/team': typeof StudentTeamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
+  '/dashboard': typeof StudentDashboardRoute
+  '/team': typeof StudentTeamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_student': typeof StudentRouteWithChildren
   '/auth': typeof AuthRoute
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
+  '/_student/dashboard': typeof StudentDashboardRoute
+  '/_student/team': typeof StudentTeamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/parent-revoke' | '/school-register'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/parent-revoke'
+    | '/school-register'
+    | '/dashboard'
+    | '/team'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/parent-revoke' | '/school-register'
-  id: '__root__' | '/' | '/auth' | '/parent-revoke' | '/school-register'
+  to:
+    | '/'
+    | '/auth'
+    | '/parent-revoke'
+    | '/school-register'
+    | '/dashboard'
+    | '/team'
+  id:
+    | '__root__'
+    | '/'
+    | '/_student'
+    | '/auth'
+    | '/parent-revoke'
+    | '/school-register'
+    | '/_student/dashboard'
+    | '/_student/team'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  StudentRoute: typeof StudentRouteWithChildren
   AuthRoute: typeof AuthRoute
   ParentRevokeRoute: typeof ParentRevokeRoute
   SchoolRegisterRoute: typeof SchoolRegisterRoute
@@ -76,6 +121,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_student': {
+      id: '/_student'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof StudentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -99,11 +151,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchoolRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_student/dashboard': {
+      id: '/_student/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/_student/team': {
+      id: '/_student/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof StudentTeamRouteImport
+      parentRoute: typeof StudentRoute
+    }
   }
 }
 
+interface StudentRouteChildren {
+  StudentDashboardRoute: typeof StudentDashboardRoute
+  StudentTeamRoute: typeof StudentTeamRoute
+}
+
+const StudentRouteChildren: StudentRouteChildren = {
+  StudentDashboardRoute: StudentDashboardRoute,
+  StudentTeamRoute: StudentTeamRoute,
+}
+
+const StudentRouteWithChildren =
+  StudentRoute._addFileChildren(StudentRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  StudentRoute: StudentRouteWithChildren,
   AuthRoute: AuthRoute,
   ParentRevokeRoute: ParentRevokeRoute,
   SchoolRegisterRoute: SchoolRegisterRoute,
