@@ -18,7 +18,7 @@ export const Route = createFileRoute("/coordinator")({
 });
 
 function CoordinatorLayout() {
-  const { roles, profile } = Route.useRouteContext<{ roles: string[]; profile: Profile | null }>();
+  const { roles, profile } = Route.useRouteContext() as { roles: string[]; profile: Profile | null };
   const isCoordinator = roles.includes("coordinator");
 
   return (

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_student")({
 });
 
 function StudentLayout() {
-  const { profile } = Route.useRouteContext<{ roles: string[]; profile: Profile | null }>();
+  const { profile } = Route.useRouteContext() as { roles: string[]; profile: Profile | null };
 
   if (!profile || !profile.grade || !profile.school_name) {
     return profile ? (

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { profile } = Route.useRouteContext<{ roles: string[]; profile: Profile | null }>();
+  const { profile } = Route.useRouteContext() as { roles: string[]; profile: Profile | null };
   return (
     <div className="min-h-screen bg-linen">
       <AppNav role="admin" name={profile?.full_name ?? "Administrator"} />

@@ -72,7 +72,7 @@ function CoordinatorPortal() {
         full_name: cols[0],
         email: cols[1],
         grade: Number(cols[2] || 8) || 8,
-        parent_email: cols[3] || undefined,
+        parent_email: cols[3] || "",
       });
     }
     if (!seeds.length) { toast.error("No valid rows found (need name, email, grade columns)."); return; }

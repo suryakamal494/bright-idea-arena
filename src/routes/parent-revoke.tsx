@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/parent-revoke")({
   validateSearch: (search: Record<string, unknown>) => ({
-    token: typeof search.token === "string" ? search.token : undefined,
+    token: typeof search["token"] === "string" ? search["token"] : undefined,
   }),
   head: () => ({
     meta: [
