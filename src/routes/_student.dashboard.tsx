@@ -54,7 +54,7 @@ function Dashboard() {
     <div className="space-y-6">
       <header>
         <p className="eyebrow">Ideathon 2026 · Student workspace</p>
-        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">
+        <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">
           {team ? "Your competition at a glance" : "Let's get you started"}
         </h1>
       </header>

@@ -37,7 +37,7 @@ import { SubmissionDetails } from "@/components/submission-details";
 
 export const Route = createFileRoute("/_student/submission")({
   head: () => ({
-    meta: [{ title: "My submission — Social Innovation Ideathon" }],
+    meta: [{ title: "Submission form — Social Innovation Ideathon" }],
   }),
   component: SubmissionPage,
 });
@@ -140,8 +140,8 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
   return (
     <div className="space-y-5">
       <header>
-        <p className="eyebrow">Two-stage submission</p>
-        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">
+        <p className="eyebrow">Submission form · two stages</p>
+        <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">
           {team.name} · {team.track?.name ?? "No theme selected"}
         </h1>
       </header>
