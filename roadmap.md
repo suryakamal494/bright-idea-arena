@@ -1,14 +1,12 @@
 # Social Innovation Ideathon — build roadmap
 
-- [x] Enable Lovable Cloud, email auth, Google + Lovable sign-in, evidence storage bucket
-- [x] Database schema, RLS, grants, RPCs (team ops, submissions, parent revocation)
-- [x] Demo seed: 4 tracks, rubric, 16 accounts, 4 teams, 6 submissions, scores, announcements
-- [ ] Design system (styles.css) + root shell + fonts
-- [ ] Landing page (/) + auth page (/auth) with demo quick-login
-- [ ] Authenticated layout gate + role layouts (_student, _admin, _judge, _coordinator)
-- [ ] Student: dashboard, team formation, 2-stage submissions with autosave, learning center
-- [ ] Admin: KPI dashboard, submissions manager (drawer), deadlines, judge assignment, broadcasts
-- [ ] Judge: blind queue, dual-pane evaluation with 0.25-step sliders
-- [ ] Coordinator: /school-register signup + roster portal + printable access passes
-- [ ] Parent revocation page (/parent-revoke)
-- [ ] End-to-end verification (Playwright) for each role flow
+- [x] Cloud backend, schema/RLS/RPCs, demo seed, all role flows, perf fixes, login-first homepage
+- [ ] ICORG logo asset + brand lockup in headers + "Organized by ICORG" footers
+- [ ] Auth page: remove Continue with Lovable, keep Google, "School registration" link
+- [ ] Instant student signup (auto-confirm) + server-side parent notification email trigger
+- [ ] Transactional email infra + parent-notification template (ICORG/SII, passive consent, withdrawal link)
+- [ ] /school-register: name, designation, school, city, email, mobile, password + back link
+- [ ] /parent-revoke: show student details, explicit two-step confirmation
+- [ ] Student pre-team onboarding stepper on dashboard
+- [ ] profiles.designation column + parent info RPCs (migration)
+- [ ] Verification (tests, build, Playwright) + memory updates
