@@ -66,7 +66,7 @@ function TeamDirectory() {
           p_page_size: pageSize,
           ...(search.trim() ? { p_search: search.trim() } : {}),
           ...(trackId === "all" ? {} : { p_track_id: trackId }),
-          ...(status === "all" ? {} : { p_status: status }),
+          p_status: status,
         });
         if (error) throw error;
         const res = data as unknown as { total: number; rows: DirectoryRow[] };
@@ -208,6 +208,10 @@ function TeamDirectory() {
             <SelectItem value="stage2">Stage 2 submitted</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv} className="ml-auto">
+          <Download className="mr-1.5 h-4 w-4" />
+          {exporting ? "Preparing…" : "Export CSV"}
+        </Button>
       </div>
 
       <Card>
