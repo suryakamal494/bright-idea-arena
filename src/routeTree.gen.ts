@@ -15,6 +15,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRevokeRouteImport } from './routes/parent-revoke'
 import { Route as SchoolRegisterRouteImport } from './routes/school-register'
 import { Route as StudentDashboardRouteImport } from './routes/_student.dashboard'
+import { Route as StudentLearningRouteImport } from './routes/_student.learning'
+import { Route as StudentSubmissionRouteImport } from './routes/_student.submission'
 import { Route as StudentTeamRouteImport } from './routes/_student.team'
 
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +48,16 @@ const StudentDashboardRoute = StudentDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => StudentRoute,
 } as any)
+const StudentLearningRoute = StudentLearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentSubmissionRoute = StudentSubmissionRouteImport.update({
+  id: '/submission',
+  path: '/submission',
+  getParentRoute: () => StudentRoute,
+} as any)
 const StudentTeamRoute = StudentTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -58,6 +70,8 @@ export interface FileRoutesByFullPath {
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
   '/dashboard': typeof StudentDashboardRoute
+  '/learning': typeof StudentLearningRoute
+  '/submission': typeof StudentSubmissionRoute
   '/team': typeof StudentTeamRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +80,8 @@ export interface FileRoutesByTo {
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
   '/dashboard': typeof StudentDashboardRoute
+  '/learning': typeof StudentLearningRoute
+  '/submission': typeof StudentSubmissionRoute
   '/team': typeof StudentTeamRoute
 }
 export interface FileRoutesById {
@@ -76,6 +92,8 @@ export interface FileRoutesById {
   '/parent-revoke': typeof ParentRevokeRoute
   '/school-register': typeof SchoolRegisterRoute
   '/_student/dashboard': typeof StudentDashboardRoute
+  '/_student/learning': typeof StudentLearningRoute
+  '/_student/submission': typeof StudentSubmissionRoute
   '/_student/team': typeof StudentTeamRoute
 }
 export interface FileRouteTypes {
@@ -86,6 +104,8 @@ export interface FileRouteTypes {
     | '/parent-revoke'
     | '/school-register'
     | '/dashboard'
+    | '/learning'
+    | '/submission'
     | '/team'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,6 +114,8 @@ export interface FileRouteTypes {
     | '/parent-revoke'
     | '/school-register'
     | '/dashboard'
+    | '/learning'
+    | '/submission'
     | '/team'
   id:
     | '__root__'
@@ -103,6 +125,8 @@ export interface FileRouteTypes {
     | '/parent-revoke'
     | '/school-register'
     | '/_student/dashboard'
+    | '/_student/learning'
+    | '/_student/submission'
     | '/_student/team'
   fileRoutesById: FileRoutesById
 }
@@ -158,6 +182,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentDashboardRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/_student/learning': {
+      id: '/_student/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof StudentLearningRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/_student/submission': {
+      id: '/_student/submission'
+      path: '/submission'
+      fullPath: '/submission'
+      preLoaderRoute: typeof StudentSubmissionRouteImport
+      parentRoute: typeof StudentRoute
+    }
     '/_student/team': {
       id: '/_student/team'
       path: '/team'
@@ -170,11 +208,15 @@ declare module '@tanstack/react-router' {
 
 interface StudentRouteChildren {
   StudentDashboardRoute: typeof StudentDashboardRoute
+  StudentLearningRoute: typeof StudentLearningRoute
+  StudentSubmissionRoute: typeof StudentSubmissionRoute
   StudentTeamRoute: typeof StudentTeamRoute
 }
 
 const StudentRouteChildren: StudentRouteChildren = {
   StudentDashboardRoute: StudentDashboardRoute,
+  StudentLearningRoute: StudentLearningRoute,
+  StudentSubmissionRoute: StudentSubmissionRoute,
   StudentTeamRoute: StudentTeamRoute,
 }
 
