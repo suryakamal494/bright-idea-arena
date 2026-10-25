@@ -74,7 +74,7 @@ export function AuthPage() {
       return;
     }
     if (result.redirected) return; // full-page OAuth in progress
-    await afterAuth(navigate);
+    await resetAndNavigate(queryClient, navigate);
   }
 
   return (
