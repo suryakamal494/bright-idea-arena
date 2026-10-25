@@ -42,6 +42,7 @@
   --color-ochre: var(--ochre);
   --color-linen: var(--linen);
   --font-display: "Work Sans", system-ui, sans-serif;
+  --font-sans: "Work Sans", system-ui, sans-serif;
 }
 
 :root {
