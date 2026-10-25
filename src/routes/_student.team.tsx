@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogOut, ShieldAlert, UserRoundCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
-import { fetchMyTeam, fetchTeamMembers } from "@/lib/team";
+import { MAX_TEAM_SIZE, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,7 +97,7 @@ function TeamRoster({
         <p className="eyebrow">Team workspace</p>
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">{team.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Track · {team.track?.name ?? "Not set"} · {roster.length}/5 members
+          Track · {team.track?.name ?? "Not set"} · {roster.length}/{MAX_TEAM_SIZE} members
         </p>
       </header>
 
@@ -222,7 +222,7 @@ function TeamFormation({ onDone }: { onDone: () => void }) {
       <header>
         <p className="eyebrow">Team formation</p>
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">Build your team</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Teams of 2–5 students. One track per team.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Teams of 2–3 students. One track per team.</p>
       </header>
       <Tabs defaultValue="create">
         <TabsList className="w-full">
