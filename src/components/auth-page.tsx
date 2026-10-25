@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,9 @@ export function AuthPage() {
   }
 
   async function googleSignIn() {
-    const result = await lovableGoogleSignIn();
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
     if (result.error) {
       toast.error(result.error.message);
       return;
@@ -142,13 +145,6 @@ export function AuthPage() {
       <OrgFooter />
     </div>
   );
-}
-
-async function lovableGoogleSignIn() {
-  const { lovable } = await import("@/integrations/lovable");
-  return lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
-  });
 }
 
 function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
