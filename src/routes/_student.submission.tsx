@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
 import {
+  MAX_TEAM_SIZE,
   MIN_TEAM_SIZE,
   fetchGlobalStageSettings,
   fetchMyTeam,
@@ -157,9 +158,9 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
                 The submission form unlocks at {MIN_TEAM_SIZE} members
               </h2>
               <p className="text-sm text-ochre">
-                Your team has {roster.length} of {MIN_TEAM_SIZE} required members. Every member of a
-                team of three or more can work on the submission together — invite your teammates
-                from the Team page using your join code.
+                Your team has {roster.length} of {MIN_TEAM_SIZE} required members (each team can
+                have {MIN_TEAM_SIZE} to {MAX_TEAM_SIZE} members). Invite your teammates from the
+                Team page using your join code.
               </p>
               <Button asChild size="sm" className="bg-clay hover:bg-clay/90">
                 <Link to="/team">Invite teammates</Link>

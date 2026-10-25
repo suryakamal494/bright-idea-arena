@@ -47,7 +47,9 @@ export type SubmissionRow = {
 };
 
 /** Submission workspace unlocks only at this roster size. */
-export const MIN_TEAM_SIZE = 3;
+export const MIN_TEAM_SIZE = 2;
+/** Hard cap on team size — enforced by the backend join rule too. */
+export const MAX_TEAM_SIZE = 3;
 
 export type SutraRow = { id: string; name: string; description: string | null; sort_order: number };
 
