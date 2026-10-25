@@ -255,9 +255,13 @@ function StageEditor({
     timer.current = setTimeout(() => (saveRef.current ?? save)(false).catch(console.error), 3000);
   }
 
-  // Flush pending edits when the tab is hidden, closed, or the editor unmounts.
+  // Keep the flush helper pointed at the latest save closure.
   useEffect(() => {
     saveRef.current = save;
+  });
+
+  // Flush pending edits when the tab is hidden, closed, or the editor unmounts.
+  useEffect(() => {
     function flush() {
       if (!dirty.current) return;
       dirty.current = false;
@@ -273,7 +277,7 @@ function StageEditor({
       document.removeEventListener("visibilitychange", onHidden);
       flush();
     };
-  });
+  }, []);
 
   async function uploadFile(file: File) {
     if (!existing) {
