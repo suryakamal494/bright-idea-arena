@@ -36,8 +36,23 @@ export const Route = createFileRoute("/api/public/cron/reconcile-files")({
             .map((f) => f.url),
         );
 
-        // All objects currently in the bucket (storage schema, metadata only).
-        const { data: objects, error: objectsError } = await supabaseAdmin
+        // The generated Database type only covers the public schema, so the
+        // storage-schema PostgREST query is typed through a minimal surface.
+        type ObjectsQuery = {
+          schema: (name: string) => {
+            from: (table: string) => {
+              select: (columns: string) => {
+                eq: (
+                  column: string,
+                  value: string,
+                ) => Promise<{ data: unknown; error: unknown }>;
+              };
+            };
+          };
+        };
+        const { data: objects, error: objectsError } = await (
+          supabaseAdmin as unknown as ObjectsQuery
+        )
           .schema("storage")
           .from("objects")
           .select("name, created_at")
@@ -46,10 +61,7 @@ export const Route = createFileRoute("/api/public/cron/reconcile-files")({
           console.error("[reconcile-files] storage listing failed", objectsError);
           return Response.json({ ok: false, error: "storage_read_failed" }, { status: 500 });
         }
-        const bucketObjects = (objects ?? []) as unknown as {
-          name: string;
-          created_at: string;
-        }[];
+        const bucketObjects = (objects as { name: string; created_at: string }[] | null) ?? [];
 
         const orphans = bucketObjects
           .filter(
