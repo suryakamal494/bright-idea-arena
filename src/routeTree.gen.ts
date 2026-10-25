@@ -10,33 +10,262 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudentRouteImport } from './routes/_student'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CoordinatorRouteImport } from './routes/coordinator'
+import { Route as JudgeRouteImport } from './routes/judge'
+import { Route as ParentRevokeRouteImport } from './routes/parent-revoke'
+import { Route as SchoolRegisterRouteImport } from './routes/school-register'
+import { Route as StudentDashboardRouteImport } from './routes/_student.dashboard'
+import { Route as StudentLearningRouteImport } from './routes/_student.learning'
+import { Route as StudentSubmissionRouteImport } from './routes/_student.submission'
+import { Route as StudentTeamRouteImport } from './routes/_student.team'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminDeadlinesRouteImport } from './routes/admin.deadlines'
+import { Route as AdminJudgesRouteImport } from './routes/admin.judges'
+import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
+import { Route as CoordinatorIndexRouteImport } from './routes/coordinator.index'
+import { Route as JudgeIndexRouteImport } from './routes/judge.index'
+import { Route as JudgeEvaluateSubmissionIdRouteImport } from './routes/judge.evaluate.$submissionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentRoute = StudentRouteImport.update({
+  id: '/_student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoordinatorRoute = CoordinatorRouteImport.update({
+  id: '/coordinator',
+  path: '/coordinator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JudgeRoute = JudgeRouteImport.update({
+  id: '/judge',
+  path: '/judge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRevokeRoute = ParentRevokeRouteImport.update({
+  id: '/parent-revoke',
+  path: '/parent-revoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SchoolRegisterRoute = SchoolRegisterRouteImport.update({
+  id: '/school-register',
+  path: '/school-register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudentDashboardRoute = StudentDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentLearningRoute = StudentLearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentSubmissionRoute = StudentSubmissionRouteImport.update({
+  id: '/submission',
+  path: '/submission',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentTeamRoute = StudentTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => StudentRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
+  id: '/broadcasts',
+  path: '/broadcasts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDeadlinesRoute = AdminDeadlinesRouteImport.update({
+  id: '/deadlines',
+  path: '/deadlines',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJudgesRoute = AdminJudgesRouteImport.update({
+  id: '/judges',
+  path: '/judges',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
+  id: '/submissions',
+  path: '/submissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const CoordinatorIndexRoute = CoordinatorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CoordinatorRoute,
+} as any)
+const JudgeIndexRoute = JudgeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => JudgeRoute,
+} as any)
+const JudgeEvaluateSubmissionIdRoute =
+  JudgeEvaluateSubmissionIdRouteImport.update({
+    id: '/evaluate/$submissionId',
+    path: '/evaluate/$submissionId',
+    getParentRoute: () => JudgeRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/coordinator': typeof CoordinatorRouteWithChildren
+  '/judge': typeof JudgeRouteWithChildren
+  '/parent-revoke': typeof ParentRevokeRoute
+  '/school-register': typeof SchoolRegisterRoute
+  '/dashboard': typeof StudentDashboardRoute
+  '/learning': typeof StudentLearningRoute
+  '/submission': typeof StudentSubmissionRoute
+  '/team': typeof StudentTeamRoute
+  '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/deadlines': typeof AdminDeadlinesRoute
+  '/admin/judges': typeof AdminJudgesRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/coordinator/': typeof CoordinatorIndexRoute
+  '/judge/': typeof JudgeIndexRoute
+  '/judge/evaluate/$submissionId': typeof JudgeEvaluateSubmissionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/parent-revoke': typeof ParentRevokeRoute
+  '/school-register': typeof SchoolRegisterRoute
+  '/dashboard': typeof StudentDashboardRoute
+  '/learning': typeof StudentLearningRoute
+  '/submission': typeof StudentSubmissionRoute
+  '/team': typeof StudentTeamRoute
+  '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/deadlines': typeof AdminDeadlinesRoute
+  '/admin/judges': typeof AdminJudgesRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
+  '/admin': typeof AdminIndexRoute
+  '/coordinator': typeof CoordinatorIndexRoute
+  '/judge': typeof JudgeIndexRoute
+  '/judge/evaluate/$submissionId': typeof JudgeEvaluateSubmissionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_student': typeof StudentRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/coordinator': typeof CoordinatorRouteWithChildren
+  '/judge': typeof JudgeRouteWithChildren
+  '/parent-revoke': typeof ParentRevokeRoute
+  '/school-register': typeof SchoolRegisterRoute
+  '/_student/dashboard': typeof StudentDashboardRoute
+  '/_student/learning': typeof StudentLearningRoute
+  '/_student/submission': typeof StudentSubmissionRoute
+  '/_student/team': typeof StudentTeamRoute
+  '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/deadlines': typeof AdminDeadlinesRoute
+  '/admin/judges': typeof AdminJudgesRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/coordinator/': typeof CoordinatorIndexRoute
+  '/judge/': typeof JudgeIndexRoute
+  '/judge/evaluate/$submissionId': typeof JudgeEvaluateSubmissionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/coordinator'
+    | '/judge'
+    | '/parent-revoke'
+    | '/school-register'
+    | '/dashboard'
+    | '/learning'
+    | '/submission'
+    | '/team'
+    | '/admin/broadcasts'
+    | '/admin/deadlines'
+    | '/admin/judges'
+    | '/admin/submissions'
+    | '/admin/'
+    | '/coordinator/'
+    | '/judge/'
+    | '/judge/evaluate/$submissionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/parent-revoke'
+    | '/school-register'
+    | '/dashboard'
+    | '/learning'
+    | '/submission'
+    | '/team'
+    | '/admin/broadcasts'
+    | '/admin/deadlines'
+    | '/admin/judges'
+    | '/admin/submissions'
+    | '/admin'
+    | '/coordinator'
+    | '/judge'
+    | '/judge/evaluate/$submissionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_student'
+    | '/admin'
+    | '/auth'
+    | '/coordinator'
+    | '/judge'
+    | '/parent-revoke'
+    | '/school-register'
+    | '/_student/dashboard'
+    | '/_student/learning'
+    | '/_student/submission'
+    | '/_student/team'
+    | '/admin/broadcasts'
+    | '/admin/deadlines'
+    | '/admin/judges'
+    | '/admin/submissions'
+    | '/admin/'
+    | '/coordinator/'
+    | '/judge/'
+    | '/judge/evaluate/$submissionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  StudentRoute: typeof StudentRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CoordinatorRoute: typeof CoordinatorRouteWithChildren
+  JudgeRoute: typeof JudgeRouteWithChildren
+  ParentRevokeRoute: typeof ParentRevokeRoute
+  SchoolRegisterRoute: typeof SchoolRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +277,210 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_student': {
+      id: '/_student'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof StudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coordinator': {
+      id: '/coordinator'
+      path: '/coordinator'
+      fullPath: '/coordinator'
+      preLoaderRoute: typeof CoordinatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/judge': {
+      id: '/judge'
+      path: '/judge'
+      fullPath: '/judge'
+      preLoaderRoute: typeof JudgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent-revoke': {
+      id: '/parent-revoke'
+      path: '/parent-revoke'
+      fullPath: '/parent-revoke'
+      preLoaderRoute: typeof ParentRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/school-register': {
+      id: '/school-register'
+      path: '/school-register'
+      fullPath: '/school-register'
+      preLoaderRoute: typeof SchoolRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_student/dashboard': {
+      id: '/_student/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/_student/learning': {
+      id: '/_student/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof StudentLearningRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/_student/submission': {
+      id: '/_student/submission'
+      path: '/submission'
+      fullPath: '/submission'
+      preLoaderRoute: typeof StudentSubmissionRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/_student/team': {
+      id: '/_student/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof StudentTeamRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/broadcasts': {
+      id: '/admin/broadcasts'
+      path: '/broadcasts'
+      fullPath: '/admin/broadcasts'
+      preLoaderRoute: typeof AdminBroadcastsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/deadlines': {
+      id: '/admin/deadlines'
+      path: '/deadlines'
+      fullPath: '/admin/deadlines'
+      preLoaderRoute: typeof AdminDeadlinesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/judges': {
+      id: '/admin/judges'
+      path: '/judges'
+      fullPath: '/admin/judges'
+      preLoaderRoute: typeof AdminJudgesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/submissions': {
+      id: '/admin/submissions'
+      path: '/submissions'
+      fullPath: '/admin/submissions'
+      preLoaderRoute: typeof AdminSubmissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/coordinator/': {
+      id: '/coordinator/'
+      path: '/'
+      fullPath: '/coordinator/'
+      preLoaderRoute: typeof CoordinatorIndexRouteImport
+      parentRoute: typeof CoordinatorRoute
+    }
+    '/judge/': {
+      id: '/judge/'
+      path: '/'
+      fullPath: '/judge/'
+      preLoaderRoute: typeof JudgeIndexRouteImport
+      parentRoute: typeof JudgeRoute
+    }
+    '/judge/evaluate/$submissionId': {
+      id: '/judge/evaluate/$submissionId'
+      path: '/evaluate/$submissionId'
+      fullPath: '/judge/evaluate/$submissionId'
+      preLoaderRoute: typeof JudgeEvaluateSubmissionIdRouteImport
+      parentRoute: typeof JudgeRoute
+    }
   }
 }
 
+interface StudentRouteChildren {
+  StudentDashboardRoute: typeof StudentDashboardRoute
+  StudentLearningRoute: typeof StudentLearningRoute
+  StudentSubmissionRoute: typeof StudentSubmissionRoute
+  StudentTeamRoute: typeof StudentTeamRoute
+}
+
+const StudentRouteChildren: StudentRouteChildren = {
+  StudentDashboardRoute: StudentDashboardRoute,
+  StudentLearningRoute: StudentLearningRoute,
+  StudentSubmissionRoute: StudentSubmissionRoute,
+  StudentTeamRoute: StudentTeamRoute,
+}
+
+const StudentRouteWithChildren =
+  StudentRoute._addFileChildren(StudentRouteChildren)
+
+interface AdminRouteChildren {
+  AdminBroadcastsRoute: typeof AdminBroadcastsRoute
+  AdminDeadlinesRoute: typeof AdminDeadlinesRoute
+  AdminJudgesRoute: typeof AdminJudgesRoute
+  AdminSubmissionsRoute: typeof AdminSubmissionsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminBroadcastsRoute: AdminBroadcastsRoute,
+  AdminDeadlinesRoute: AdminDeadlinesRoute,
+  AdminJudgesRoute: AdminJudgesRoute,
+  AdminSubmissionsRoute: AdminSubmissionsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface CoordinatorRouteChildren {
+  CoordinatorIndexRoute: typeof CoordinatorIndexRoute
+}
+
+const CoordinatorRouteChildren: CoordinatorRouteChildren = {
+  CoordinatorIndexRoute: CoordinatorIndexRoute,
+}
+
+const CoordinatorRouteWithChildren = CoordinatorRoute._addFileChildren(
+  CoordinatorRouteChildren,
+)
+
+interface JudgeRouteChildren {
+  JudgeIndexRoute: typeof JudgeIndexRoute
+  JudgeEvaluateSubmissionIdRoute: typeof JudgeEvaluateSubmissionIdRoute
+}
+
+const JudgeRouteChildren: JudgeRouteChildren = {
+  JudgeIndexRoute: JudgeIndexRoute,
+  JudgeEvaluateSubmissionIdRoute: JudgeEvaluateSubmissionIdRoute,
+}
+
+const JudgeRouteWithChildren = JudgeRoute._addFileChildren(JudgeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  StudentRoute: StudentRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CoordinatorRoute: CoordinatorRouteWithChildren,
+  JudgeRoute: JudgeRouteWithChildren,
+  ParentRevokeRoute: ParentRevokeRoute,
+  SchoolRegisterRoute: SchoolRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

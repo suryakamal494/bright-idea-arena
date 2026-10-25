@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792919226770,
+      "tag": "0000_init_ideathon_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792919249296,
+      "tag": "0001_init_ideathon_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792919301836,
+      "tag": "0002_seed_config",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792919309372,
+      "tag": "0003_seed_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792919365162,
+      "tag": "0004_seed_teams",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792919378064,
+      "tag": "0005_seed_submissions_a",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792919403353,
+      "tag": "0006_seed_submissions_b",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792919416552,
+      "tag": "0007_seed_extras",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792919474078,
+      "tag": "0008_access_refinements",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792920018601,
+      "tag": "0009_fix_rls_recursion",
+      "breakpoints": true
+    }
+  ]
+}
