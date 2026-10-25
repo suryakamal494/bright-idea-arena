@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ParentRevokeRouteImport } from './routes/parent-revoke'
+import { Route as SchoolRegisterRouteImport } from './routes/school-register'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRevokeRoute = ParentRevokeRouteImport.update({
+  id: '/parent-revoke',
+  path: '/parent-revoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SchoolRegisterRoute = SchoolRegisterRouteImport.update({
+  id: '/school-register',
+  path: '/school-register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/parent-revoke': typeof ParentRevokeRoute
+  '/school-register': typeof SchoolRegisterRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/parent-revoke': typeof ParentRevokeRoute
+  '/school-register': typeof SchoolRegisterRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/parent-revoke': typeof ParentRevokeRoute
+  '/school-register': typeof SchoolRegisterRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/auth' | '/parent-revoke' | '/school-register'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/auth' | '/parent-revoke' | '/school-register'
+  id: '__root__' | '/' | '/auth' | '/parent-revoke' | '/school-register'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  ParentRevokeRoute: typeof ParentRevokeRoute
+  SchoolRegisterRoute: typeof SchoolRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent-revoke': {
+      id: '/parent-revoke'
+      path: '/parent-revoke'
+      fullPath: '/parent-revoke'
+      preLoaderRoute: typeof ParentRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/school-register': {
+      id: '/school-register'
+      path: '/school-register'
+      fullPath: '/school-register'
+      preLoaderRoute: typeof SchoolRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  ParentRevokeRoute: ParentRevokeRoute,
+  SchoolRegisterRoute: SchoolRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

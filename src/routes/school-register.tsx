@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useState } from "react";
 import { FileSpreadsheet, Printer, Table2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { redirect, useNavigate } from "@tanstack/react-router";
+import { redirect, useNavigate, createFileRoute } from "@tanstack/react-router";
 import { Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
