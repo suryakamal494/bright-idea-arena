@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, ClipboardCheck, FileText, Users, UserSquare2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/admin/index")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [{ title: "Operations overview — Social Innovation Ideathon" }],
   }),
