@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from "react";
-import { FileSpreadsheet, Printer, Table2 } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet, Printer, Table2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Brand } from "@/components/app-nav";
+import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,16 +10,16 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/school-register")({
   head: () => ({
     meta: [
-      { title: "School Coordinator Registration — Social Innovation Ideathon" },
+      { title: "School Registration — Social Innovation Ideathon" },
       {
         name: "description",
         content:
-          "Teachers: register your school group, add students in bulk or via CSV, and print student access passes.",
+          "Teachers: register your school, add students in bulk or via CSV, and print student access passes.",
       },
-      { property: "og:title", content: "School Coordinator Registration" },
+      { property: "og:title", content: "School Registration — Social Innovation Ideathon" },
       {
         property: "og:description",
-        content: "Bulk-register students, generate printable access passes and manage your school roster.",
+        content: "Register your school, bulk-register students, generate printable access passes and manage your roster.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -29,16 +29,18 @@ export const Route = createFileRoute("/school-register")({
 });
 
 function SchoolRegister() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     full_name: "",
+    designation: "",
     school_name: "",
     city: "",
     email: "",
+    phone: "",
     password: "",
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -46,41 +48,59 @@ function SchoolRegister() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: err } = await supabase.auth.signUp({
+    const { data, error: err } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: window.location.origin,
         data: {
           full_name: form.full_name,
+          designation: form.designation,
           school_name: form.school_name,
           city: form.city,
+          phone: form.phone,
         },
       },
     });
-    setBusy(false);
     if (err) {
+      setBusy(false);
       setError(err.message);
       return;
     }
-    setSent(true);
+    if (data.session) {
+      // Auto-confirmed: straight to the school portal to claim the roster.
+      await navigate({ to: "/coordinator" });
+      return;
+    }
+    setBusy(false);
+    setError(
+      "Your account needs email confirmation before sign-in. Please check your inbox, then sign in from the home page.",
+    );
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-linen">
       <header className="mx-auto w-full max-w-5xl px-5 py-5">
-        <Brand />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Brand />
+          <a
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-clay underline underline-offset-2"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to sign in
+          </a>
+        </div>
       </header>
       <main className="mx-auto grid w-full max-w-5xl flex-1 items-start gap-8 px-5 pb-16 lg:grid-cols-2">
         <div>
           <p className="eyebrow">For teachers & coordinators</p>
           <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-forest">
-            Bring your school's brightest to the ideathon.
+            School registration
           </h1>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-            Register your school group, add students with quick tabular entry or a CSV upload, and
-            hand out printed access passes — each student gets their own login, no email round-trips
-            needed.
+            Register your school for the Social Innovation Ideathon, add students with quick
+            tabular entry or a CSV upload, and hand out printed access passes — each student gets
+            their own login, no email round-trips needed.
           </p>
           <div className="mt-8 space-y-4">
             {[
@@ -114,23 +134,22 @@ function SchoolRegister() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-          <h2 className="font-display text-xl font-semibold text-forest">Coordinator registration</h2>
-          {sent ? (
-            <div className="mt-4 rounded-lg border border-sage/30 bg-sage/10 p-4 text-sm text-secondary-foreground">
-              <p className="font-semibold">Check your email</p>
-              <p className="mt-1">
-                Confirm {form.email} to activate the account. Then sign in and open{" "}
-                <span className="font-medium">My roster</span> from the navigation to claim your
-                coordinator role and start adding students.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={submit} className="mt-4 space-y-3.5">
+          <h2 className="font-display text-xl font-semibold text-forest">Create school account</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            One coordinator per school. You'll be signed in right away to claim your school's roster
+            portal.
+          </p>
+          <form onSubmit={submit} className="mt-4 space-y-3.5">
+            <div className="grid gap-3.5 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Your name</Label>
                 <Input required value={form.full_name} onChange={set("full_name")} placeholder="e.g. Sunita Nair" />
               </div>
               <div className="space-y-1.5">
+                <Label>Designation</Label>
+                <Input required value={form.designation} onChange={set("designation")} placeholder="e.g. ATL In-charge" />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label>School name</Label>
                 <Input required value={form.school_name} onChange={set("school_name")} placeholder="e.g. Sunrise Public School" />
               </div>
@@ -139,28 +158,33 @@ function SchoolRegister() {
                 <Input required value={form.city} onChange={set("city")} placeholder="e.g. Delhi" />
               </div>
               <div className="space-y-1.5">
+                <Label>Mobile number</Label>
+                <Input required type="tel" value={form.phone} onChange={set("phone")} placeholder="+91 …" />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label>School email</Label>
                 <Input type="email" required value={form.email} onChange={set("email")} placeholder="coordinator@school.in" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label>Password</Label>
                 <Input type="password" required minLength={8} value={form.password} onChange={set("password")} placeholder="8+ characters" />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
-                {busy ? "Creating account…" : "Create coordinator account"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Already registered?{" "}
-                <a href="/auth" className="font-medium text-clay underline underline-offset-2">
-                  Sign in
-                </a>{" "}
-                and open the roster portal.
-              </p>
-            </form>
-          )}
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
+              {busy ? "Creating school account…" : "Create school account"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Already registered?{" "}
+              <a href="/" className="font-medium text-clay underline underline-offset-2">
+                Sign in
+              </a>{" "}
+              and open the roster portal.
+            </p>
+          </form>
         </div>
       </main>
+      <OrgFooter />
     </div>
   );
 }

@@ -121,6 +121,7 @@ export type Database = {
         Row: {
           city: string | null
           created_at: string
+          designation: string | null
           email: string
           full_name: string
           grade: number | null
@@ -132,6 +133,7 @@ export type Database = {
         Insert: {
           city?: string | null
           created_at?: string
+          designation?: string | null
           email?: string
           full_name?: string
           grade?: number | null
@@ -143,6 +145,7 @@ export type Database = {
         Update: {
           city?: string | null
           created_at?: string
+          designation?: string | null
           email?: string
           full_name?: string
           grade?: number | null
@@ -557,6 +560,8 @@ export type Database = {
         }
       }
       leave_team: { Args: never; Returns: undefined }
+      parent_notify_info: { Args: never; Returns: Json }
+      parent_revoke_info: { Args: { p_token: string }; Returns: Json }
       request_coordinator_role: { Args: never; Returns: undefined }
       revoke_parent_access: { Args: { p_token: string }; Returns: boolean }
       transfer_captaincy: { Args: { p_user_id: string }; Returns: undefined }
