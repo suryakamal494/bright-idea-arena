@@ -1,3 +1,4 @@
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "student" | "coordinator" | "judge" | "admin" | "mentor";
@@ -21,30 +22,83 @@ export type Profile = {
   parent_email: string | null;
 };
 
-export async function getSessionUser() {
-  const { data } = await supabase.auth.getUser();
-  return data.user ?? null;
+/**
+ * Reads the user from the locally cached Supabase session (no network
+ * roundtrip). The bearer token is still validated server-side on every
+ * authenticated request, so this is safe for route guards.
+ */
+export async function getSessionUser(): Promise<User | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user ?? null;
 }
 
-export async function fetchMyRoles(): Promise<AppRole[]> {
-  const user = await getSessionUser();
-  if (!user) return [];
+async function fetchRolesFor(userId: string): Promise<AppRole[]> {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
   return (data ?? []).map((r) => r.role as AppRole);
 }
 
-export async function fetchMyProfile(): Promise<Profile | null> {
-  const user = await getSessionUser();
-  if (!user) return null;
+async function fetchProfileFor(userId: string): Promise<Profile | null> {
   const { data } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
   return (data as Profile) ?? null;
+}
+
+export type AuthContext = { user: User; roles: AppRole[]; profile: Profile | null };
+
+// Short-lived in-memory cache so route guards and child pages within the same
+// navigation share one roles+profile fetch instead of repeating the queries.
+let authCache: { userId: string; at: number; value: AuthContext } | null = null;
+let inflight: Promise<AuthContext> | null = null;
+const AUTH_CACHE_TTL = 60_000;
+
+export async function getAuthContext(): Promise<AuthContext | null> {
+  const user = await getSessionUser();
+  if (!user) {
+    authCache = null;
+    return null;
+  }
+  if (
+    authCache &&
+    authCache.userId === user.id &&
+    Date.now() - authCache.at < AUTH_CACHE_TTL
+  ) {
+    return authCache.value;
+  }
+  // Concurrent callers (e.g. preload + navigation) share one fetch.
+  if (!inflight) {
+    inflight = Promise.all([
+      fetchRolesFor(user.id),
+      fetchProfileFor(user.id),
+    ]).then(([roles, profile]) => {
+      const value: AuthContext = { user, roles, profile };
+      authCache = { userId: user.id, at: Date.now(), value };
+      return value;
+    }).finally(() => {
+      inflight = null;
+    });
+  }
+  return inflight;
+}
+
+export function clearAuthContext() {
+  authCache = null;
+  inflight = null;
+}
+
+export async function fetchMyRoles(): Promise<AppRole[]> {
+  const ctx = await getAuthContext();
+  return ctx?.roles ?? [];
+}
+
+export async function fetchMyProfile(): Promise<Profile | null> {
+  const ctx = await getAuthContext();
+  return ctx?.profile ?? null;
 }
 
 export function homeFor(roles: AppRole[]): string {
@@ -56,14 +110,20 @@ export function homeFor(roles: AppRole[]): string {
 
 export const DEMO_PASSWORD = "Ideathon2026!";
 
-export const DEMO_ACCOUNTS: { label: string; email: string; blurb: string }[] = [
-  { label: "Administrator", email: "admin@demo.in", blurb: "Full operations hub" },
-  { label: "Evaluator", email: "judge@demo.in", blurb: "Blind scoring queue" },
-  { label: "Coordinator", email: "coordinator@demo.in", blurb: "Sunrise Public School" },
-  { label: "Team captain", email: "arjun@demo.in", blurb: "Verdant Minds · AgriTech" },
-  { label: "Teamless student", email: "zoya@demo.in", blurb: "Test joining a team" },
+export const DEMO_ACCOUNTS: {
+  label: string;
+  email: string;
+  blurb: string;
+  home: string;
+}[] = [
+  { label: "Administrator", email: "admin@demo.in", blurb: "Full operations hub", home: "/admin" },
+  { label: "Evaluator", email: "judge@demo.in", blurb: "Blind scoring queue", home: "/judge" },
+  { label: "Coordinator", email: "coordinator@demo.in", blurb: "Sunrise Public School", home: "/coordinator" },
+  { label: "Team captain", email: "arjun@demo.in", blurb: "Verdant Minds · AgriTech", home: "/dashboard" },
+  { label: "Teamless student", email: "zoya@demo.in", blurb: "Test joining a team", home: "/dashboard" },
 ];
 
 export async function signOutEverywhere() {
+  clearAuthContext();
   await supabase.auth.signOut();
 }
