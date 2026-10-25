@@ -83,7 +83,7 @@ function NoTeamCards() {
               You're registered — step 1 of 3
             </p>
             <p className="mt-1 text-sm leading-relaxed text-foreground">
-              Every team needs 3–5 members. One member creates the team and becomes its captain; the
+              Every team needs 2–3 members. One member creates the team and becomes its captain; the
               others join with the 6-digit code the captain shares.
             </p>
           </div>
