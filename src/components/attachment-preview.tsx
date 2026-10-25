@@ -105,11 +105,3 @@ export function AttachmentPreviewGrid({ files }: { files: AttachmentRow[] }) {
     </>
   );
 }
-
-export function AttachmentDownloadButton({ className }: { className?: string }) {
-  return (
-    <Button variant="outline" size="sm" className={className}>
-      Download
-    </Button>
-  );
-}

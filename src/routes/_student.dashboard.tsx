@@ -166,7 +166,7 @@ function TeamSummaryCard({ team }: { team: TeamRow }) {
         <div>
           <CardTitle className="font-display text-2xl text-forest">{team.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            Track · {team.track?.name ?? "Not set"}
+            Theme · {team.track?.name ?? "Not set"}
           </p>
         </div>
         <span className="rounded-full bg-forest px-3 py-1 font-mono text-xs font-semibold text-linen">

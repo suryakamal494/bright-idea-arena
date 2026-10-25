@@ -20,7 +20,7 @@ export const Route = createFileRoute("/judge/evaluate/$submissionId")({
 });
 
 type Criterion = { id: string; name: string; description: string | null; max_score: number };
-type FileRow = { id: string; name: string; url: string };
+type FileRow = { id: string; name: string; url: string; title?: string | null };
 
 function EvaluationSheet() {
   const { submissionId } = Route.useParams();
@@ -43,7 +43,7 @@ function EvaluationSheet() {
         .maybeSingle();
       const trackId = (sub?.team as { track_id?: string } | null)?.track_id;
       const [filesRes, existingRes, criteriaRes] = await Promise.all([
-        supabase.from("submission_files").select("id,name,url").eq("submission_id", submissionId),
+        supabase.from("submission_files").select("id,name,url,title").eq("submission_id", submissionId),
         supabase
           .from("scores")
           .select("id,criterion_scores,feedback,submitted")
@@ -153,35 +153,11 @@ function EvaluationSheet() {
       <div className="grid items-start gap-5 lg:grid-cols-2">
         {/* Left pane: full submission content */}
         <div className="rounded-2xl border border-border bg-card p-5">
-          <SubmissionDetails submission={sub as never} files={data.files as never} />
-          {/* Inline attachment previews (already resolved) */}
-          {data.files.length > 0 && (
-            <div className="mt-5 border-t border-border pt-4">
-              <h3 className="eyebrow mb-2">Attached evidence</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {data.files.map((f) => {
-                  const url = resolved[f.url];
-                  return (
-                    <a
-                      key={f.id}
-                      href={url || "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block overflow-hidden rounded-lg border border-border"
-                    >
-                      {url && /\.(png|jpe?g|gif|webp|avif)$/i.test(f.url) ? (
-                        <img src={url} alt={f.name} className="h-32 w-full object-cover" />
-                      ) : (
-                        <div className="flex h-32 items-center justify-center bg-muted px-3 text-center text-xs text-muted-foreground">
-                          {f.name}
-                        </div>
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <SubmissionDetails
+            submission={sub as never}
+            files={data.files as never}
+            theme={(sub.team as { track?: { name?: string } } | null)?.track?.name}
+          />
         </div>
 
         {/* Right pane: sticky rubric */}
