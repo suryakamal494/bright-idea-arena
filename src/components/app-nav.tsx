@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 import icorgLogo from "@/assets/icorg-logo.png.asset.json";
 import { cn } from "@/lib/utils";
-import { signOutEverywhere, type AppRole } from "@/lib/auth";
+import { clearAuthContext, type AppRole } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,10 +114,19 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
   const [pwOpen, setPwOpen] = useState(false);
   async function handleSignOut() {
     setBusy(true);
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await signOutEverywhere();
-    router.navigate({ to: "/auth", replace: true });
+    try {
+      // Navigate first so sign-out feels instant: drop cached protected data
+      // synchronously, then fire the remote logout in the background.
+      queryClient.clear();
+      clearAuthContext();
+      router.navigate({ to: "/auth", replace: true });
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error("Server sign-out failed — your local session is cleared; sign in again to continue.");
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   const home = items[0];
