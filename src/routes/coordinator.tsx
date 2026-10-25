@@ -20,7 +20,7 @@ function CoordinatorLayout() {
   const isCoordinator = roles.includes("coordinator");
 
   return (
-    <div className="min-h-screen bg-linen">
+    <div className="app-shell min-h-screen bg-linen">
       {isCoordinator && <AppNav role="coordinator" name={profile?.full_name ?? "Coordinator"} />}
       <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-4 md:pb-12">
         {isCoordinator ? (

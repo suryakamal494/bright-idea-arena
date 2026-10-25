@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_student/learning")({
   head: () => ({
-    meta: [{ title: "Learning center — Social Innovation Ideathon" }],
+    meta: [{ title: "Resources — Social Innovation Ideathon" }],
   }),
   component: LearningCenter,
 });
@@ -40,8 +40,8 @@ function LearningCenter() {
   return (
     <div className="space-y-5">
       <header>
-        <p className="eyebrow">Learning center</p>
-        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">
+        <p className="eyebrow">Resources</p>
+        <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">
           Guides, toolkits & live sessions
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

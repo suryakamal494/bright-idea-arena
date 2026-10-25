@@ -95,7 +95,7 @@ function TeamRoster({
     <div className="space-y-6">
       <header>
         <p className="eyebrow">Team workspace</p>
-        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">{team.name}</h1>
+        <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">{team.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Track · {team.track?.name ?? "Not set"} · {roster.length}/5 members
         </p>
@@ -221,7 +221,7 @@ function TeamFormation({ onDone }: { onDone: () => void }) {
     <div className="space-y-5">
       <header>
         <p className="eyebrow">Team formation</p>
-        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">Build your team</h1>
+        <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">Build your team</h1>
         <p className="mt-1 text-sm text-muted-foreground">Teams of 2–5 students. One track per team.</p>
       </header>
       <Tabs defaultValue="create">
