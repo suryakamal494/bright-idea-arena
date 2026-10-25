@@ -63,7 +63,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
         <>
           <span className="h-7 w-px bg-border" aria-hidden />
           <span className="leading-tight">
-            <span className="block whitespace-nowrap font-display text-[14px] font-semibold text-forest">
+            <span className="block font-display text-[15px] font-semibold text-forest">
               Social Innovation Ideathon
             </span>
             <span className="block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -147,7 +147,12 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
           {collapsed ? (
             <img src={icorgLogo.url} alt="ICORG" className="h-4 w-auto" />
           ) : (
-            <Brand />
+            <Link to="/" className="flex min-w-0 flex-col gap-1">
+              <img src={icorgLogo.url} alt="ICORG" className="h-4 w-auto self-start" />
+              <span className="truncate font-display text-[13px] font-semibold text-forest">
+                Social Innovation Ideathon
+              </span>
+            </Link>
           )}
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="Main">
