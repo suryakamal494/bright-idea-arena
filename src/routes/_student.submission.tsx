@@ -1,18 +1,32 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, CloudUpload, Loader2, Lock } from "lucide-react";
+import {
+  Check,
+  CloudUpload,
+  FileText,
+  Info,
+  Loader2,
+  Lock,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
 import {
+  MIN_TEAM_SIZE,
   fetchGlobalStageSettings,
   fetchMyTeam,
+  fetchSutras,
+  fetchTeamMembers,
   stageOpen,
   type StageSettingRow,
   type SubmissionRow,
+  type SutraRow,
   type TeamRow,
 } from "@/lib/team";
+import { isImageFile, isPdfFile } from "@/components/attachment-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,8 +110,14 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
     queryFn: fetchGlobalStageSettings,
   });
   const { data: submissions } = useSubmissions(team.id);
+  const { data: members } = useQuery({
+    queryKey: ["team-members", team.id],
+    queryFn: () => fetchTeamMembers(team.id),
+  });
   const files = useSubmissionFiles(team.id, submissions ?? []);
   const list = submissions ?? [];
+  const roster = members ?? [];
+  const teamReady = roster.length >= MIN_TEAM_SIZE;
 
   const s1 = list.find((s) => s.stage === 1);
   const s2 = list.find((s) => s.stage === 2);
@@ -115,63 +135,82 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
       <header>
         <p className="eyebrow">Two-stage submission</p>
         <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">
-          {team.name} · {team.track?.name}
+          {team.name} · {team.track?.name ?? "No theme selected"}
         </h1>
       </header>
 
-      {!s1Open && !s2Open && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-sm text-destructive">
-          Both submission stages are currently closed. Organisers may reopen them — announcements
-          will appear on your dashboard.
-        </div>
-      )}
-
-      <Tabs defaultValue="1">
-        <TabsList className="w-full">
-          <TabsTrigger value="1" className="flex-1">
-            Stage 1 · Concept note
-          </TabsTrigger>
-          <TabsTrigger value="2" className="flex-1" disabled={!s2Open && !s2}>
-            Stage 2 · Final prototype
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="1">
-          <StageEditor
-            stage={1}
-            team={team}
-            existing={s1}
-            settings={settings ?? null}
-            files={(files.data ?? []).filter((f) => f.submission_id === s1?.id)}
-            onRefresh={refresh}
-          />
-        </TabsContent>
-        <TabsContent value="2">
-          {s1?.status !== "submitted" ? (
-            <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm text-ochre">
-              Submit your Stage 1 concept note first — Stage 2, the final prototype submission,
-              unlocks once your concept is in review.
+      {!teamReady ? (
+        <div className="rounded-2xl border border-ochre/40 bg-ochre/10 p-5">
+          <div className="flex items-start gap-3">
+            <Users className="mt-0.5 h-5 w-5 text-ochre" />
+            <div className="space-y-2">
+              <h2 className="font-display text-lg font-semibold text-forest">
+                The submission form unlocks at {MIN_TEAM_SIZE} members
+              </h2>
+              <p className="text-sm text-ochre">
+                Your team has {roster.length} of {MIN_TEAM_SIZE} required members. Every member of a
+                team of three or more can work on the submission together — invite your teammates
+                from the Team page using your join code.
+              </p>
+              <Button asChild size="sm" className="bg-clay hover:bg-clay/90">
+                <Link to="/team">Invite teammates</Link>
+              </Button>
             </div>
-          ) : (
+          </div>
+        </div>
+      ) : (
+        <Tabs defaultValue="1">
+          <TabsList className="w-full">
+            <TabsTrigger value="1" className="flex-1">
+              Stage 1 · Project one-pager
+            </TabsTrigger>
+            <TabsTrigger value="2" className="flex-1" disabled={!s2Open && !s2}>
+              Stage 2 · Final submission
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="1">
             <StageEditor
-              stage={2}
+              stage={1}
               team={team}
-              existing={s2}
+              existing={s1}
               settings={settings ?? null}
-              files={(files.data ?? []).filter((f) => f.submission_id === s2?.id)}
+              open={s1Open}
+              files={(files.data ?? []).filter((f) => f.submission_id === s1?.id)}
               onRefresh={refresh}
             />
-          )}
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          <TabsContent value="2">
+            {s1?.status !== "submitted" ? (
+              <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm text-ochre">
+                Submit your Stage 1 project one-pager first — Stage 2, the final submission,
+                unlocks once your concept is in review.
+              </div>
+            ) : (
+              <StageEditor
+                stage={2}
+                team={team}
+                existing={s2}
+                settings={settings ?? null}
+                open={s2Open}
+                files={(files.data ?? []).filter((f) => f.submission_id === s2?.id)}
+                onRefresh={refresh}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
+
+type StagedFile = { file: File; title: string };
 
 function StageEditor({
   stage,
   team,
   existing,
   settings,
+  open,
   files,
   onRefresh,
 }: {
@@ -179,14 +218,17 @@ function StageEditor({
   team: TeamRow;
   existing: SubmissionRow | undefined;
   settings: StageSettingRow | null;
-  files: { id: string; name: string; url: string }[];
+  open: boolean;
+  files: { id: string; name: string; url: string; title?: string | null }[];
   onRefresh: () => void;
 }) {
-  const isOpen = stageOpen(settings, stage);
+  const deadline = stage === 1 ? settings?.stage1_deadline ?? null : settings?.stage2_deadline ?? null;
+  const closedByDeadline = !!deadline && new Date(deadline).getTime() < Date.now();
   const locked = existing?.status === "submitted";
+  const { data: sutras } = useQuery({ queryKey: ["sutras"], queryFn: fetchSutras });
   const [fields, setFields] = useState({
     title: existing?.title ?? "",
-    sdg_tags: (existing?.sdg_tags ?? []).join(", "),
+    sutras_explanation: existing?.sutras_explanation ?? "",
     problem_statement: existing?.problem_statement ?? "",
     methodology: existing?.methodology ?? "",
     technical_reasoning: existing?.technical_reasoning ?? "",
@@ -195,29 +237,41 @@ function StageEditor({
     links: existing?.links ?? "",
     evidence_links: existing?.evidence_links ?? "",
   });
+  const [selectedSutras, setSelectedSutras] = useState<string[]>(existing?.sutra_ids ?? []);
+  const [staged, setStaged] = useState<StagedFile[]>([]);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [uploading, setUploading] = useState(false);
   const dirty = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mounted = useRef(false);
-
-  useEffect(() => {
-    if (mounted.current) return;
-    mounted.current = true;
-  }, []);
-
   const queryClient = useQueryClient();
   const saveRef = useRef<((submit: boolean) => Promise<void>) | null>(null);
+  const finalized = useRef(false);
 
+  // Deadline auto-submit: when the deadline has passed and a draft is still open,
+  // finalise it the moment any member opens the form.
+  useEffect(() => {
+    if (finalized.current || !closedByDeadline || locked || !existing) return;
+    finalized.current = true;
+    (async () => {
+      const { error } = await supabase.rpc("finalize_due_submission", { p_stage: stage });
+      if (error) { console.error(error); return; }
+      toast.info(`The deadline passed — your ${stage === 1 ? "one-pager" : "final submission"} was auto-submitted.`);
+      onRefresh();
+    })();
+  }, [closedByDeadline, locked, existing, stage, onRefresh]);
 
   async function save(submit: boolean) {
     if (!team.id) return;
     setSaveState("saving");
-    const payload: Record<string, unknown> = { team_id: team.id };
+    const payload: Record<string, unknown> = {
+      team_id: team.id,
+      ...(existing ? { id: existing.id } : {}),
+      sutra_ids: selectedSutras,
+    };
     for (const [k, v] of Object.entries(fields)) {
       if (stage === 1 && ["technical_reasoning", "prototype_status", "test_outcomes"].includes(k)) continue;
       if (stage === 2 && k === "methodology") continue;
-      payload[k] = k === "sdg_tags" ? (v as string).split(",").map((t) => t.trim()).filter(Boolean) || null : (v as string) || null;
+      payload[k] = (v as string) || null;
     }
     const { data, error } = await supabase.rpc("upsert_submission", {
       p_payload: payload as never,
@@ -255,6 +309,16 @@ function StageEditor({
     timer.current = setTimeout(() => (saveRef.current ?? save)(false).catch(console.error), 3000);
   }
 
+  function toggleSutra(id: string) {
+    setSelectedSutras((cur) => {
+      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+      dirty.current = true;
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => (saveRef.current ?? save)(false).catch(console.error), 3000);
+      return next;
+    });
+  }
+
   // Keep the flush helper pointed at the latest save closure.
   useEffect(() => {
     saveRef.current = save;
@@ -279,27 +343,40 @@ function StageEditor({
     };
   }, []);
 
-  async function uploadFile(file: File) {
+  async function attachStaged() {
     if (!existing) {
       toast.info("Save your draft first (type something), then attach files.");
       return;
     }
+    if (staged.length === 0) return;
     setUploading(true);
-    const path = `evidence/${team.id}/${existing.id}/${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("evidence").upload(
-      path.replace(/^evidence\//, ""),
-      file,
-    );
-    if (upErr) {
+    try {
+      for (const s of staged) {
+        const path = `evidence/${team.id}/${existing.id}/${Date.now()}-${s.file.name}`;
+        const { error: upErr } = await supabase.storage.from("evidence").upload(
+          path.replace(/^evidence\//, ""),
+          s.file,
+        );
+        if (upErr) { toast.error(`${s.file.name}: ${upErr.message}`); continue; }
+        const { error: insErr } = await supabase.from("submission_files").insert({
+          submission_id: existing.id,
+          name: s.file.name,
+          title: s.title.trim() || s.file.name,
+          url: path,
+        });
+        if (insErr) toast.error(insErr.message);
+      }
+      setStaged([]);
+      toast.success("Attachments added");
+      onRefresh();
+    } finally {
       setUploading(false);
-      { toast.error(upErr.message); return; }
     }
-    const { error: insErr } = await supabase
-      .from("submission_files")
-      .insert({ submission_id: existing.id, name: file.name, url: path });
-    setUploading(false);
-    if (insErr) { toast.error(insErr.message); return; }
-    toast.success("Attachment uploaded");
+  }
+
+  async function removeFile(id: string) {
+    const { error } = await supabase.from("submission_files").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
     onRefresh();
   }
 
@@ -311,7 +388,13 @@ function StageEditor({
           {existing?.submitted_at && new Date(existing.submitted_at).toLocaleDateString()}. The
           entry is locked and cannot be edited.
         </div>
-        {existing && <SubmissionDetails submission={existing as never} files={files as never} />}
+        {existing && (
+          <SubmissionDetails
+            submission={existing as never}
+            files={files as never}
+            theme={team.track?.name ?? null}
+          />
+        )}
       </div>
     );
   }
@@ -331,103 +414,284 @@ function StageEditor({
       <span className="text-xs text-muted-foreground">Auto-saves as you type</span>
     );
 
+  const SectionHead = ({ n, title, hint }: { n: string; title: string; hint?: string }) => (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-forest font-mono text-xs font-semibold text-linen">
+          {n}
+        </span>
+        <h3 className="font-display text-base font-semibold text-forest">{title}</h3>
+      </div>
+      {hint && (
+        <p className="flex items-start gap-1.5 pl-8 text-xs leading-relaxed text-muted-foreground">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-clay" /> {hint}
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-5 rounded-2xl border border-border bg-card p-5">
+    <div className="space-y-6 rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-display text-xl font-semibold text-forest">
-            {stage === 1 ? "Stage 1 · Progress / Concept Note" : "Stage 2 · Final Submission"}
+            {stage === 1 ? "Stage 1 · Project One-Pager" : "Stage 2 · Final Submission"}
           </h2>
-          <Countdown
-            deadline={stage === 1 ? settings?.stage1_deadline ?? null : settings?.stage2_deadline ?? null}
-            className="mt-1"
-          />
+          <Countdown deadline={deadline} className="mt-1" />
         </div>
         <SaveIndicator />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Project title</Label>
-          <Input value={fields.title} onChange={(e) => onChange("title", e.target.value)} placeholder="e.g. KrishiMitra" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>SDG tags (comma separated)</Label>
-          <Input value={fields.sdg_tags} onChange={(e) => onChange("sdg_tags", e.target.value)} placeholder="SDG 2, SDG 6" />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>Problem statement</Label>
-        <Textarea rows={4} value={fields.problem_statement} onChange={(e) => onChange("problem_statement", e.target.value)} placeholder="What problem are you solving, and for whom?" />
-      </div>
-
       {stage === 1 ? (
-        <div className="space-y-1.5">
-          <Label>Proposed methodology</Label>
-          <Textarea rows={5} value={fields.methodology} onChange={(e) => onChange("methodology", e.target.value)} placeholder="How will you build it? Steps, materials, tools…" />
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <SectionHead
+                n="01"
+                title="Project title"
+                hint="A clear, specific title — avoid broad areas like “Waste Management” or “Water Conservation”."
+              />
+              <Input
+                value={fields.title}
+                onChange={(e) => onChange("title", e.target.value)}
+                placeholder="e.g. KrishiMitra: Low-cost Soil Health Advisor"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <SectionHead n="02" title="Theme" hint="Chosen with your team — ask your coordinator to change it if needed." />
+              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm font-medium text-forest">
+                {team.track?.name ?? "Not set"}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <SectionHead
+              n="03"
+              title="Swarna Andhra Sutras"
+              hint="Pick every Sutra your project contributes to — one or more."
+            />
+            <div className="flex flex-wrap gap-1.5 pl-8">
+              {(sutras ?? []).map((s: SutraRow) => {
+                const active = selectedSutras.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    title={s.description ?? ""}
+                    onClick={() => toggleSutra(s.id)}
+                    className={
+                      "rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                      (active
+                        ? "border-ochre bg-ochre/15 text-ochre"
+                        : "border-border text-muted-foreground hover:border-ochre/50 hover:text-ochre")
+                    }
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="pl-8">
+              <Textarea
+                rows={3}
+                value={fields.sutras_explanation}
+                onChange={(e) => onChange("sutras_explanation", e.target.value)}
+                placeholder="Briefly explain how your project connects to the selected Sutra(s)…"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <SectionHead
+              n="04"
+              title="What is the problem?"
+              hint="Describe the specific problem you have observed around you — a broad topic is not a problem. e.g. “Wet and recyclable waste get mixed at our collection point, making it unhygienic.”"
+            />
+            <div className="pl-8">
+              <Textarea
+                rows={5}
+                value={fields.problem_statement}
+                onChange={(e) => onChange("problem_statement", e.target.value)}
+                placeholder="What exactly is happening, for whom, and what makes it difficult?"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <SectionHead
+              n="05"
+              title="What is your proposed solution?"
+              hint="Explain the full idea — what it does, how it works, and how it addresses the problem. “We will build an app” is not a solution."
+            />
+            <div className="pl-8">
+              <Textarea
+                rows={6}
+                value={fields.methodology}
+                onChange={(e) => onChange("methodology", e.target.value)}
+                placeholder="This is what we are proposing, this is how it works, and this is how it solves the problem…"
+              />
+            </div>
+          </div>
+        </>
       ) : (
         <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Project title</Label>
+              <Input value={fields.title} onChange={(e) => onChange("title", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Theme</Label>
+              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm font-medium text-forest">
+                {team.track?.name ?? "Not set"}
+              </div>
+            </div>
+          </div>
           <div className="space-y-1.5">
             <Label>Technical reasoning</Label>
-            <Textarea rows={5} value={fields.technical_reasoning} onChange={(e) => onChange("technical_reasoning", e.target.value)} placeholder="Why does your solution work? Key design decisions…" />
+            <Textarea
+              rows={5}
+              value={fields.technical_reasoning}
+              onChange={(e) => onChange("technical_reasoning", e.target.value)}
+              placeholder="Why does your solution work? Key design decisions…"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Prototype status</Label>
-            <Textarea rows={3} value={fields.prototype_status} onChange={(e) => onChange("prototype_status", e.target.value)} placeholder="Working prototype / partial build / simulation…" />
+            <Textarea
+              rows={3}
+              value={fields.prototype_status}
+              onChange={(e) => onChange("prototype_status", e.target.value)}
+              placeholder="Working prototype / partial build / simulation…"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Test outcomes</Label>
-            <Textarea rows={4} value={fields.test_outcomes} onChange={(e) => onChange("test_outcomes", e.target.value)} placeholder="What did you test, what were the results…" />
+            <Textarea
+              rows={4}
+              value={fields.test_outcomes}
+              onChange={(e) => onChange("test_outcomes", e.target.value)}
+              placeholder="What did you test, what were the results…"
+            />
           </div>
         </>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Links (sketches, repos, demo)</Label>
-          <Input value={fields.links} onChange={(e) => onChange("links", e.target.value)} placeholder="https://…" />
+      <div className="space-y-2">
+        <SectionHead
+          n="06"
+          title="Additional information"
+          hint="Diagrams, sketches, photos, the flow of your idea, expected benefits — anything that helps the reader understand. At least one attachment is required to submit."
+        />
+        <div className="grid gap-4 pl-8 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Links (sketches, repos, demo)</Label>
+            <Input value={fields.links} onChange={(e) => onChange("links", e.target.value)} placeholder="https://…" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Evidence links</Label>
+            <Input
+              value={fields.evidence_links}
+              onChange={(e) => onChange("evidence_links", e.target.value)}
+              placeholder="https://…"
+            />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label>Evidence links</Label>
-          <Input value={fields.evidence_links} onChange={(e) => onChange("evidence_links", e.target.value)} placeholder="https://…" />
+        <div className="space-y-2 pl-8">
+          <label className="flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-clay/50 hover:text-foreground">
+            <CloudUpload className="h-4.5 w-4.5" />
+            Choose files to attach
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => {
+                const chosen = Array.from(e.target.files ?? []).map((f) => ({
+                  file: f,
+                  title: f.name.replace(/\.[^.]+$/, ""),
+                }));
+                if (chosen.length) setStaged((cur) => [...cur, ...chosen]);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {staged.length > 0 && (
+            <div className="space-y-2 rounded-xl border border-clay/30 bg-clay/5 p-3">
+              {staged.map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    className="h-8 flex-1 text-xs"
+                    value={s.title}
+                    placeholder="Attachment title"
+                    onChange={(e) =>
+                      setStaged((cur) => cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))
+                    }
+                  />
+                  <span className="max-w-40 truncate text-xs text-muted-foreground">{s.file.name}</span>
+                  <button
+                    onClick={() => setStaged((cur) => cur.filter((_, j) => j !== i))}
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label="Remove"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              <Button size="sm" className="bg-clay hover:bg-clay/90" disabled={uploading} onClick={attachStaged}>
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
+                Attach {staged.length} file{staged.length === 1 ? "" : "s"}
+              </Button>
+            </div>
+          )}
+          {files.length > 0 && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {files.map((f) => {
+                const image = isImageFile(f.url);
+                const pdf = isPdfFile(f.url);
+                return (
+                  <div key={f.id} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+                    {image || pdf ? (
+                      image ? (
+                        <img src={f.url} alt="" className="h-8 w-8 rounded object-cover" />
+                      ) : (
+                        <FileText className="h-4 w-4 text-clay" />
+                      )
+                    ) : (
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold">{f.title || f.name}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">{f.name}</p>
+                    </div>
+                    {!locked && (
+                      <button
+                        onClick={() => removeFile(f.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Evidence attachments (photos, PDFs)</Label>
-        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-clay/50 hover:text-foreground">
-          <CloudUpload className="h-4.5 w-4.5" />
-          {uploading ? "Uploading…" : "Click to upload files"}
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) uploadFile(f);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        {files.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {files.map((f) => (
-              <span key={f.id} className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                {f.name}
-              </span>
-            ))}
-          </div>
-        )}
+      <div className="space-y-2 border-t border-border pt-4">
+        <SectionHead n="07" title="Team members" hint="Filled automatically from your team roster." />
+        <TeamMembersInline teamId={team.id} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-        <Countdown deadline={stage === 1 ? settings?.stage1_deadline ?? null : settings?.stage2_deadline ?? null} />
+        <Countdown deadline={deadline} />
         <Button
           className="bg-clay hover:bg-clay/90"
-          disabled={!isOpen}
+          disabled={!open}
           onClick={() => {
             if (window.confirm("Submit for review? Your entry and team roster lock after this.")) {
               save(true);
@@ -437,9 +701,30 @@ function StageEditor({
           Submit for review
         </Button>
       </div>
-      {!isOpen && (
-        <p className="text-xs text-destructive">This stage is closed — final submission is disabled.</p>
+      {!open && (
+        <p className="text-xs text-destructive">
+          {closedByDeadline
+            ? "The deadline has passed — your entry was auto-submitted for review."
+            : "This stage is closed — final submission is disabled."}
+        </p>
       )}
+    </div>
+  );
+}
+
+function TeamMembersInline({ teamId }: { teamId: string }) {
+  const { data: members } = useQuery({
+    queryKey: ["team-members", teamId],
+    queryFn: () => fetchTeamMembers(teamId),
+  });
+  return (
+    <div className="flex flex-wrap gap-1.5 pl-8">
+      {(members ?? []).map((m) => (
+        <span key={m.user_id} className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+          {m.profile?.full_name ?? "Member"}
+          {m.is_captain ? " · Captain" : ""}
+        </span>
+      ))}
     </div>
   );
 }
