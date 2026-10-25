@@ -97,11 +97,15 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
   const items = NAV[role] ?? [];
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    // Start collapsed on narrow desktops so the menu never eats the content —
+    // tablets keep a usable working width out of the box.
+    const stored = localStorage.getItem("sii-sidebar");
+    if (stored === "collapsed") return true;
+    if (stored === "expanded") return false;
+    return window.innerWidth < 1100;
+  });
 
-  useEffect(() => {
-    setCollapsed(localStorage.getItem("sii-sidebar") === "collapsed");
-  }, []);
   function toggle() {
     setCollapsed((c) => {
       localStorage.setItem("sii-sidebar", c ? "expanded" : "collapsed");
@@ -143,17 +147,25 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
           collapsed ? "w-[4.5rem]" : "w-64",
         )}
       >
-        <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-4")}>
-          {collapsed ? (
-            <img src={icorgLogo.url} alt="ICORG" className="h-4 w-auto" />
-          ) : (
-            <Link to="/" className="flex min-w-0 flex-col gap-1">
-              <img src={icorgLogo.url} alt="ICORG" className="h-4 w-auto self-start" />
-              <span className="truncate font-display text-[13px] font-semibold text-forest">
-                Social Innovation Ideathon
-              </span>
-            </Link>
+        <div
+          className={cn(
+            "flex items-center border-b border-border",
+            collapsed ? "flex-col justify-center gap-2 px-2 py-3" : "justify-between px-4 py-3",
           )}
+        >
+          <img
+            src={icorgLogo.url}
+            alt="ICORG"
+            className={cn("w-auto", collapsed ? "h-5" : "h-9")}
+          />
+          <button
+            onClick={toggle}
+            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+            title={collapsed ? "Expand menu" : "Collapse menu"}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="Main">
           {!collapsed && (
@@ -183,7 +195,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
             );
           })}
         </nav>
-        <div className="space-y-1 border-t border-border p-3">
+        <div className="border-t border-border p-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -204,17 +216,6 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <button
-            onClick={toggle}
-            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-            className={cn(
-              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
-              collapsed && "justify-center px-0",
-            )}
-          >
-            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            {!collapsed && "Collapse menu"}
-          </button>
         </div>
       </aside>
 
@@ -254,6 +255,14 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
               {deeper ? "Details" : current?.label}
             </span>
           </nav>
+          <span className="hidden shrink-0 items-baseline gap-2 md:flex" aria-hidden>
+            <span className="font-display text-sm font-semibold text-forest">
+              Social Innovation Ideathon
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Organized by ICORG
+            </span>
+          </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="shrink-0 md:hidden" aria-label="Account">

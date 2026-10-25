@@ -219,13 +219,13 @@ function StageCards({
           </div>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><PenLine className="h-4.5 w-4.5 text-clay" /></span>
         </CardHeader>
-        <CardContent className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="mt-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {s1 ? (
             <Countdown deadline={settings?.stage1_deadline ?? null} />
           ) : (
             <p className="text-sm font-medium text-destructive">Closed</p>
           )}
-          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+          <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
             <Link to="/submission">Open submission form</Link>
           </Button>
         </CardContent>
@@ -238,13 +238,13 @@ function StageCards({
           </div>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><CalendarClock className="h-4.5 w-4.5 text-ochre" /></span>
         </CardHeader>
-        <CardContent className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="mt-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {s2 ? (
             <Countdown deadline={settings?.stage2_deadline ?? null} />
           ) : (
             <p className="text-sm font-medium text-destructive">Closed</p>
           )}
-          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+          <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
             <Link to="/submission">Open submission form</Link>
           </Button>
         </CardContent>
