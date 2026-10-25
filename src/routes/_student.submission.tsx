@@ -207,7 +207,7 @@ function StageEditor({
   }, []);
 
   const queryClient = useQueryClient();
-  const saveRef = useRef<(() => Promise<void>) | null>(null);
+  const saveRef = useRef<((submit: boolean) => Promise<void>) | null>(null);
 
 
   async function save(submit: boolean) {

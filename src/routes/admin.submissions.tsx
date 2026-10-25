@@ -75,10 +75,10 @@ function SubmissionsManager() {
       const { data, error } = await supabase.rpc("admin_submission_directory", {
         p_page: page,
         p_page_size: PAGE_SIZE,
-        p_search: search || null,
-        p_track_id: trackId === "all" ? null : trackId,
-        p_stage: stage === "all" ? null : Number(stage),
-        p_status: status === "all" ? null : status,
+        p_search: search.trim() || undefined,
+        p_track_id: trackId === "all" ? undefined : trackId,
+        p_stage: stage === "all" ? undefined : Number(stage),
+        p_status: status === "all" ? undefined : status,
       });
       if (error) throw error;
       return data as unknown as { total: number; rows: Row[] };
