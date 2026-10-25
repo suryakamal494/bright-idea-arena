@@ -312,6 +312,7 @@ export type Database = {
           stage: number
           status: string
           submitted_at: string | null
+          team_code: string | null
           team_id: string
           technical_reasoning: string | null
           test_outcomes: string | null
@@ -329,6 +330,7 @@ export type Database = {
           stage: number
           status?: string
           submitted_at?: string | null
+          team_code?: string | null
           team_id: string
           technical_reasoning?: string | null
           test_outcomes?: string | null
@@ -346,6 +348,7 @@ export type Database = {
           stage?: number
           status?: string
           submitted_at?: string | null
+          team_code?: string | null
           team_id?: string
           technical_reasoning?: string | null
           test_outcomes?: string | null
@@ -566,6 +569,7 @@ export type Database = {
           stage: number
           status: string
           submitted_at: string | null
+          team_code: string | null
           team_id: string
           technical_reasoning: string | null
           test_outcomes: string | null
