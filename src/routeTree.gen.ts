@@ -31,6 +31,7 @@ import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions
 import { Route as CoordinatorIndexRouteImport } from './routes/coordinator.index'
 import { Route as JudgeIndexRouteImport } from './routes/judge.index'
 import { Route as JudgeEvaluateSubmissionIdRouteImport } from './routes/judge.evaluate.$submissionId'
+import { Route as ApiPublicCronReconcileFilesRouteImport } from './routes/api/public/cron/reconcile-files'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -142,6 +143,12 @@ const JudgeEvaluateSubmissionIdRoute =
     path: '/evaluate/$submissionId',
     getParentRoute: () => JudgeRoute,
   } as any)
+const ApiPublicCronReconcileFilesRoute =
+  ApiPublicCronReconcileFilesRouteImport.update({
+    id: '/api/public/cron/reconcile-files',
+    path: '/api/public/cron/reconcile-files',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/coordinator/': typeof CoordinatorIndexRoute
   '/judge/': typeof JudgeIndexRoute
   '/judge/evaluate/$submissionId': typeof JudgeEvaluateSubmissionIdRoute
+  '/api/public/cron/reconcile-files': typeof ApiPublicCronReconcileFilesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -185,6 +193,7 @@ export interface FileRoutesByTo {
   '/coordinator': typeof CoordinatorIndexRoute
   '/judge': typeof JudgeIndexRoute
   '/judge/evaluate/$submissionId': typeof JudgeEvaluateSubmissionIdRoute
+  '/api/public/cron/reconcile-files': typeof ApiPublicCronReconcileFilesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -210,6 +219,7 @@ export interface FileRoutesById {
   '/coordinator/': typeof CoordinatorIndexRoute
   '/judge/': typeof JudgeIndexRoute
   '/judge/evaluate/$submissionId': typeof JudgeEvaluateSubmissionIdRoute
+  '/api/public/cron/reconcile-files': typeof ApiPublicCronReconcileFilesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/coordinator/'
     | '/judge/'
     | '/judge/evaluate/$submissionId'
+    | '/api/public/cron/reconcile-files'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/coordinator'
     | '/judge'
     | '/judge/evaluate/$submissionId'
+    | '/api/public/cron/reconcile-files'
   id:
     | '__root__'
     | '/'
@@ -279,6 +291,7 @@ export interface FileRouteTypes {
     | '/coordinator/'
     | '/judge/'
     | '/judge/evaluate/$submissionId'
+    | '/api/public/cron/reconcile-files'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -291,6 +304,7 @@ export interface RootRouteChildren {
   ParentRevokeRoute: typeof ParentRevokeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SchoolRegisterRoute: typeof SchoolRegisterRoute
+  ApiPublicCronReconcileFilesRoute: typeof ApiPublicCronReconcileFilesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -449,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JudgeEvaluateSubmissionIdRouteImport
       parentRoute: typeof JudgeRoute
     }
+    '/api/public/cron/reconcile-files': {
+      id: '/api/public/cron/reconcile-files'
+      path: '/api/public/cron/reconcile-files'
+      fullPath: '/api/public/cron/reconcile-files'
+      preLoaderRoute: typeof ApiPublicCronReconcileFilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -523,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentRevokeRoute: ParentRevokeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SchoolRegisterRoute: SchoolRegisterRoute,
+  ApiPublicCronReconcileFilesRoute: ApiPublicCronReconcileFilesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
