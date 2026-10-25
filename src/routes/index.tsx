@@ -1,12 +1,12 @@
 import { redirect, createFileRoute } from "@tanstack/react-router";
 import { AuthPage } from "@/components/auth-page";
-import { fetchMyRoles, homeFor } from "@/lib/auth";
+import { getAuthContext, homeFor } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   beforeLoad: async () => {
-    const roles = await fetchMyRoles();
-    if (roles.length > 0) throw redirect({ to: homeFor(roles) });
+    const ctx = await getAuthContext();
+    if (ctx && ctx.roles.length > 0) throw redirect({ to: homeFor(ctx.roles) });
   },
   head: () => ({
     meta: [

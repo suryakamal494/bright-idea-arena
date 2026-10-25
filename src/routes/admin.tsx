@@ -1,17 +1,15 @@
 import { redirect, Outlet, createFileRoute } from "@tanstack/react-router";
 import { AppNav } from "@/components/app-nav";
-import { fetchMyProfile, fetchMyRoles, getSessionUser, homeFor } from "@/lib/auth";
+import { getAuthContext, homeFor } from "@/lib/auth";
 import type { Profile } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
   beforeLoad: async () => {
-    const user = await getSessionUser();
-    if (!user) throw redirect({ to: "/auth" });
-    const roles = await fetchMyRoles();
-    if (!roles.includes("admin")) throw redirect({ to: homeFor(roles) });
-    const profile = await fetchMyProfile();
-    return { roles, profile };
+    const ctx = await getAuthContext();
+    if (!ctx) throw redirect({ to: "/auth" });
+    if (!ctx.roles.includes("admin")) throw redirect({ to: homeFor(ctx.roles) });
+    return { roles: ctx.roles, profile: ctx.profile };
   },
   component: AdminLayout,
 });

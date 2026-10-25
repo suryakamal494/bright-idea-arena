@@ -2,17 +2,18 @@ import { redirect, Outlet, createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AppNav } from "@/components/app-nav";
 import { CompleteProfile } from "@/components/complete-profile";
-import { fetchMyProfile, fetchMyRoles, getSessionUser } from "@/lib/auth";
+import { clearAuthContext, getAuthContext } from "@/lib/auth";
 import type { Profile } from "@/lib/auth";
 
 export const Route = createFileRoute("/_student")({
   ssr: false,
   beforeLoad: async () => {
-    const user = await getSessionUser();
-    if (!user) throw redirect({ to: "/auth" });
-    const roles = await fetchMyRoles();
+    const ctx = await getAuthContext();
+    if (!ctx) throw redirect({ to: "/auth" });
+    const { roles, profile } = ctx;
     if (roles.length === 0) {
       // Account with no role assigned yet — nothing to show, sign out safely.
+      clearAuthContext();
       await supabase.auth.signOut();
       throw redirect({ to: "/auth" });
     }
@@ -20,11 +21,6 @@ export const Route = createFileRoute("/_student")({
     if (roles.includes("judge")) throw redirect({ to: "/judge" });
     if (roles.includes("coordinator") && !roles.includes("student")) {
       throw redirect({ to: "/coordinator" });
-    }
-    const profile = await fetchMyProfile();
-    if (!profile) {
-      // Authenticated but no profile row — treat as incomplete; page will prompt.
-      return { roles, profile: null };
     }
     return { roles, profile };
   },
