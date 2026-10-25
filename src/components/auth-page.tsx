@@ -16,11 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, fetchMyRoles, homeFor } from "@/lib/auth";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, getAuthContext, homeFor } from "@/lib/auth";
 
 async function afterAuth(navigate: ReturnType<typeof useNavigate>) {
-  const roles = await fetchMyRoles();
-  await navigate({ to: homeFor(roles) });
+  const ctx = await getAuthContext();
+  await navigate({ to: homeFor(ctx?.roles ?? []) });
 }
 
 export function AuthPage() {
@@ -33,12 +33,18 @@ export function AuthPage() {
       email,
       password: DEMO_PASSWORD,
     });
-    setLoadingDemo(null);
     if (error) {
+      setLoadingDemo(null);
       toast.error(error.message);
       return;
     }
-    await afterAuth(navigate);
+    try {
+      // Demo accounts have known destinations — skip role discovery.
+      const account = DEMO_ACCOUNTS.find((a) => a.email === email);
+      await navigate({ to: account?.home ?? "/dashboard" });
+    } finally {
+      setLoadingDemo(null);
+    }
   }
 
   async function socialSignIn(provider: "google" | "lovable") {
@@ -156,12 +162,16 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
     setBusy(true);
     setError(null);
     const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
     if (err) {
+      setBusy(false);
       setError(err.message);
       return;
     }
-    await onDone();
+    try {
+      await onDone();
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
