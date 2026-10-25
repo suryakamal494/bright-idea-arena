@@ -131,11 +131,11 @@ function NoTeamCards() {
               Step 2 · Study the problem briefs
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Read the guides and past examples in the Learning Center before picking your track —
+              Read the guides and past examples in the Resources before picking your track —
               no team needed to start.
             </p>
             <Button asChild variant="link" className="mt-1 h-auto p-0 text-clay">
-              <Link to="/learning">Open Learning Center →</Link>
+              <Link to="/learning">Open Resources →</Link>
             </Button>
           </CardContent>
         </Card>
@@ -211,35 +211,41 @@ function StageCards({
   const s2 = stageOpen(settings, 2);
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="font-display text-lg">Stage 1 · Concept note</CardTitle>
-          <PenLine className="h-4.5 w-4.5 text-clay" />
+      <Card className="flex flex-col">
+        <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 space-y-0">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Stage 1</p>
+            <CardTitle className="font-display mt-1 text-lg leading-snug">Concept note</CardTitle>
+          </div>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><PenLine className="h-4.5 w-4.5 text-clay" /></span>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {s1 ? (
             <Countdown deadline={settings?.stage1_deadline ?? null} />
           ) : (
             <p className="text-sm font-medium text-destructive">Closed</p>
           )}
-          <Button asChild variant="link" className="mt-1 h-auto p-0 text-clay">
-            <Link to="/submission">Open stage 1 →</Link>
+          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+            <Link to="/submission">Open submission form</Link>
           </Button>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="font-display text-lg">Stage 2 · Final prototype</CardTitle>
-          <CalendarClock className="h-4.5 w-4.5 text-ochre" />
+      <Card className="flex flex-col">
+        <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 space-y-0">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Stage 2</p>
+            <CardTitle className="font-display mt-1 text-lg leading-snug">Final prototype</CardTitle>
+          </div>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><CalendarClock className="h-4.5 w-4.5 text-ochre" /></span>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {s2 ? (
             <Countdown deadline={settings?.stage2_deadline ?? null} />
           ) : (
             <p className="text-sm font-medium text-destructive">Closed</p>
           )}
-          <Button asChild variant="link" className="mt-1 h-auto p-0 text-clay">
-            <Link to="/submission">Open stage 2 →</Link>
+          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+            <Link to="/submission">Open submission form</Link>
           </Button>
         </CardContent>
       </Card>
