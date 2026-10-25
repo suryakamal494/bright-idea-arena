@@ -11,7 +11,6 @@ import {
   Megaphone,
   PenLine,
   Scale,
-  Sprout,
   Users,
 } from "lucide-react";
 import icorgLogo from "@/assets/icorg-logo.png.asset.json";
