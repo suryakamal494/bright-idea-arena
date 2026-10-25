@@ -17,3 +17,7 @@
 - [x] Verification: typecheck, tests, build, Playwright flows (student form + autosave + attachment, gate for short teams, admin inspector + export, judge blind view) — all green
 - [ ] Final competition themes: currently the 4 seeded themes (AgriTech, CleanTech, Health, Education); user will finalize the full theme list later — theme selection UX (per-team theme pick before submission) to be revisited then
 - [ ] Mentor role: future access to submission forms with blind surfaces (team code + title only); schema already identity-safe
+- [x] Left sidebar UX rework: big ICORG logo, collapse toggle at top (icons-only state remembered), "Social Innovation Ideathon · Organized by ICORG" moved to the top strip's right side; sidebar auto-collapses on desktops under 1100px
+- [x] Tablet-fit fixes: dashboard stage cards stack countdown above a full-width "Open submission form" button below lg; verified zero horizontal overflow on the submission form at 774px
+- [x] Account/demo role switching wipes cached queries + auth context before navigating (no stale cross-role data)
+- [x] Demo judge queue has an unscored Stage 2 entry (TEAM-HEALTH-007 · DawaDot) so the full score-entry flow is testable
