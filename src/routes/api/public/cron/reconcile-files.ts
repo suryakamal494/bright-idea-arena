@@ -46,8 +46,9 @@ export const Route = createFileRoute("/api/public/cron/reconcile-files")({
           console.error("[reconcile-files] storage listing failed", objectsError);
           return Response.json({ ok: false, error: "storage_read_failed" }, { status: 500 });
         }
+        const bucketObjects = (objects ?? []) as { name: string; created_at: string }[];
 
-        const orphans = (objects ?? [])
+        const orphans = bucketObjects
           .filter(
             (o) =>
               !referenced.has(`${URL_PREFIX}${o.name}`) &&
@@ -71,9 +72,9 @@ export const Route = createFileRoute("/api/public/cron/reconcile-files")({
         }
 
         console.log(
-          `[reconcile-files] scanned=${objects?.length ?? 0} referenced=${referenced.size} orphans=${orphans.length} deleted=${deleted} failed=${failures.length}`,
+          `[reconcile-files] scanned=${bucketObjects.length} referenced=${referenced.size} orphans=${orphans.length} deleted=${deleted} failed=${failures.length}`,
         );
-        return Response.json({ ok: true, scanned: objects?.length ?? 0, referenced: referenced.size, orphans: orphans.length, deleted, failed: failures.length });
+        return Response.json({ ok: true, scanned: bucketObjects.length, referenced: referenced.size, orphans: orphans.length, deleted, failed: failures.length });
       },
     },
   },
