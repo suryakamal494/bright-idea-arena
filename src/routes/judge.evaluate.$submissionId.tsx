@@ -36,35 +36,31 @@ function EvaluationSheet() {
     queryFn: async () => {
       const user = await getSessionUser();
       if (!user) throw new Error("Sign in required");
-      const [{ data: sub }, { data: files }, { data: existing }, { data: criteria }] =
-        await Promise.all([
-          supabase
-            .from("submissions")
-            .select("*, team:teams(track_id, track:tracks(name))")
-            .eq("id", submissionId)
-            .maybeSingle(),
-          supabase.from("submission_files").select("id,name,url").eq("submission_id", submissionId),
-          supabase
-            .from("scores")
-            .select("id,criterion_scores,feedback,submitted")
-            .eq("submission_id", submissionId)
-            .eq("judge_id", user.id)
-            .maybeSingle(),
-          supabase
-            .from("rubric_criteria")
-            .select("id,name,description,max_score,track_id")
-            .or(
-              `track_id.is.null,track_id.eq.${
-                (sub?.team as { track_id?: string } | null)?.track_id ?? "00000000-0000-0000-0000-000000000000"
-              }`,
-            )
-            .order("sort_order"),
-        ]);
+      const { data: sub } = await supabase
+        .from("submissions")
+        .select("*, team:teams(track_id, track:tracks(name))")
+        .eq("id", submissionId)
+        .maybeSingle();
+      const trackId = (sub?.team as { track_id?: string } | null)?.track_id;
+      const [filesRes, existingRes, criteriaRes] = await Promise.all([
+        supabase.from("submission_files").select("id,name,url").eq("submission_id", submissionId),
+        supabase
+          .from("scores")
+          .select("id,criterion_scores,feedback,submitted")
+          .eq("submission_id", submissionId)
+          .eq("judge_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("rubric_criteria")
+          .select("id,name,description,max_score,track_id")
+          .or(`track_id.is.null,track_id.eq.${trackId ?? "00000000-0000-0000-0000-000000000000"}`)
+          .order("sort_order"),
+      ]);
       return {
         submission: sub,
-        files: (files ?? []) as FileRow[],
-        existing,
-        criteria: (criteria ?? []) as Criterion[],
+        files: (filesRes.data ?? []) as FileRow[],
+        existing: existingRes.data,
+        criteria: (criteriaRes.data ?? []) as Criterion[],
         judgeId: user.id,
       };
     },
@@ -214,7 +210,7 @@ function EvaluationSheet() {
                   max={c.max_score}
                   step={0.25}
                   disabled={locked}
-                  onValueChange={([v]) => onScoreChange(c.id, v)}
+                  onValueChange={(vals) => onScoreChange(c.id, vals[0] ?? 0)}
                 />
               </div>
             ))}
