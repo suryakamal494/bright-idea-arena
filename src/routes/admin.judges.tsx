@@ -32,13 +32,20 @@ function JudgeAssignment() {
 
   const { data: judges } = useQuery({
     queryKey: ["admin-judges"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("user_id, profile:profiles(full_name,email)")
-        .eq("role", "judge");
-      return (data ?? []) as JudgeRow[];
-    },
+      queryFn: async () => {
+        const { data: roleRows } = await supabase
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "judge");
+        const ids = (roleRows ?? []).map((r) => r.user_id);
+        if (ids.length === 0) return [];
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", ids);
+        const byId = new Map((profs ?? []).map((p) => [p.id, p]));
+        return ids.map((id) => ({ user_id: id, profile: byId.get(id) ?? null })) as JudgeRow[];
+      },
   });
 
   const { data: tracks } = useQuery({

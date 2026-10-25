@@ -56,7 +56,7 @@ function SubmissionsManager() {
     },
   });
 
-  const { data, isLoading, count } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-submissions", search, trackId, stage, status, page],
     queryFn: async () => {
       let q = supabase
@@ -75,14 +75,15 @@ function SubmissionsManager() {
     },
   });
 
-  const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
+  const total = data?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="space-y-5">
       <header>
         <p className="eyebrow">Submissions manager</p>
         <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">
-          All entries <span className="text-lg font-normal text-muted-foreground">({count ?? 0})</span>
+          All entries <span className="text-lg font-normal text-muted-foreground">({total})</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">View-only inspection of every entry and its scores.</p>
       </header>

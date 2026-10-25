@@ -24,20 +24,27 @@ function AdminOverview() {
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["admin-kpis"],
     queryFn: async (): Promise<Kpis> => {
-      const count = async (table: string, filters: Record<string, unknown> = {}) => {
-        let q = supabase.from(table).select("id", { count: "exact", head: true });
-        for (const [k, v] of Object.entries(filters)) {
-          q = q.eq(k, v as never);
-        }
-        const { count: c } = await q;
-        return c ?? 0;
-      };
+      const base = { count: "exact", head: true } as const;
       const [teams, students, stage1, stage2, judged] = await Promise.all([
-        count("teams"),
-        count("profiles"),
-        count("submissions", { stage: 1, status: "submitted" }),
-        count("submissions", { stage: 2, status: "submitted" }),
-        count("scores", { submitted: true }),
+        supabase.from("teams").select("id", base).then((r) => r.count ?? 0),
+        supabase.from("profiles").select("id", base).then((r) => r.count ?? 0),
+        supabase
+          .from("submissions")
+          .select("id", base)
+          .eq("stage", 1)
+          .eq("status", "submitted")
+          .then((r) => r.count ?? 0),
+        supabase
+          .from("submissions")
+          .select("id", base)
+          .eq("stage", 2)
+          .eq("status", "submitted")
+          .then((r) => r.count ?? 0),
+        supabase
+          .from("scores")
+          .select("id", base)
+          .eq("submitted", true)
+          .then((r) => r.count ?? 0),
       ]);
       return { teams, students, stage1, stage2, judged };
     },

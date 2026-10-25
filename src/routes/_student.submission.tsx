@@ -177,7 +177,7 @@ function StageEditor({
 }: {
   stage: 1 | 2;
   team: TeamRow;
-  existing?: SubmissionRow;
+  existing: SubmissionRow | undefined;
   settings: StageSettingRow | null;
   files: { id: string; name: string; url: string }[];
   onRefresh: () => void;
@@ -216,7 +216,7 @@ function StageEditor({
       payload[k] = k === "sdg_tags" ? (v as string).split(",").map((t) => t.trim()).filter(Boolean) || null : (v as string) || null;
     }
     const { error } = await supabase.rpc("upsert_submission", {
-      p_payload: payload,
+      p_payload: payload as never,
       p_stage: stage,
       p_submit: submit,
     });

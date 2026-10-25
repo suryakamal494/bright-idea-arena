@@ -58,13 +58,13 @@ function TeamRoster({
   team: NonNullable<Awaited<ReturnType<typeof fetchMyTeam>>>;
   onChanged: () => void;
 }) {
-  const user = getSessionUser();
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
   const { data: members } = useQuery({
     queryKey: ["team-members", team.id],
     queryFn: () => fetchTeamMembers(team.id),
   });
   const [transferTo, setTransferTo] = useState("");
-  const isCaptain = !!team.captain_id && team.captain_id === user.id;
+  const isCaptain = !!team.captain_id && team.captain_id === user?.id;
   const roster = members ?? [];
   const others = roster.filter((m) => !m.is_captain);
 
