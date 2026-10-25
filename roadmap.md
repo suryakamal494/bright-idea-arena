@@ -7,6 +7,7 @@
 - [ ] Parent notification email + template (BLOCKED: email domain not configured — waiting for user's domain setup)
 - [x] /school-register: name, designation, school, city, email, mobile, password + back link
 - [x] /parent-revoke: student details first, explicit two-step confirmation
+- [x] Admin reorganization: Registrations page (every signed-up student: school, name, class, email, phone, parent email, team) via admin_registration_directory RPC (migration 0017); Submissions page is now the per-team stage-status table with entry inspection; old team directory page removed
 - [x] Student pre-team onboarding stepper on dashboard (steps 1–3)
 - [x] profiles.designation column + parent info RPCs (migration 0010)
 - [x] Scale work: DB indexes (migration 0011), admin team/submission directory RPCs + paginated pages, judge pagination, student autosave hardening (migration 0012 fixed upsert_submission stage-settings call), load test at 654 teams/934 submissions, load-test data cleaned up
