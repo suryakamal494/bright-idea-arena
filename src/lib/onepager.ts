@@ -5,12 +5,12 @@ import { fetchSutras, type SubmissionRow } from "@/lib/team";
 /** Build and open a printable one-pager for a submission (admin view includes school). */
 export async function printOnePager(
   submission: SubmissionRow,
-  files: { name: string; title?: string | null }[],
+  files: { name: string; url: string; title?: string | null }[],
   opts?: { theme?: string | null; school?: string | null; teamName?: string | null },
 ) {
   const [sutras, resolved] = await Promise.all([
     fetchSutras(),
-    Promise.all(files.map((f) => resolveAttachmentUrl(f.title ?? f.name))),
+    Promise.all(files.map((f) => resolveAttachmentUrl(f.url))),
   ]);
   const sutraNames = (submission.sutra_ids ?? [])
     .map((id) => sutras.find((s) => s.id === id)?.name)
