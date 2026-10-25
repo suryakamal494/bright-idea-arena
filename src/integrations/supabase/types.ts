@@ -529,6 +529,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_overview_kpis: { Args: never; Returns: Json }
       admin_submission_directory: {
         Args: {
           p_page?: number
@@ -577,6 +578,7 @@ export type Database = {
       }
       finalize_due_submission: { Args: { p_stage: number }; Returns: boolean }
       generate_team_code: { Args: { p_slug: string }; Returns: string }
+      get_auth_context: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
