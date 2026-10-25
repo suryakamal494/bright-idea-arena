@@ -76,8 +76,8 @@ function TeamDirectory() {
       const { data, error } = await supabase.rpc("admin_team_directory", {
         p_page: page,
         p_page_size: PAGE_SIZE,
-        p_search: search.trim() || undefined,
-        p_track_id: trackId === "all" ? undefined : trackId,
+        ...(search.trim() ? { p_search: search.trim() } : {}),
+        ...(trackId === "all" ? {} : { p_track_id: trackId }),
         p_status: status,
       });
       if (error) throw error;
