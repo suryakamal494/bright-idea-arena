@@ -530,6 +530,16 @@ export type Database = {
     }
     Functions: {
       admin_overview_kpis: { Args: never; Returns: Json }
+      admin_registration_directory: {
+        Args: {
+          p_grade?: number
+          p_page?: number
+          p_page_size?: number
+          p_school?: string
+          p_search?: string
+        }
+        Returns: Json
+      }
       admin_submission_directory: {
         Args: {
           p_page?: number

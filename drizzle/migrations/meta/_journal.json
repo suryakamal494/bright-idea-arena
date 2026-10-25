@@ -120,6 +120,13 @@
       "when": 1792953650728,
       "tag": "0016_one_roundtrip_auth_and_admin_kpis",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792961004800,
+      "tag": "0017_admin_registration_directory",
+      "breakpoints": true
     }
   ]
 }
