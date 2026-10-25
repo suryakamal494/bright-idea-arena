@@ -529,6 +529,10 @@ export type Database = {
         Returns: boolean
       }
       is_school_coordinator: { Args: { _school: string }; Returns: boolean }
+      is_team_coordinator: {
+        Args: { _team_id: string; _uid: string }
+        Returns: boolean
+      }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
