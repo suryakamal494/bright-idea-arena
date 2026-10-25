@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,43 +19,40 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { SubmissionDetails } from "@/components/submission-details";
 import { printOnePager } from "@/lib/onepager";
-import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/admin/submissions")({
   head: () => ({
-    meta: [{ title: "Submissions manager — Social Innovation Ideathon" }],
+    meta: [{ title: "Submissions — Social Innovation Ideathon" }],
   }),
   component: SubmissionsManager,
 });
 
 type Row = {
-  id: string;
+  team_id: string;
   team_code: string | null;
-  title: string | null;
-  stage: number;
-  status: string;
-  updated_at: string;
   team_name: string;
   track_name: string | null;
   school: string | null;
+  members: string[];
   member_count: number;
-  attachment_count: number;
-  submitted_at: string | null;
+  s1_status: string | null;
+  s2_status: string | null;
+  last_activity: string | null;
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 25;
 
 function SubmissionsManager() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [trackId, setTrackId] = useState<string>("all");
-  const [stage, setStage] = useState<string>("all");
-  const [status, setStatus] = useState<string>("all");
+  const [trackId, setTrackId] = useState("all");
+  const [status, setStatus] = useState("all");
   const [page, setPage] = useState(0);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedRow, setSelectedRow] = useState<Row | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<Row | null>(null);
   const [exporting, setExporting] = useState(false);
 
   async function exportCsv() {
@@ -63,28 +60,39 @@ function SubmissionsManager() {
     try {
       const pageSize = 100;
       const all: Row[] = [];
-      let page = 0;
+      let p = 0;
       for (;;) {
-        const { data, error } = await supabase.rpc("admin_submission_directory", {
-          p_page: page,
+        const { data, error } = await supabase.rpc("admin_team_directory", {
+          p_page: p,
           p_page_size: pageSize,
           ...(search.trim() ? { p_search: search.trim() } : {}),
           ...(trackId === "all" ? {} : { p_track_id: trackId }),
-          ...(stage === "all" ? {} : { p_stage: Number(stage) }),
-          ...(status === "all" ? {} : { p_status: status }),
+          p_status: status,
         });
         if (error) throw error;
         const res = data as unknown as { total: number; rows: Row[] };
         all.push(...res.rows);
         if (res.rows.length < pageSize || all.length >= res.total || all.length >= 5000) break;
-        page++;
+        p++;
       }
-      const header = ["team_code", "team_name", "school", "theme", "title", "stage", "status", "members", "attachments", "submitted_at"];
+      const header = ["team_id", "team_name", "school", "theme", "member_count", "members", "stage1", "stage2", "last_activity"];
       const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const csv = [
         header.join(","),
         ...all.map((r) =>
-          [r.team_code, r.team_name, r.school, r.track_name, r.title, r.stage, r.status, r.member_count, r.attachment_count, r.submitted_at].map(esc).join(","),
+          [
+            r.team_code ?? "",
+            r.team_name,
+            r.school ?? "",
+            r.track_name ?? "",
+            r.member_count,
+            (r.members ?? []).join("; "),
+            r.s1_status ?? "",
+            r.s2_status ?? "",
+            r.last_activity?.slice(0, 10) ?? "",
+          ]
+            .map(esc)
+            .join(","),
         ),
       ].join("\n");
       const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -115,16 +123,15 @@ function SubmissionsManager() {
     },
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-submissions", search, trackId, stage, status, page],
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["admin-directory", search, trackId, status, page],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_submission_directory", {
+      const { data, error } = await supabase.rpc("admin_team_directory", {
         p_page: page,
         p_page_size: PAGE_SIZE,
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
-        ...(stage === "all" ? {} : { p_stage: Number(stage) }),
-        ...(status === "all" ? {} : { p_status: status }),
+        p_status: status,
       });
       if (error) throw error;
       return data as unknown as { total: number; rows: Row[] };
@@ -135,14 +142,26 @@ function SubmissionsManager() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const statusBadge = (s: string | null) =>
+    s === "submitted" ? (
+      <Badge className="bg-sage/15 text-sage hover:bg-sage/15">Submitted</Badge>
+    ) : s === "draft" ? (
+      <Badge className="bg-ochre/15 text-ochre hover:bg-ochre/15">Draft</Badge>
+    ) : (
+      <span className="text-xs text-muted-foreground">—</span>
+    );
+
   return (
     <div className="space-y-5">
       <header>
-        <p className="eyebrow">Submissions manager</p>
+        <p className="eyebrow">Submissions</p>
         <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">
-          All entries <span className="text-lg font-normal text-muted-foreground">({total})</span>
+          Team entries <span className="text-lg font-normal text-muted-foreground">({total})</span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">View-only inspection of every entry and its scores.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Stage 1 and Stage 2 status for every team. Click a team to inspect its entries, scoring
+          and attachments.
+        </p>
       </header>
 
       <div className="flex flex-wrap gap-2">
@@ -150,7 +169,7 @@ function SubmissionsManager() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search title, team code or school…"
+            placeholder="Search team ID, name, school or student…"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -175,42 +194,23 @@ function SubmissionsManager() {
           </SelectContent>
         </Select>
         <Select
-          value={stage}
-          onValueChange={(v) => {
-            setStage(v);
-            setPage(0);
-          }}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Stage" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All stages</SelectItem>
-            <SelectItem value="1">Stage 1</SelectItem>
-            <SelectItem value="2">Stage 2</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
           value={status}
           onValueChange={(v) => {
             setStatus(v);
             setPage(0);
           }}
         >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Progress" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="submitted">Submitted</SelectItem>
+            <SelectItem value="all">All progress</SelectItem>
+            <SelectItem value="none">Not started</SelectItem>
+            <SelectItem value="stage1">Stage 1 in review</SelectItem>
+            <SelectItem value="stage2">Stage 2 submitted</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">Showing {PAGE_SIZE} entries per page</p>
-        <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv}>
+        <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv} className="ml-auto">
           <Download className="mr-1.5 h-4 w-4" />
           {exporting ? "Preparing…" : "Export CSV"}
         </Button>
@@ -219,44 +219,64 @@ function SubmissionsManager() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Loading entries…</p>
-          ) : (
             <div className="divide-y divide-border">
-              {(data?.rows ?? []).map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => {
-                    setSelectedId(s.id);
-                    setSelectedRow(s);
-                  }}
-                  className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{s.title ?? "Untitled"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-mono">{s.team_code ?? "TEAM"}</span> ·{" "}
-                      {s.team_name ?? "—"} · {s.track_name ?? "No track"} · {s.school ?? "No school"}{" "}
-                      · {s.member_count} member{s.member_count === 1 ? "" : "s"}
-                    </p>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between gap-4 px-4 py-3.5">
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-56" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">Stage {s.stage}</span>
-                    <span
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs font-semibold " +
-                        (s.status === "submitted" ? "bg-sage/15 text-sage" : "bg-ochre/15 text-ochre")
-                      }
-                    >
-                      {s.status}
-                    </span>
-                  </div>
-                </button>
+                  <Skeleton className="h-4 w-24" />
+                </div>
               ))}
-              {(data?.rows ?? []).length === 0 && (
-                <p className="py-10 text-center text-sm text-muted-foreground">
-                  No entries match these filters.
-                </p>
-              )}
+            </div>
+          ) : (
+            <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
+              <div className="hidden grid-cols-[130px_minmax(0,1.2fr)_minmax(0,1fr)_90px_90px_110px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+                <span>Team ID</span>
+                <span>Team</span>
+                <span>School · theme</span>
+                <span className="text-center">Members</span>
+                <span className="text-center">Stage 1</span>
+                <span className="text-center">Stage 2</span>
+              </div>
+              <div className="divide-y divide-border">
+                {(data?.rows ?? []).map((r) => (
+                  <button
+                    key={r.team_id}
+                    onClick={() => setSelectedTeam(r)}
+                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.2fr)_minmax(0,1fr)_90px_90px_110px] lg:items-center lg:gap-3"
+                  >
+                    <span className="font-mono text-xs font-semibold text-forest">
+                      {r.team_code ?? "—"}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{r.team_name}</span>
+                      <span className="block truncate text-xs text-muted-foreground lg:hidden">
+                        {r.school ?? "No school"} · {r.track_name ?? "No track"}
+                      </span>
+                    </span>
+                    <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
+                      {r.school ?? "No school"} · {r.track_name ?? "No track"}
+                    </span>
+                    <span className="text-xs text-muted-foreground lg:text-center">
+                      {r.member_count}{" "}
+                      <span className="hidden lg:inline">
+                        {r.members.slice(0, 2).join(", ")}
+                        {r.members.length > 2 ? ` +${r.members.length - 2}` : ""}
+                      </span>
+                      <span className="lg:hidden">members</span>
+                    </span>
+                    <span className="lg:text-center">{statusBadge(r.s1_status)}</span>
+                    <span className="lg:text-center">{statusBadge(r.s2_status)}</span>
+                  </button>
+                ))}
+                {(data?.rows ?? []).length === 0 && (
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    No teams match these filters.
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
@@ -269,115 +289,155 @@ function SubmissionsManager() {
           </Button>
           <span className="text-sm text-muted-foreground">
             Page {page + 1} of {totalPages}
+            {isFetching ? " · loading…" : ""}
           </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
       )}
 
-      <Sheet open={!!selectedId} onOpenChange={(o) => !o && setSelectedId(null)}>
+      <Sheet open={!!selectedTeam} onOpenChange={(o) => !o && setSelectedTeam(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader>
-            <SheetTitle>Submission inspection</SheetTitle>
+            <SheetTitle>{selectedTeam?.team_name}</SheetTitle>
           </SheetHeader>
-          {selectedId && <SubmissionInspector submissionId={selectedId} row={selectedRow} />}
+          {selectedTeam && <TeamEntryInspector team={selectedTeam} />}
         </SheetContent>
       </Sheet>
     </div>
   );
 }
 
-function SubmissionInspector({
-  submissionId,
-  row,
-}: {
-  submissionId: string;
-  row: Row | null;
-}) {
-  const { data } = useQuery({
-    queryKey: ["admin-submission", submissionId],
+function TeamEntryInspector({ team }: { team: Row }) {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-team-detail", team.team_id],
     queryFn: async () => {
-      const [sub, files, scores] = await Promise.all([
-        supabase.from("submissions").select("*").eq("id", submissionId).maybeSingle(),
-        supabase.from("submission_files").select("*").eq("submission_id", submissionId),
-        supabase
-          .from("scores")
-          .select("id,criterion_scores,feedback,submitted,updated_at,judge:profiles(full_name)")
-          .eq("submission_id", submissionId),
+      const subs = await supabase
+        .from("submissions")
+        .select("*")
+        .eq("team_id", team.team_id)
+        .order("stage");
+      const ids = (subs.data ?? []).map((s) => s.id);
+      const [files, scores] = await Promise.all([
+        ids.length
+          ? supabase.from("submission_files").select("*").in("submission_id", ids)
+          : Promise.resolve({ data: [] as never[] }),
+        ids.length
+          ? supabase
+              .from("scores")
+              .select("id,submission_id,criterion_scores,feedback,submitted,updated_at,judge:profiles(full_name)")
+              .in("submission_id", ids)
+          : Promise.resolve({ data: [] as never[] }),
       ]);
-      return {
-        submission: sub.data,
-        files: files.data ?? [],
-        scores: (scores.data ?? []) as {
-          id: string;
-          criterion_scores: Record<string, number> | null;
-          feedback: string | null;
-          submitted: boolean;
-          updated_at: string;
-          judge: { full_name: string } | null;
-        }[],
-      };
+      return { submissions: subs.data ?? [], files: files.data ?? [], scores: scores.data ?? [] };
     },
   });
 
-  if (!data?.submission) {
-    return <p className="mt-6 text-sm text-muted-foreground">Loading…</p>;
-  }
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({ queryKey: ["admin-team-detail", team.team_id] });
+    };
+  }, [queryClient, team.team_id]);
 
-  const total = Object.values(data.scores.find((s) => s.submitted)?.criterion_scores ?? {}).reduce(
-    (a, b) => a + (typeof b === "number" ? b : 0),
-    0,
-  );
+  if (isLoading) return <p className="mt-6 text-sm text-muted-foreground">Loading…</p>;
+
+  const entries = data?.submissions ?? [];
+  const files = data?.files ?? [];
+  const scores = (data?.scores ?? []) as {
+    id: string;
+    submission_id: string;
+    criterion_scores: Record<string, number> | null;
+    feedback: string | null;
+    submitted: boolean;
+    updated_at: string;
+    judge: { full_name: string } | null;
+  }[];
 
   return (
     <div className="mt-4 space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          {row?.track_name ?? "No theme"} · {row?.team_name ?? "—"} · {row?.school ?? "No school"}
+      <section className="rounded-xl border border-border p-4 text-sm">
+        <p>
+          <span className="font-semibold">Team ID:</span>{" "}
+          <span className="font-mono">{team.team_code ?? "—"}</span>
         </p>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            printOnePager(data.submission as never, data.files as never, {
-              theme: row?.track_name ?? null,
-              school: row?.school ?? null,
-              teamName: row?.team_name ?? null,
-            })
-          }
-        >
-          <Download className="mr-1.5 h-4 w-4" /> One-pager
-        </Button>
-      </div>
-      <SubmissionDetails
-        submission={data.submission as never}
-        files={data.files as never}
-        theme={row?.track_name ?? null}
-      />
-      <section className="border-t border-border pt-4">
-        <h3 className="eyebrow mb-2">Judge scoring summary</h3>
-        <div className="space-y-2.5">
-          {data.scores.map((s) => (
-            <div key={s.id} className="rounded-lg border border-border p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">{s.judge?.full_name ?? "Judge"}</p>
-                <span
-                  className={
-                    "rounded-full px-2 py-0.5 text-xs font-semibold " +
-                    (s.submitted ? "bg-sage/15 text-sage" : "bg-ochre/15 text-ochre")
+        <p className="mt-1">
+          <span className="font-semibold">School:</span> {team.school ?? "—"} ·{" "}
+          <span className="font-semibold">Theme:</span> {team.track_name ?? "—"}
+        </p>
+        <p className="mt-1">
+          <span className="font-semibold">Members ({team.member_count}):</span>{" "}
+          {team.members.join(", ") || "—"}
+        </p>
+      </section>
+
+      <section className="space-y-5">
+        {entries.map((s) => {
+          const subScores = scores.filter((sc) => sc.submission_id === s.id);
+          const evaluated = subScores.find((sc) => sc.submitted);
+          const total =
+            evaluated
+              ? Object.values(evaluated.criterion_scores ?? {}).reduce(
+                  (a, b) => a + (typeof b === "number" ? b : 0),
+                  0,
+                )
+              : 0;
+          return (
+            <div key={s.id} className="space-y-3">
+              <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                <h3 className="text-sm font-semibold">Stage {s.stage} entry</h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    printOnePager(s as never, files.filter((f) => f.submission_id === s.id) as never, {
+                      theme: team.track_name ?? null,
+                      school: team.school ?? null,
+                      teamName: team.team_name ?? null,
+                    })
                   }
                 >
-                  {s.submitted ? `Evaluated · ${total.toFixed(2)}` : "In progress"}
-                </span>
+                  <Download className="mr-1.5 h-4 w-4" /> One-pager
+                </Button>
               </div>
-              {s.feedback && <p className="mt-1.5 text-sm text-muted-foreground">{s.feedback}</p>}
+              <SubmissionDetails
+                submission={s as never}
+                files={files.filter((f) => f.submission_id === s.id) as never}
+                theme={team.track_name ?? null}
+              />
+              <div className="rounded-lg border border-border p-3">
+                <p className="eyebrow mb-2">Judge scoring</p>
+                <div className="space-y-2">
+                  {subScores.map((sc) => (
+                    <div key={sc.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="font-medium">{sc.judge?.full_name ?? "Judge"}</span>
+                      <span
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs font-semibold " +
+                          (sc.submitted ? "bg-sage/15 text-sage" : "bg-ochre/15 text-ochre")
+                        }
+                      >
+                        {sc.submitted ? `Evaluated · ${total.toFixed(2)}` : "In progress"}
+                      </span>
+                    </div>
+                  ))}
+                  {subScores.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No judge has opened this entry yet.</p>
+                  )}
+                </div>
+              </div>
             </div>
-          ))}
-          {data.scores.length === 0 && (
-            <p className="text-sm text-muted-foreground">No judge has opened this entry yet.</p>
-          )}
-        </div>
+          );
+        })}
+        {entries.length === 0 && (
+          <p className="text-sm text-muted-foreground">No entries from this team yet.</p>
+        )}
       </section>
     </div>
   );
