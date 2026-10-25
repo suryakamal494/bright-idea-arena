@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
   CalendarClock,
@@ -14,8 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { queryClient } from "@/lib/query-client";
-import { signOutEverywhere, type AppRole } from "@/lib/auth";
+import type { AppRole } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,

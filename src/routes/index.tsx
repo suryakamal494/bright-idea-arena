@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, ClipboardList, Rocket, Search, Trophy, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Brand } from "@/components/app-nav";
