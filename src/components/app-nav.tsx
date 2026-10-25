@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { AppRole } from "@/lib/auth";
+import { signOutEverywhere, type AppRole } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +67,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = NAV[role] ?? [];
+  const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
 
   async function handleSignOut() {
