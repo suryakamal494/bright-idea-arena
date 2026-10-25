@@ -146,7 +146,9 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
         </h1>
       </header>
 
-      {!teamReady ? (
+      {membersPending && !membersError ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Loading team roster…</p>
+      ) : !teamReady ? (
         <div className="rounded-2xl border border-ochre/40 bg-ochre/10 p-5">
           <div className="flex items-start gap-3">
             <Users className="mt-0.5 h-5 w-5 text-ochre" />
