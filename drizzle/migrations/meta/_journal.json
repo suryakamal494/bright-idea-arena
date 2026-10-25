@@ -71,6 +71,13 @@
       "when": 1792920018601,
       "tag": "0009_fix_rls_recursion",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792933987502,
+      "tag": "0010_designation_and_parent_info",
+      "breakpoints": true
     }
   ]
 }
