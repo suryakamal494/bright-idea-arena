@@ -41,8 +41,7 @@
   --color-sage: var(--sage);
   --color-ochre: var(--ochre);
   --color-linen: var(--linen);
-  --font-display: "Fraunces", Georgia, serif;
-  --font-sans: "Work Sans", system-ui, sans-serif;
+  --font-display: "Work Sans", system-ui, sans-serif;
 }
 
 :root {
@@ -142,6 +141,7 @@
 /* Editorial flourishes */
 @utility font-display {
   font-family: var(--font-display);
+  letter-spacing: -0.015em;
 }
 
 @utility eyebrow {
