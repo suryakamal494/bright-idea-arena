@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,18 +35,31 @@ type Row = {
   stage: number;
   status: string;
   updated_at: string;
-  team: { name: string; track: { name: string } | null } | null;
+  team_name: string;
+  track_name: string | null;
+  school: string | null;
+  member_count: number;
 };
 
 const PAGE_SIZE = 10;
 
 function SubmissionsManager() {
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [trackId, setTrackId] = useState<string>("all");
   const [stage, setStage] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Debounced search: one query per settled term, not per keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const { data: tracks } = useQuery({
     queryKey: ["public-tracks"],
@@ -59,23 +72,21 @@ function SubmissionsManager() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-submissions", search, trackId, stage, status, page],
     queryFn: async () => {
-      let q = supabase
-        .from("submissions")
-        .select("id,team_code,title,stage,status,updated_at,team:teams(name,track:tracks(name))", {
-          count: "exact",
-        })
-        .order("updated_at", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-      if (trackId !== "all") q = q.eq("team.track_id", trackId);
-      if (stage !== "all") q = q.eq("stage", Number(stage));
-      if (status !== "all") q = q.eq("status", status);
-      if (search.trim()) q = q.or(`title.ilike.%${search.trim()}%,team_code.ilike.%${search.trim()}%`);
-      const { data: rows, count: c } = await q;
-      return { rows: (rows ?? []) as Row[], count: c ?? 0 };
+      const { data, error } = await supabase.rpc("admin_submission_directory", {
+        p_page: page,
+        p_page_size: PAGE_SIZE,
+        p_search: search || null,
+        p_track_id: trackId === "all" ? null : trackId,
+        p_stage: stage === "all" ? null : Number(stage),
+        p_status: status === "all" ? null : status,
+      });
+      if (error) throw error;
+      return data as unknown as { total: number; rows: Row[] };
     },
+    placeholderData: keepPreviousData,
   });
 
-  const total = data?.count ?? 0;
+  const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -93,12 +104,9 @@ function SubmissionsManager() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search title or team code…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            placeholder="Search title, team code or school…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
         <Select
@@ -170,7 +178,8 @@ function SubmissionsManager() {
                     <p className="truncate text-sm font-semibold">{s.title ?? "Untitled"}</p>
                     <p className="text-xs text-muted-foreground">
                       <span className="font-mono">{s.team_code ?? "TEAM"}</span> ·{" "}
-                      {s.team?.name ?? "—"} · {s.team?.track?.name ?? "No track"}
+                      {s.team_name ?? "—"} · {s.track_name ?? "No track"} · {s.school ?? "No school"}{" "}
+                      · {s.member_count} member{s.member_count === 1 ? "" : "s"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
