@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import {
@@ -52,6 +52,57 @@ function TeamDirectory() {
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<DirectoryRow | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const pageSize = 100;
+      const all: DirectoryRow[] = [];
+      let page = 0;
+      for (;;) {
+        const { data, error } = await supabase.rpc("admin_team_directory", {
+          p_page: page,
+          p_page_size: pageSize,
+          ...(search.trim() ? { p_search: search.trim() } : {}),
+          ...(trackId === "all" ? {} : { p_track_id: trackId }),
+          ...(status === "all" ? {} : { p_status: status }),
+        });
+        if (error) throw error;
+        const res = data as unknown as { total: number; rows: DirectoryRow[] };
+        all.push(...res.rows);
+        if (res.rows.length < pageSize || all.length >= res.total || all.length >= 5000) break;
+        page++;
+      }
+      const header = ["team_code", "team_name", "theme", "school", "member_count", "members", "stage1", "stage2"];
+      const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const csv = [
+        header.join(","),
+        ...all.map((r) =>
+          [
+            r.team_code,
+            r.team_name,
+            r.track_name,
+            r.school,
+            r.member_count,
+            (r.members ?? []).join("; "),
+            r.s1_status ?? "",
+            r.s2_status ?? "",
+          ]
+            .map(esc)
+            .join(","),
+        ),
+      ].join("\n");
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `teams-and-students-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // Debounced search: one query per settled term, not per keystroke.
   useEffect(() => {
