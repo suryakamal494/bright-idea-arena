@@ -88,10 +88,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   }
   // Concurrent callers (e.g. preload + navigation) share one fetch.
   if (!inflight) {
-    inflight = Promise.all([
-      fetchRolesFor(user.id),
-      fetchProfileFor(user.id),
-    ]).then(([roles, profile]) => {
+    inflight = fetchContextFor(user.id).then(({ roles, profile }) => {
       const value: AuthContext = { user, roles, profile };
       authCache = { userId: user.id, at: Date.now(), value };
       return value;
@@ -139,7 +136,3 @@ export const DEMO_ACCOUNTS: {
   { label: "Teamless student", email: "zoya@demo.in", blurb: "Test joining a team", home: "/dashboard" },
 ];
 
-export async function signOutEverywhere() {
-  clearAuthContext();
-  await supabase.auth.signOut();
-}
