@@ -206,6 +206,10 @@ function StageEditor({
     mounted.current = true;
   }, []);
 
+  const queryClient = useQueryClient();
+  const saveRef = useRef<(() => Promise<void>) | null>(null);
+
+
   async function save(submit: boolean) {
     if (!team.id) return;
     setSaveState("saving");
@@ -215,7 +219,7 @@ function StageEditor({
       if (stage === 2 && k === "methodology") continue;
       payload[k] = k === "sdg_tags" ? (v as string).split(",").map((t) => t.trim()).filter(Boolean) || null : (v as string) || null;
     }
-    const { error } = await supabase.rpc("upsert_submission", {
+    const { data, error } = await supabase.rpc("upsert_submission", {
       p_payload: payload as never,
       p_stage: stage,
       p_submit: submit,
@@ -227,7 +231,20 @@ function StageEditor({
     }
     dirty.current = false;
     setSaveState("saved");
-    onRefresh();
+    const saved = data as unknown as SubmissionRow | null;
+    if (!submit && saved) {
+      // Write the returned row straight into the cache — no refetch roundtrips.
+      queryClient.setQueryData<SubmissionRow[]>(["team-submissions", team.id], (old) => {
+        const list = old ?? [];
+        const idx = list.findIndex((s) => s.id === saved.id);
+        if (idx === -1) return [...list, saved];
+        const next = [...list];
+        next[idx] = saved;
+        return next;
+      });
+    } else {
+      onRefresh();
+    }
     if (submit) toast.success("Submitted for review — team roster is now locked.");
   }
 
@@ -235,8 +252,28 @@ function StageEditor({
     setFields((f) => ({ ...f, [k]: v }));
     dirty.current = true;
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => save(false).catch(console.error), 1500);
+    timer.current = setTimeout(() => (saveRef.current ?? save)(false).catch(console.error), 3000);
   }
+
+  // Flush pending edits when the tab is hidden, closed, or the editor unmounts.
+  useEffect(() => {
+    saveRef.current = save;
+    function flush() {
+      if (!dirty.current) return;
+      dirty.current = false;
+      (saveRef.current ?? save)(false).catch(console.error);
+    }
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onHidden);
+      flush();
+    };
+  });
 
   async function uploadFile(file: File) {
     if (!existing) {
