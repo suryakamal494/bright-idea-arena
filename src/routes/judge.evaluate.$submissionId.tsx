@@ -152,7 +152,7 @@ function EvaluationSheet() {
           <SubmissionDetails
             submission={sub as never}
             files={data.files as never}
-            theme={(sub.team as { track?: { name?: string } } | null)?.track?.name}
+            theme={(sub.team as { track?: { name?: string } } | null)?.track?.name ?? null}
           />
         </div>
 

@@ -42,6 +42,7 @@ type Row = {
   school: string | null;
   member_count: number;
   attachment_count: number;
+  submitted_at: string | null;
 };
 
 const PAGE_SIZE = 10;
