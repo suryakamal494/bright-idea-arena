@@ -110,14 +110,21 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
     queryFn: fetchGlobalStageSettings,
   });
   const { data: submissions } = useSubmissions(team.id);
-  const { data: members } = useQuery({
+  const {
+    data: members,
+    isPending: membersPending,
+    isError: membersError,
+  } = useQuery({
     queryKey: ["team-members", team.id],
     queryFn: () => fetchTeamMembers(team.id),
+    retry: 2,
   });
   const files = useSubmissionFiles(team.id, submissions ?? []);
   const list = submissions ?? [];
   const roster = members ?? [];
-  const teamReady = roster.length >= MIN_TEAM_SIZE;
+  // Only gate on a real short roster — never on a failed or still-loading fetch,
+  // so a full team is never locked out by a transient request error.
+  const teamReady = membersError || (!membersPending && roster.length >= MIN_TEAM_SIZE);
 
   const s1 = list.find((s) => s.stage === 1);
   const s2 = list.find((s) => s.stage === 2);
