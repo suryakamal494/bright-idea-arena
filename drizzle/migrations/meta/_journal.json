@@ -78,6 +78,13 @@
       "when": 1792933987502,
       "tag": "0010_designation_and_parent_info",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792935992628,
+      "tag": "0011_scale_indexes_and_admin_directories",
+      "breakpoints": true
     }
   ]
 }

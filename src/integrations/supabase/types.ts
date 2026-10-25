@@ -499,6 +499,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_submission_directory: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_stage?: number
+          p_status?: string
+          p_track_id?: string
+        }
+        Returns: Json
+      }
+      admin_team_directory: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_status?: string
+          p_track_id?: string
+        }
+        Returns: Json
+      }
       create_team: {
         Args: { p_name: string; p_track_id: string }
         Returns: {
