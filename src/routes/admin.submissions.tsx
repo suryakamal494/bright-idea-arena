@@ -207,6 +207,14 @@ function SubmissionsManager() {
         </Select>
       </div>
 
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">Showing {PAGE_SIZE} entries per page</p>
+        <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv}>
+          <Download className="mr-1.5 h-4 w-4" />
+          {exporting ? "Preparing…" : "Export CSV"}
+        </Button>
+      </div>
+
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -279,7 +287,13 @@ function SubmissionsManager() {
   );
 }
 
-function SubmissionInspector({ submissionId }: { submissionId: string }) {
+function SubmissionInspector({
+  submissionId,
+  row,
+}: {
+  submissionId: string;
+  row: Row | null;
+}) {
   const { data } = useQuery({
     queryKey: ["admin-submission", submissionId],
     queryFn: async () => {
@@ -317,7 +331,29 @@ function SubmissionInspector({ submissionId }: { submissionId: string }) {
 
   return (
     <div className="mt-4 space-y-6">
-      <SubmissionDetails submission={data.submission as never} files={data.files as never} />
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          {row?.track_name ?? "No theme"} · {row?.team_name ?? "—"} · {row?.school ?? "No school"}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            printOnePager(data.submission as never, data.files as never, {
+              theme: row?.track_name ?? null,
+              school: row?.school ?? null,
+              teamName: row?.team_name ?? null,
+            })
+          }
+        >
+          <Download className="mr-1.5 h-4 w-4" /> One-pager
+        </Button>
+      </div>
+      <SubmissionDetails
+        submission={data.submission as never}
+        files={data.files as never}
+        theme={row?.track_name ?? null}
+      />
       <section className="border-t border-border pt-4">
         <h3 className="eyebrow mb-2">Judge scoring summary</h3>
         <div className="space-y-2.5">
