@@ -41,8 +41,23 @@ export type SubmissionRow = {
   test_outcomes: string | null;
   links: string | null;
   evidence_links: string | null;
+  sutra_ids: string[] | null;
+  sutras_explanation: string | null;
   submitted_at: string | null;
 };
+
+/** Submission workspace unlocks only at this roster size. */
+export const MIN_TEAM_SIZE = 3;
+
+export type SutraRow = { id: string; name: string; description: string | null; sort_order: number };
+
+let sutrasCache: SutraRow[] | null = null;
+export async function fetchSutras(): Promise<SutraRow[]> {
+  if (sutrasCache) return sutrasCache;
+  const { data } = await supabase.from("sutras").select("*").order("sort_order");
+  sutrasCache = (data ?? []) as SutraRow[];
+  return sutrasCache;
+}
 
 export async function fetchMyTeam(userId: string): Promise<TeamRow | null> {
   const { data } = await supabase
