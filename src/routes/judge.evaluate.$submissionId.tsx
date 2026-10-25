@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
-import { useResolvedAttachments } from "@/lib/attachments";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,9 +73,6 @@ function EvaluationSheet() {
     setFeedback(data.existing.feedback ?? "");
     setSaveState(data.existing.submitted ? "submitted" : "saved");
   }, [data, submissionId]);
-
-  const urls = (data?.files ?? []).map((f) => f.url);
-  const resolved = useResolvedAttachments(urls);
 
   async function persist(submit: boolean) {
     if (!data) return;
