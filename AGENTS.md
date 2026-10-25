@@ -19,4 +19,7 @@
 - Admin listings at scale use SECURITY DEFINER RPCs (`admin_team_directory`, `admin_submission_directory`) that return `{ total, rows }` with server-side pagination and filtering; pages use TanStack Query with `keepPreviousData`, debounced search, and bounded page size. Never load unbounded tables in admin/judge routes.
 - RPC optional args must be spread conditionally (`...(x ? { p_arg: x } : {})`) — `exactOptionalPropertyTypes` rejects explicit `undefined`, and `null` fails the generated types.
 - Student submission autosave writes the RPC-returned row directly into the `["team-submissions", teamId]` cache instead of refetching; keep the flush-listener effect with a `[]` dependency array (per-render cleanup caused double saves).
+- Submissions are structured form data (never uploaded filled-in documents): one-pager fields live in `submissions` columns; the printed one-pager is generated client-side from the row (`src/lib/onepager.ts`). A team's theme is its `teams.track` — the form displays it, never edits it.
+- `MIN_TEAM_SIZE = 3` (src/lib/team.ts) gates the submission form in the UI only when the roster query has succeeded with fewer members — a failed/short fetch must never lock a full team out; `upsert_submission` enforces the same rule server-side.
+- Deadline policy: any team member may edit until the stage deadline, then the draft auto-finalises (finalize RPC + daily reconciliation job); after submit the roster and entry lock.
 - Demo seed accounts share the password Ideathon2026! and must keep their @demo.in emails.

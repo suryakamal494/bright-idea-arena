@@ -277,6 +277,7 @@ export type Database = {
           id: string
           name: string
           submission_id: string
+          title: string | null
           url: string
         }
         Insert: {
@@ -284,6 +285,7 @@ export type Database = {
           id?: string
           name: string
           submission_id: string
+          title?: string | null
           url: string
         }
         Update: {
@@ -291,6 +293,7 @@ export type Database = {
           id?: string
           name?: string
           submission_id?: string
+          title?: string | null
           url?: string
         }
         Relationships: [
@@ -315,6 +318,8 @@ export type Database = {
           stage: number
           status: string
           submitted_at: string | null
+          sutra_ids: string[] | null
+          sutras_explanation: string | null
           team_code: string | null
           team_id: string
           technical_reasoning: string | null
@@ -333,6 +338,8 @@ export type Database = {
           stage: number
           status?: string
           submitted_at?: string | null
+          sutra_ids?: string[] | null
+          sutras_explanation?: string | null
           team_code?: string | null
           team_id: string
           technical_reasoning?: string | null
@@ -351,6 +358,8 @@ export type Database = {
           stage?: number
           status?: string
           submitted_at?: string | null
+          sutra_ids?: string[] | null
+          sutras_explanation?: string | null
           team_code?: string | null
           team_id?: string
           technical_reasoning?: string | null
@@ -367,6 +376,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sutras: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       team_members: {
         Row: {
@@ -520,6 +550,7 @@ export type Database = {
         }
         Returns: Json
       }
+      auto_submit_due_submissions: { Args: never; Returns: number }
       create_team: {
         Args: { p_name: string; p_track_id: string }
         Returns: {
@@ -544,6 +575,7 @@ export type Database = {
         Args: { p_stage: number; p_track_id: string }
         Returns: Record<string, unknown>
       }
+      finalize_due_submission: { Args: { p_stage: number }; Returns: boolean }
       generate_team_code: { Args: { p_slug: string }; Returns: string }
       has_role: {
         Args: {
@@ -599,6 +631,8 @@ export type Database = {
           stage: number
           status: string
           submitted_at: string | null
+          sutra_ids: string[] | null
+          sutras_explanation: string | null
           team_code: string | null
           team_id: string
           technical_reasoning: string | null
