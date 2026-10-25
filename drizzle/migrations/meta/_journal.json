@@ -15,6 +15,20 @@
       "when": 1792919249296,
       "tag": "0001_init_ideathon_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792919301836,
+      "tag": "0002_seed_config",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792919309372,
+      "tag": "0003_seed_users",
+      "breakpoints": true
     }
   ]
 }
