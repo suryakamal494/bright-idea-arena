@@ -62,13 +62,8 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <>
           <span className="h-7 w-px bg-border" aria-hidden />
-          <span className="leading-tight">
-            <span className="block font-display text-[15px] font-semibold text-forest">
-              Social Innovation Ideathon
-            </span>
-            <span className="block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Organized by ICORG
-            </span>
+          <span className="font-display text-[15px] font-semibold text-forest">
+            Social Innovation Ideathon
           </span>
         </>
       )}
@@ -79,8 +74,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
 export function OrgFooter() {
   return (
     <footer className="no-print border-t border-border py-5 text-center text-xs text-muted-foreground">
-      Organized by <span className="font-semibold text-forest">ICORG</span> · Social Innovation
-      Ideathon
+      <span className="font-semibold text-forest">Social Innovation Ideathon</span>
     </footer>
   );
 }
@@ -255,13 +249,8 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
               {deeper ? "Details" : current?.label}
             </span>
           </nav>
-          <span className="hidden shrink-0 items-baseline gap-2 md:flex" aria-hidden>
-            <span className="font-display text-sm font-semibold text-forest">
-              Social Innovation Ideathon
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Organized by ICORG
-            </span>
+          <span className="hidden shrink-0 font-display text-sm font-semibold text-forest md:block" aria-hidden>
+            Social Innovation Ideathon
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
