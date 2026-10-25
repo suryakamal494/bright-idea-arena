@@ -65,11 +65,18 @@ function AdminOverview() {
             Live overview
           </h1>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/admin/broadcasts">
-            <ArrowUpRight className="mr-1.5 h-4 w-4" /> Post announcement
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/registrations">
+              <Users className="mr-1.5 h-4 w-4" /> Registrations
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/broadcasts">
+              <ArrowUpRight className="mr-1.5 h-4 w-4" /> Post announcement
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

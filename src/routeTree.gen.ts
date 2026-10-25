@@ -25,8 +25,8 @@ import { Route as StudentTeamRouteImport } from './routes/_student.team'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
 import { Route as AdminDeadlinesRouteImport } from './routes/admin.deadlines'
-import { Route as AdminDirectoryRouteImport } from './routes/admin.directory'
 import { Route as AdminJudgesRouteImport } from './routes/admin.judges'
+import { Route as AdminRegistrationsRouteImport } from './routes/admin.registrations'
 import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
 import { Route as CoordinatorIndexRouteImport } from './routes/coordinator.index'
 import { Route as JudgeIndexRouteImport } from './routes/judge.index'
@@ -112,14 +112,14 @@ const AdminDeadlinesRoute = AdminDeadlinesRouteImport.update({
   path: '/deadlines',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminDirectoryRoute = AdminDirectoryRouteImport.update({
-  id: '/directory',
-  path: '/directory',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminJudgesRoute = AdminJudgesRouteImport.update({
   id: '/judges',
   path: '/judges',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRegistrationsRoute = AdminRegistrationsRouteImport.update({
+  id: '/registrations',
+  path: '/registrations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
@@ -165,8 +165,8 @@ export interface FileRoutesByFullPath {
   '/team': typeof StudentTeamRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/deadlines': typeof AdminDeadlinesRoute
-  '/admin/directory': typeof AdminDirectoryRoute
   '/admin/judges': typeof AdminJudgesRoute
+  '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/': typeof AdminIndexRoute
   '/coordinator/': typeof CoordinatorIndexRoute
@@ -186,8 +186,8 @@ export interface FileRoutesByTo {
   '/team': typeof StudentTeamRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/deadlines': typeof AdminDeadlinesRoute
-  '/admin/directory': typeof AdminDirectoryRoute
   '/admin/judges': typeof AdminJudgesRoute
+  '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin': typeof AdminIndexRoute
   '/coordinator': typeof CoordinatorIndexRoute
@@ -212,8 +212,8 @@ export interface FileRoutesById {
   '/_student/team': typeof StudentTeamRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/deadlines': typeof AdminDeadlinesRoute
-  '/admin/directory': typeof AdminDirectoryRoute
   '/admin/judges': typeof AdminJudgesRoute
+  '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/': typeof AdminIndexRoute
   '/coordinator/': typeof CoordinatorIndexRoute
@@ -238,8 +238,8 @@ export interface FileRouteTypes {
     | '/team'
     | '/admin/broadcasts'
     | '/admin/deadlines'
-    | '/admin/directory'
     | '/admin/judges'
+    | '/admin/registrations'
     | '/admin/submissions'
     | '/admin/'
     | '/coordinator/'
@@ -259,8 +259,8 @@ export interface FileRouteTypes {
     | '/team'
     | '/admin/broadcasts'
     | '/admin/deadlines'
-    | '/admin/directory'
     | '/admin/judges'
+    | '/admin/registrations'
     | '/admin/submissions'
     | '/admin'
     | '/coordinator'
@@ -284,8 +284,8 @@ export interface FileRouteTypes {
     | '/_student/team'
     | '/admin/broadcasts'
     | '/admin/deadlines'
-    | '/admin/directory'
     | '/admin/judges'
+    | '/admin/registrations'
     | '/admin/submissions'
     | '/admin/'
     | '/coordinator/'
@@ -421,18 +421,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDeadlinesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/directory': {
-      id: '/admin/directory'
-      path: '/directory'
-      fullPath: '/admin/directory'
-      preLoaderRoute: typeof AdminDirectoryRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/judges': {
       id: '/admin/judges'
       path: '/judges'
       fullPath: '/admin/judges'
       preLoaderRoute: typeof AdminJudgesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/registrations': {
+      id: '/admin/registrations'
+      path: '/registrations'
+      fullPath: '/admin/registrations'
+      preLoaderRoute: typeof AdminRegistrationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/submissions': {
@@ -493,8 +493,8 @@ const StudentRouteWithChildren =
 interface AdminRouteChildren {
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminDeadlinesRoute: typeof AdminDeadlinesRoute
-  AdminDirectoryRoute: typeof AdminDirectoryRoute
   AdminJudgesRoute: typeof AdminJudgesRoute
+  AdminRegistrationsRoute: typeof AdminRegistrationsRoute
   AdminSubmissionsRoute: typeof AdminSubmissionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -502,8 +502,8 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminDeadlinesRoute: AdminDeadlinesRoute,
-  AdminDirectoryRoute: AdminDirectoryRoute,
   AdminJudgesRoute: AdminJudgesRoute,
+  AdminRegistrationsRoute: AdminRegistrationsRoute,
   AdminSubmissionsRoute: AdminSubmissionsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

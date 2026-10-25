@@ -15,11 +15,19 @@ describe("App routing", () => {
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
 
-  it("matches the admin team directory page", () => {
+  it("matches the admin registrations page", () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
 
-    const matches = router.matchRoutes("/admin/directory");
+    const matches = router.matchRoutes("/admin/registrations");
 
-    expect(matches.at(-1)?.routeId).toBe("/admin/directory");
+    expect(matches.at(-1)?.routeId).toBe("/admin/registrations");
+  });
+
+  it("matches the admin submissions page", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/admin/submissions");
+
+    expect(matches.at(-1)?.routeId).toBe("/admin/submissions");
   });
 });
