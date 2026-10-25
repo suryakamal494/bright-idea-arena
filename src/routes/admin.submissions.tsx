@@ -162,10 +162,10 @@ function SubmissionsManager() {
           }}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Track" />
+            <SelectValue placeholder="Theme" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All tracks</SelectItem>
+            <SelectItem value="all">All themes</SelectItem>
             {(tracks ?? []).map((t) => (
               <SelectItem key={t.id} value={t.id}>
                 {t.name}
