@@ -32,21 +32,37 @@ export async function getSessionUser(): Promise<User | null> {
   return data.session?.user ?? null;
 }
 
-async function fetchRolesFor(userId: string): Promise<AppRole[]> {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
-  return (data ?? []).map((r) => r.role as AppRole);
-}
-
-async function fetchProfileFor(userId: string): Promise<Profile | null> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
-  return (data as Profile) ?? null;
+/**
+ * One roundtrip: the SECURITY DEFINER RPC `get_auth_context()` returns the
+ * caller's own roles + profile together (identity derived from auth.uid()
+ * inside the function). Falls back to the two-query path if the RPC is
+ * unreachable, so a schema drift can never lock users out.
+ */
+async function fetchContextFor(
+  userId: string,
+): Promise<{ roles: AppRole[]; profile: Profile | null }> {
+  const { data, error } = await supabase.rpc("get_auth_context");
+  if (error || !data) {
+    const [roles, profile] = await Promise.all([
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .then(({ data }) => (data ?? []).map((r) => r.role as AppRole)),
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle()
+        .then(({ data }) => (data as Profile) ?? null),
+    ]);
+    return { roles, profile };
+  }
+  const payload = data as { roles: string[] | null; profile: Profile | null };
+  return {
+    roles: (payload.roles ?? []) as AppRole[],
+    profile: payload.profile ?? null,
+  };
 }
 
 export type AuthContext = { user: User; roles: AppRole[]; profile: Profile | null };
@@ -72,10 +88,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   }
   // Concurrent callers (e.g. preload + navigation) share one fetch.
   if (!inflight) {
-    inflight = Promise.all([
-      fetchRolesFor(user.id),
-      fetchProfileFor(user.id),
-    ]).then(([roles, profile]) => {
+    inflight = fetchContextFor(user.id).then(({ roles, profile }) => {
       const value: AuthContext = { user, roles, profile };
       authCache = { userId: user.id, at: Date.now(), value };
       return value;
@@ -123,7 +136,3 @@ export const DEMO_ACCOUNTS: {
   { label: "Teamless student", email: "zoya@demo.in", blurb: "Test joining a team", home: "/dashboard" },
 ];
 
-export async function signOutEverywhere() {
-  clearAuthContext();
-  await supabase.auth.signOut();
-}

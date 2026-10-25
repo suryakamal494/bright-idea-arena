@@ -12,55 +12,46 @@ export const Route = createFileRoute("/admin/")({
   component: AdminOverview,
 });
 
-type Kpis = {
+type AdminOverview = {
   teams: number;
   students: number;
   stage1: number;
   stage2: number;
   judged: number;
+  recent: {
+    id: string;
+    team_code: string | null;
+    title: string | null;
+    stage: number;
+    status: string;
+    submitted_at: string | null;
+    updated_at: string;
+    team_name: string | null;
+    track: string | null;
+  }[];
 };
 
 function AdminOverview() {
-  const { data: kpis, isLoading } = useQuery({
+  // One roundtrip: the admin-only RPC returns all counts + recent rows.
+  const { data: overview, isLoading } = useQuery({
     queryKey: ["admin-kpis"],
-    queryFn: async (): Promise<Kpis> => {
-      const base = { count: "exact", head: true } as const;
-      const [teams, students, stage1, stage2, judged] = await Promise.all([
-        supabase.from("teams").select("id", base).then((r) => r.count ?? 0),
-        supabase.from("profiles").select("id", base).then((r) => r.count ?? 0),
-        supabase
-          .from("submissions")
-          .select("id", base)
-          .eq("stage", 1)
-          .eq("status", "submitted")
-          .then((r) => r.count ?? 0),
-        supabase
-          .from("submissions")
-          .select("id", base)
-          .eq("stage", 2)
-          .eq("status", "submitted")
-          .then((r) => r.count ?? 0),
-        supabase
-          .from("scores")
-          .select("id", base)
-          .eq("submitted", true)
-          .then((r) => r.count ?? 0),
-      ]);
-      return { teams, students, stage1, stage2, judged };
+    queryFn: async (): Promise<AdminOverview> => {
+      const { data, error } = await supabase.rpc("admin_overview_kpis");
+      if (error) throw error;
+      return data as AdminOverview;
     },
   });
 
-  const { data: recent } = useQuery({
-    queryKey: ["admin-recent-submissions"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("submissions")
-        .select("id,team_code,title,stage,status,submitted_at,updated_at,team:teams(name,track:tracks(name))")
-        .order("updated_at", { ascending: false })
-        .limit(8);
-      return data ?? [];
-    },
-  });
+  const kpis = overview
+    ? {
+        teams: overview.teams,
+        students: overview.students,
+        stage1: overview.stage1,
+        stage2: overview.stage2,
+        judged: overview.judged,
+      }
+    : undefined;
+  const recent = overview?.recent ?? [];
 
   const judgedPct =
     kpis && kpis.stage2 > 0 ? Math.round((kpis.judged / kpis.stage2) * 100) : 0;
@@ -129,7 +120,7 @@ function AdminOverview() {
                   <p className="truncate text-sm font-semibold">{s.title ?? "Untitled"}</p>
                   <p className="text-xs text-muted-foreground">
                     <span className="font-mono">{s.team_code ?? "TEAM"}</span> ·{" "}
-                    {(s.team as { track?: { name?: string } } | null)?.track?.name ?? "—"}
+                    {s.track ?? "—"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
