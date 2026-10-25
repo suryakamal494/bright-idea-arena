@@ -134,37 +134,54 @@ function TeamRoster({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">Invite teammates</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-muted px-3 py-2 font-mono text-base font-semibold tracking-widest text-forest">
-            {team.join_code}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              navigator.clipboard.writeText(team.join_code);
-              toast.success("Join code copied");
-            }}
-          >
-            Copy code
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(
-                `Join my ideathon team "${team.name}"! Enter code ${team.join_code} on the Social Innovation Ideathon app.`,
-              )}`}
-              target="_blank"
-              rel="noreferrer"
+      {roster.length >= MAX_TEAM_SIZE ? (
+        <Card className="border-sage/30 bg-sage/5">
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Team is full</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {team.name} has all {MAX_TEAM_SIZE} members, so no more teammates can join — the
+              join code stops working automatically.
+            </p>
+            <Button asChild size="sm" className="mt-3 bg-clay hover:bg-clay/90">
+              <Link to="/submission">Open submission form</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Invite teammates</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-2">
+            <span className="rounded-lg bg-muted px-3 py-2 font-mono text-base font-semibold tracking-widest text-forest">
+              {team.join_code}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(team.join_code);
+                toast.success("Join code copied");
+              }}
             >
-              Share on WhatsApp
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
+              Copy code
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `Join my ideathon team "${team.name}"! Enter code ${team.join_code} on the Social Innovation Ideathon app.`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Share on WhatsApp
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
