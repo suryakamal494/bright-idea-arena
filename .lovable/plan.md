@@ -40,6 +40,47 @@
 ### E. Verify
 - Re-run the Playwright timing script (login→admin, overview→directory cold/warm, sign-out) and record before/after; tests + build green; screenshots clean.
 
+## Your questions, answered plainly
+
+**"Why is memory at 57% when we're only testing?"** Memory on a cloud database is not like a phone's storage filling up. The moment the database exists, it reserves its own working memory for the engine itself — buffers and caches that make reads fast — plus the small amount your app's data needs. Our app data is tiny (12.6 MB). The 57% is almost entirely the engine's fixed baseline on the current small instance, not something testing "consumed". It stays roughly constant whether 4 teams or 650 teams are stored.
+
+**"How do we increase memory?"** In Backend → Advanced settings → instance size (a bigger instance = more memory, more CPU, more connections). We should NOT do this now — the measurements show zero pressure. Upsizing only if the load test shows saturation.
+
+**"What is 13/60 connections?"** 60 is the maximum number of simultaneous database connections this instance accepts — think of it as 60 phone lines. 13 means 13 lines are currently off the hook (the app, its pool, and idle sessions). Every page someone opens borrows a line briefly. With connection pooling built into Lovable Cloud, 60 lines comfortably serve thousands of users, because lines are shared and released instantly. The number only becomes a problem if usage ever hits 60/60 — then new requests queue. That would show up in the health check before users feel it.
+
+**"What is consuming the disk?"** 15% of the data disk = 12.6 MB of actual app data (rows, indexes). The other overhead (96 MB write-ahead log) is the database's own journal, managed automatically. Nothing to act on.
+
+## Review of the new ChatGPT assessment — agreed, folded in
+
+Its verdict matches ours: latency + feedback first, don't upscale infrastructure pre-emptively. Its four tightenings are all within our limits and are added below; nothing in it is outside what we can do except that no one can "prove" 2,000 real humans without the event itself — a simulated load test is the honest proxy.
+
+## Fix plan (updated)
+
+### A. One-roundtrip auth context — hardened per the review
+- New SECURITY DEFINER RPC `get_auth_context()` returning `{ roles, profile }` in one call.
+- Security hardening (the review's point 1): fixed `search_path = 'public'`, user identity taken from `auth.uid()` inside the function (never from arguments), `REVOKE ... FROM anon` so only authenticated sessions can call it, and the browser client keeps RLS so it can only ever receive its own roles/profile. Verified with student, judge and admin demo accounts.
+
+### B. Instant sign-out — with no protected data left visible (point 2)
+- `handleSignOut`: synchronously clear the query cache and auth context, navigate to `/auth` immediately, then fire the remote logout in the background.
+- If the remote logout fails, do not silently claim success: show a toast and keep the local session cleared (next action re-authenticates). No protected route can render with a stale session because the guard re-checks the cleared context.
+
+### C. Pending UI so navigation never looks frozen
+- Add `defaultPendingComponent` (brand-matched skeleton) + `defaultPendingMs: 200`; role layouts keep their guards. No blank screens, no stale protected content (guards still run before render).
+
+### D. Admin overview in 1 roundtrip
+- RPC `admin_overview_kpis` returning all 5 counts + 8 recent rows in one call; benchmark against the current six requests.
+
+### E. File reconciliation job (point 3)
+- Extend the existing daily cron: a reconciliation pass that flags storage objects unreferenced by `submission_files` after a grace period and removes them, with log lines — never touching objects tied to in-progress submissions.
+
+### F. Verification
+- Re-run the Playwright timing script (login→admin, overview→directory cold/warm, sign-out) and record before/after; tests + build green; screenshots clean; role-based auth-context tests per the review.
+
+### G. Load test with database-state reconciliation (the review's requirement)
+- k6 against the published URL: realistic arrival ramp toward ~2,000 simulated users, plus a 650-team submission burst with real file uploads.
+- Success = HTTP AND state: after the burst, SQL reconciliation confirms every accepted request has exactly one submission row, no duplicates, correct statuses, files all referenced. Report measured percentiles against the targets (95% < 500 ms, failures < 0.1%).
+- Only if the test shows saturation → recommend instance upsizing, with the measurement as evidence.
+
 ## ChatGPT's 12 points — verified status
 
 | # | Point | Status |
@@ -49,14 +90,14 @@
 | 3 | Deadline-hour submission rush | Covered — single idempotent upsert RPC, unique (team, stage) constraint, daily auto-finalize cron verified active |
 | 4 | Slow queries / N+1 | Verified clean — all indexes present, log clean, no N+1 in admin/judge pages |
 | 5 | Admin panel at 650 teams | Covered — server-side pagination RPCs, 25/page, cached page turns (warm page turn = 0 requests, measured) |
-| 6 | Server capacity | Current instance has large headroom (13/60 connections); can upsize in Backend → Advanced settings before event day if needed |
+| 6 | Server capacity | Current instance has large headroom (13/60 connections); upsize only if the load test shows saturation |
 | 7 | Duplicate registrations | Covered — unique emails, unique team codes, idempotent upserts |
-| 8 | Partial failures (DB vs file) | Minor residual: an uploaded file whose row insert fails leaves an orphan storage object — harmless, cleaned on retry |
+| 8 | Partial failures (DB vs file) | Fixed by the reconciliation job in E |
 | 9 | Cache/sync delays | Covered — 60 s cache with mutation-driven invalidation (instant after writes) |
-| 10 | Security under load | Covered — RLS on every table, blind judging verified, admin checks inside RPCs |
-| 11 | Failure visibility | Partially — error reporting exists; DB health monitorable; a separate uptime check is out of scope |
-| 12 | Backups | Platform-managed by Lovable Cloud; not user-testable |
+| 10 | Security under load | Covered — RLS on every table, blind judging verified, admin checks inside RPCs; new RPC hardened per A |
+| 11 | Failure visibility | Error reporting exists; uptime monitoring added as part of G's report; DB health checkable any time |
+| 12 | Backups | Platform-managed by Lovable Cloud; not user-testable from here |
 
 ## Honest limits
 
-I cannot prove 2,000-concurrent-user behaviour from here. After the fixes, a real load test against the published URL (k6: registration ramp + 650-team submission burst) is the remaining step — say the word and I'll set it up as a follow-up.
+A simulated 2,000-user test is the strongest proof available before the event; it cannot capture real-world network geography. After the fixes and load test, the remaining unknown is only real-user traffic.
