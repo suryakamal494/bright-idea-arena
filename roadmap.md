@@ -9,4 +9,5 @@
 - [x] /parent-revoke: student details first, explicit two-step confirmation
 - [x] Student pre-team onboarding stepper on dashboard (steps 1–3)
 - [x] profiles.designation column + parent info RPCs (migration 0010)
+- [x] Scale work: DB indexes (migration 0011), admin team/submission directory RPCs + paginated pages, judge pagination, student autosave hardening (migration 0012 fixed upsert_submission stage-settings call), load test at 654 teams/934 submissions, load-test data cleaned up
 - [x] Verification (tests, build, Playwright) + memory updates

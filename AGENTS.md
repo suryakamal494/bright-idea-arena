@@ -16,4 +16,7 @@
 - Student identity never reaches judge surfaces: judges read submissions by team_code only; profiles are never selected in judge routes.
 - Routes are gated by role pathless layouts (_student, _admin, _judge, _coordinator) each with `ssr: false` and a beforeLoad role check via public.user_roles. There is no _authenticated layer.
 - submission_files.url values beginning with `evidence/` are storage object paths (create signed URLs to view); anything else is an external URL.
+- Admin listings at scale use SECURITY DEFINER RPCs (`admin_team_directory`, `admin_submission_directory`) that return `{ total, rows }` with server-side pagination and filtering; pages use TanStack Query with `keepPreviousData`, debounced search, and bounded page size. Never load unbounded tables in admin/judge routes.
+- RPC optional args must be spread conditionally (`...(x ? { p_arg: x } : {})`) — `exactOptionalPropertyTypes` rejects explicit `undefined`, and `null` fails the generated types.
+- Student submission autosave writes the RPC-returned row directly into the `["team-submissions", teamId]` cache instead of refetching; keep the flush-listener effect with a `[]` dependency array (per-render cleanup caused double saves).
 - Demo seed accounts share the password Ideathon2026! and must keep their @demo.in emails.
