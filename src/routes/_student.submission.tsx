@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_student/submission")({
   component: SubmissionPage,
 });
 
-type SaveState = "idle" | "saving" | "saved" | "error";
+type SaveState = "idle" | "saving" | "saved" | "error" | "offline";
 
 function SubmissionPage() {
   const { data: team, isLoading } = useQuery({
@@ -255,6 +255,7 @@ function StageEditor({
   const queryClient = useQueryClient();
   const saveRef = useRef<((submit: boolean) => Promise<void>) | null>(null);
   const finalized = useRef(false);
+  const backupKey = `sii-draft:${team.id}:${stage}`;
 
   // Deadline auto-submit: when the deadline has passed and a draft is still open,
   // finalise it the moment any member opens the form.
@@ -271,6 +272,16 @@ function StageEditor({
 
   async function save(submit: boolean) {
     if (!team.id) return;
+    // Keep an on-device copy first so a dropped connection never loses work.
+    try {
+      localStorage.setItem(backupKey, JSON.stringify({ at: Date.now(), fields, sutras: selectedSutras }));
+    } catch { /* storage full or blocked */ }
+    if (!navigator.onLine) {
+      dirty.current = true;
+      setSaveState("offline");
+      if (submit) toast.error("You're offline. Reconnect to submit — your work is kept on this device.");
+      return;
+    }
     setSaveState("saving");
     const payload: Record<string, unknown> = {
       team_id: team.id,
@@ -288,10 +299,17 @@ function StageEditor({
       p_submit: submit,
     });
     if (error) {
+      if (/fetch|network|load failed/i.test(error.message)) {
+        dirty.current = true;
+        setSaveState("offline");
+        if (submit) toast.error("Connection lost. Your work is kept on this device — try again when online.");
+        return;
+      }
       setSaveState("error");
       toast.error(error.message);
       return;
     }
+    try { localStorage.removeItem(backupKey); } catch { /* ignore */ }
     dirty.current = false;
     setSaveState("saved");
     const saved = data as unknown as SubmissionRow | null;
@@ -343,13 +361,39 @@ function StageEditor({
     const onHidden = () => {
       if (document.visibilityState === "hidden") flush();
     };
+    const onOnline = () => {
+      if (!dirty.current) return;
+      (saveRef.current ?? save)(false).catch(console.error);
+    };
+    const onOffline = () => setSaveState("offline");
     window.addEventListener("beforeunload", flush);
     document.addEventListener("visibilitychange", onHidden);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
     return () => {
       window.removeEventListener("beforeunload", flush);
       document.removeEventListener("visibilitychange", onHidden);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
       flush();
     };
+  }, []);
+
+  // Restore an unsent on-device copy (e.g. the network dropped before it saved).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(backupKey);
+      if (!raw) return;
+      const b = JSON.parse(raw) as { at: number; fields: typeof fields; sutras: string[] };
+      const updatedAt = (existing as { updated_at?: string | null } | null | undefined)?.updated_at;
+      const serverAt = updatedAt ? new Date(updatedAt).getTime() : 0;
+      if (b.at <= serverAt) { localStorage.removeItem(backupKey); return; }
+      setFields((f) => ({ ...f, ...b.fields }));
+      setSelectedSutras(b.sutras ?? []);
+      dirty.current = true;
+      toast.info("Restored unsaved changes from this device.");
+      if (navigator.onLine) setTimeout(() => (saveRef.current ?? save)(false).catch(console.error), 500);
+    } catch { /* ignore corrupt backup */ }
   }, []);
 
   async function attachStaged() {
@@ -416,6 +460,10 @@ function StageEditor({
     ) : saveState === "saved" ? (
       <span className="inline-flex items-center gap-1.5 text-xs text-sage">
         <Check className="h-3.5 w-3.5" /> All changes saved
+      </span>
+    ) : saveState === "offline" ? (
+      <span className="text-xs text-ochre">
+        No internet — your work is kept on this device and will save when you reconnect
       </span>
     ) : saveState === "error" ? (
       <span className="text-xs text-destructive">Save failed — retrying on next edit</span>
