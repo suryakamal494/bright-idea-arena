@@ -44,9 +44,9 @@ function StudentLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-linen">
+    <div className="app-shell min-h-screen bg-linen">
       <AppNav role="student" name={profile.full_name} />
-      <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4 md:pb-12">
+      <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-5 md:px-8 md:pb-12">
         <Outlet />
       </main>
     </div>
