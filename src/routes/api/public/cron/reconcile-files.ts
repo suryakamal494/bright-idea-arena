@@ -46,7 +46,10 @@ export const Route = createFileRoute("/api/public/cron/reconcile-files")({
           console.error("[reconcile-files] storage listing failed", objectsError);
           return Response.json({ ok: false, error: "storage_read_failed" }, { status: 500 });
         }
-        const bucketObjects = (objects ?? []) as { name: string; created_at: string }[];
+        const bucketObjects = (objects ?? []) as unknown as {
+          name: string;
+          created_at: string;
+        }[];
 
         const orphans = bucketObjects
           .filter(
