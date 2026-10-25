@@ -54,6 +54,7 @@ export type AuthContext = { user: User; roles: AppRole[]; profile: Profile | nul
 // Short-lived in-memory cache so route guards and child pages within the same
 // navigation share one roles+profile fetch instead of repeating the queries.
 let authCache: { userId: string; at: number; value: AuthContext } | null = null;
+let inflight: Promise<AuthContext> | null = null;
 const AUTH_CACHE_TTL = 60_000;
 
 export async function getAuthContext(): Promise<AuthContext | null> {
@@ -69,17 +70,25 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   ) {
     return authCache.value;
   }
-  const [roles, profile] = await Promise.all([
-    fetchRolesFor(user.id),
-    fetchProfileFor(user.id),
-  ]);
-  const value: AuthContext = { user, roles, profile };
-  authCache = { userId: user.id, at: Date.now(), value };
-  return value;
+  // Concurrent callers (e.g. preload + navigation) share one fetch.
+  if (!inflight) {
+    inflight = Promise.all([
+      fetchRolesFor(user.id),
+      fetchProfileFor(user.id),
+    ]).then(([roles, profile]) => {
+      const value: AuthContext = { user, roles, profile };
+      authCache = { userId: user.id, at: Date.now(), value };
+      return value;
+    }).finally(() => {
+      inflight = null;
+    });
+  }
+  return inflight;
 }
 
 export function clearAuthContext() {
   authCache = null;
+  inflight = null;
 }
 
 export async function fetchMyRoles(): Promise<AppRole[]> {
