@@ -174,3 +174,8 @@
   .app-shell:has([data-app-sidebar="expanded"]) { padding-left: 16rem; }
   .app-shell:has([data-app-sidebar="collapsed"]) { padding-left: 4.5rem; }
 }
+/* Phones: hard guarantee the desktop rail never renders or offsets content. */
+@media (max-width: 767.98px) {
+  [data-app-sidebar] { display: none !important; }
+  .app-shell { padding-left: 0 !important; }
+}
