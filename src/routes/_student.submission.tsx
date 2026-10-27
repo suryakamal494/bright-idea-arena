@@ -17,11 +17,13 @@ import { getSessionUser } from "@/lib/auth";
 import {
   MAX_TEAM_SIZE,
   MIN_TEAM_SIZE,
+  fetchCompetitionSettings,
   fetchGlobalStageSettings,
   fetchMyTeam,
   fetchSutras,
   fetchTeamMembers,
   stageOpen,
+  type PublishedResultRow,
   type StageSettingRow,
   type SubmissionRow,
   type SutraRow,
@@ -131,6 +133,23 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
   const s2 = list.find((s) => s.stage === 2);
   const s1Open = stageOpen(settings ?? null, 1);
   const s2Open = stageOpen(settings ?? null, 2);
+  const { data: competition } = useQuery({
+    queryKey: ["competition-settings"],
+    queryFn: fetchCompetitionSettings,
+  });
+  const twoStage = (competition?.stage_count ?? 2) === 2;
+  const { data: results } = useQuery({
+    queryKey: ["my-results", team.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("results")
+        .select("team_id,stage,outcome,published")
+        .eq("team_id", team.id);
+      return (data ?? []) as PublishedResultRow[];
+    },
+  });
+  const r1 = (results ?? []).find((r) => r.stage === 1);
+  const shortlisted = !!r1?.published && r1.outcome === "shortlisted";
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["team-submissions", team.id] });
@@ -141,7 +160,7 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
   return (
     <div className="space-y-5">
       <header>
-        <p className="eyebrow">Submission form · two stages</p>
+        <p className="eyebrow">Submission form · {twoStage ? "two stages" : "single stage"}</p>
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">
           {team.name} · {team.track?.name ?? "No theme selected"}
         </h1>
@@ -174,9 +193,11 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
             <TabsTrigger value="1" className="flex-1">
               Stage 1 · One-pager
             </TabsTrigger>
-            <TabsTrigger value="2" className="flex-1" disabled={!s2Open && !s2}>
-              Stage 2 · Final
-            </TabsTrigger>
+            {twoStage && (
+              <TabsTrigger value="2" className="flex-1" disabled={!s2Open && !s2}>
+                Stage 2 · Final
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="1">
             <StageEditor
@@ -189,24 +210,35 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
               onRefresh={refresh}
             />
           </TabsContent>
-          <TabsContent value="2">
-            {s1?.status !== "submitted" ? (
-              <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm text-ochre">
-                Submit your Stage 1 project one-pager first — Stage 2, the final submission,
-                unlocks once your concept is in review.
-              </div>
-            ) : (
-              <StageEditor
-                stage={2}
-                team={team}
-                existing={s2}
-                settings={settings ?? null}
-                open={s2Open}
-                files={(files.data ?? []).filter((f) => f.submission_id === s2?.id)}
-                onRefresh={refresh}
-              />
-            )}
-          </TabsContent>
+          {twoStage && (
+            <TabsContent value="2">
+              {s1?.status !== "submitted" ? (
+                <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm text-ochre">
+                  Submit your Stage 1 project one-pager first — Stage 2, the final submission,
+                  unlocks once your concept is in review.
+                </div>
+              ) : r1?.published && r1.outcome === "not_selected" ? (
+                <div className="rounded-xl border border-clay/40 bg-clay/10 p-4 text-sm font-medium text-clay">
+                  Your team was not selected for Round 2 — thank you for participating!
+                </div>
+              ) : !shortlisted ? (
+                <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm text-ochre">
+                  Round 1 results are not published yet. Stage 2 opens only for teams shortlisted
+                  after Round 1 — we'll show it here the moment results go live.
+                </div>
+              ) : (
+                <StageEditor
+                  stage={2}
+                  team={team}
+                  existing={s2}
+                  settings={settings ?? null}
+                  open={s2Open}
+                  files={(files.data ?? []).filter((f) => f.submission_id === s2?.id)}
+                  onRefresh={refresh}
+                />
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       )}
     </div>

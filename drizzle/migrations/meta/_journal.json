@@ -141,6 +141,20 @@
       "when": 1793097164738,
       "tag": "0019_admin_overview_kpis_student_count",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793120424672,
+      "tag": "0020_usernames_stage_setting_results",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793120453478,
+      "tag": "0021_submission_stage_gates_and_school_overview",
+      "breakpoints": true
     }
   ]
 }

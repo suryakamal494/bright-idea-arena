@@ -4,6 +4,7 @@ import { Brand } from "@/components/app-nav";
 
 export type AccessPass = {
   full_name: string;
+  username: string;
   email: string;
   password: string;
   grade?: number | null;
@@ -24,11 +25,19 @@ export function AccessPasses({ passes }: { passes: AccessPass[] }) {
         </Button>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {passes.map((p) => (
+        {passes.map((p, i) => (
           <div
-            key={p.email}
-            className="rounded-xl border-2 border-forest/80 bg-white p-4 break-inside-avoid"
+            key={`${p.email}-${i}`}
+            className={
+              "rounded-xl border-2 p-4 break-inside-avoid " +
+              (p.error ? "border-destructive/60 bg-destructive/5" : "border-forest/80 bg-white")
+            }
           >
+            {p.error && (
+              <p className="mb-2 rounded-md bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive">
+                {p.error}
+              </p>
+            )}
             <div className="flex items-start justify-between border-b border-dashed border-border pb-2">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest text-[11px] font-bold text-linen">
@@ -47,10 +56,13 @@ export function AccessPasses({ passes }: { passes: AccessPass[] }) {
             </div>
             <div className="mt-3 space-y-1.5 text-sm">
               <p className="font-semibold text-foreground">{p.full_name}</p>
-              <p className="text-muted-foreground">{p.email}</p>
+              <p className="text-xs text-muted-foreground">
+                Login: <span className="font-mono font-medium text-foreground">{p.username}</span> or{" "}
+                <span className="font-mono">{p.email}</span>
+              </p>
               {p.school_name && <p className="text-xs text-muted-foreground">{p.school_name}</p>}
               <div className="mt-2 rounded-md bg-muted px-2.5 py-1.5">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Temporary password</span>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Password</span>
                 <p className="font-mono text-sm font-semibold text-forest">{p.password}</p>
               </div>
             </div>

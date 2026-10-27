@@ -3,22 +3,27 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type StudentSeed = {
   full_name: string;
-  email: string;
+  username: string;
+  password: string;
   grade: number;
-  parent_email?: string;
-  phone?: string;
+  email: string;
+  mobile?: string;
 };
 
 export type CreatedPass = {
   full_name: string;
+  username: string;
   email: string;
   password: string;
   grade: number;
   school_name: string;
-  error?: string;
+  mobile?: string | undefined;
+  error?: string | undefined;
 };
 
 const COORDINATOR = "coordinator";
+const USERNAME_RE = /^[a-z0-9._-]{3,30}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const claimCoordinatorRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -57,12 +62,49 @@ export const claimCoordinatorRole = createServerFn({ method: "POST" })
     return { school };
   });
 
-function generatePassword(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let out = "";
-  for (let i = 0; i < 10; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
-  return out;
-}
+export type BulkAvailability = {
+  usernames: string[];
+  emails: string[];
+};
+
+/**
+ * Inline uniqueness pre-check for the bulk entry table: returns the usernames
+ * and emails that already exist on the platform, so the school sees the
+ * collision on the field itself before submitting.
+ */
+export const checkBulkAvailability = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { students: Pick<StudentSeed, "username" | "email">[] }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isCoord } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: COORDINATOR,
+    });
+    if (!isCoord) throw new Error("Only school coordinators can check availability.");
+
+    const usernames = [
+      ...new Set(data.students.map((s) => s.username.trim().toLowerCase()).filter(Boolean)),
+    ];
+    const emails = [
+      ...new Set(data.students.map((s) => s.email.trim().toLowerCase()).filter(Boolean)),
+    ];
+    if (!usernames.length && !emails.length) return { usernames: [], emails: [] };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [uRes, eRes] = await Promise.all([
+      usernames.length
+        ? supabaseAdmin.from("profiles").select("username").in("username", usernames)
+        : Promise.resolve({ data: [] as { username: string }[] }),
+      emails.length
+        ? supabaseAdmin.from("profiles").select("email").in("email", emails)
+        : Promise.resolve({ data: [] as { email: string }[] }),
+    ]);
+    return {
+      usernames: ((uRes.data ?? []) as { username: string }[]).map((r) => r.username),
+      emails: ((eRes.data ?? []) as { email: string }[]).map((r) => r.email),
+    } satisfies BulkAvailability;
+  });
 
 export const createStudentAccounts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -86,32 +128,74 @@ export const createStudentAccounts = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const results: CreatedPass[] = [];
 
-    for (const student of data.students) {
-      const password = generatePassword();
+    // Global uniqueness: every username and email must be new on the platform.
+    const usernames = data.students.map((s) => s.username.trim().toLowerCase());
+    const emails = data.students.map((s) => s.email.trim().toLowerCase());
+    const [existingUsers, existingEmails] = await Promise.all([
+      supabaseAdmin.from("profiles").select("username").in("username", usernames),
+      supabaseAdmin.from("profiles").select("email").in("email", emails),
+    ]);
+    const takenUsers = new Set(((existingUsers.data ?? []) as { username: string }[]).map((r) => r.username));
+    const takenEmails = new Set(((existingEmails.data ?? []) as { email: string }[]).map((r) => r.email));
+
+    for (const [index, student] of data.students.entries()) {
+      const username = student.username.trim().toLowerCase();
+      const email = student.email.trim().toLowerCase();
+      const rowError =
+        !student.full_name.trim()
+          ? "Name is required"
+          : !USERNAME_RE.test(username)
+            ? "Username must be 3–30 characters (letters, numbers, . _ -)"
+            : takenUsers.has(username)
+              ? "Username already used on the platform"
+              : !EMAIL_RE.test(email)
+                ? "Enter a valid email"
+                : takenEmails.has(email)
+                  ? "Email already used on the platform"
+                  : !student.password || student.password.length < 8
+                    ? "Password must be at least 8 characters"
+                    : null;
+      if (rowError) {
+        results.push({
+          full_name: student.full_name,
+          username,
+          email: student.email,
+          password: "",
+          grade: student.grade,
+          school_name: school,
+          mobile: student.mobile,
+          error: rowError,
+        });
+        continue;
+      }
       const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-        email: student.email.trim().toLowerCase(),
-        password,
+        email,
+        password: student.password,
         email_confirm: true, // school-registered students get immediate access
         user_metadata: {
-          full_name: student.full_name,
+          full_name: student.full_name.trim(),
+          username,
           school_name: school,
           city: profile?.city ?? null,
           grade: student.grade,
-          parent_email: student.parent_email ?? null,
-          phone: student.phone ?? null,
+          phone: student.mobile ?? null,
         },
       });
       if (error || !created?.user) {
         results.push({
           full_name: student.full_name,
-          email: student.email,
+          username,
+          email,
           password: "",
           grade: student.grade,
           school_name: school,
+          mobile: student.mobile,
           error: error?.message ?? "Account creation failed",
         });
         continue;
       }
+      takenUsers.add(username);
+      takenEmails.add(email);
       // Ensure the student role exists (signup trigger usually adds it).
       const { data: hasRole } = await supabaseAdmin.rpc("has_role", {
         _user_id: created.user.id,
@@ -123,46 +207,15 @@ export const createStudentAccounts = createServerFn({ method: "POST" })
           .insert({ user_id: created.user.id, role: "student" });
       }
       results.push({
-        full_name: student.full_name,
-        email: student.email.trim().toLowerCase(),
-        password,
+        full_name: student.full_name.trim(),
+        username,
+        email,
+        password: student.password,
         grade: student.grade,
         school_name: school,
+        mobile: student.mobile,
       });
+      void index;
     }
     return results;
-  });
-
-export type RosterEntry = {
-  id: string;
-  full_name: string;
-  email: string;
-  grade: number | null;
-  parent_email: string | null;
-};
-
-export const fetchSchoolRoster = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { data: isCoord } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: COORDINATOR,
-    });
-    if (!isCoord) throw new Error("Only school coordinators can view the roster.");
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("school_name")
-      .eq("id", userId)
-      .maybeSingle();
-    if (!profile?.school_name) return [];
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
-      .from("profiles")
-      .select("id, full_name, email, grade, parent_email, school_name")
-      .eq("school_name", profile.school_name)
-      .order("full_name");
-    return ((data ?? []) as (RosterEntry & { school_name: string })[]).filter(
-      (r) => r.id !== userId,
-    ) as RosterEntry[];
   });

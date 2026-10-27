@@ -17,6 +17,7 @@ import {
   Megaphone,
   PenLine,
   Scale,
+  Trophy,
   UserCog,
   Users,
 } from "lucide-react";
@@ -54,12 +55,13 @@ const NAV: Record<string, NavItem[]> = {
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/registrations", label: "Registrations", icon: Users },
     { to: "/admin/submissions", label: "Submissions", icon: Inbox },
+    { to: "/admin/results", label: "Results", icon: Trophy },
     { to: "/admin/deadlines", label: "Deadlines", icon: CalendarClock },
     { to: "/admin/judges", label: "Judges", icon: Scale },
     { to: "/admin/broadcasts", label: "Broadcast", icon: Megaphone },
   ],
   judge: [{ to: "/judge", label: "Evaluation queue", icon: Inbox }],
-  coordinator: [{ to: "/coordinator", label: "School roster", icon: Users }],
+  coordinator: [{ to: "/coordinator", label: "My portal", icon: Users }],
 };
 
 export function Brand({ compact = false }: { compact?: boolean }) {
@@ -93,7 +95,7 @@ export function OrgFooter() {
 const MOBILE_SHORT: Record<string, string> = {
   "Submission form": "Submission",
   "Evaluation queue": "Queue",
-  "School roster": "Roster",
+  "My portal": "Portal",
   Registrations: "Students",
 };
 
