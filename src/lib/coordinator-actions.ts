@@ -17,8 +17,8 @@ export type CreatedPass = {
   password: string;
   grade: number;
   school_name: string;
-  mobile?: string;
-  error?: string;
+  mobile?: string | undefined;
+  error?: string | undefined;
 };
 
 const COORDINATOR = "coordinator";

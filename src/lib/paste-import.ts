@@ -90,7 +90,8 @@ function guessMapping(headers: string[] | null, matrix: string[][]): ColumnKind[
     return vals.filter(test).length / vals.length > 0.6;
   };
   for (let i = 0; i < cols; i++) {
-    if (mapping[i] !== "ignore") continue;
+    const kind = mapping[i] ?? "ignore";
+    if (kind !== "ignore") continue;
     if (!used.has("email") && majority(i, (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))) {
       mapping[i] = "email";
     } else if (!used.has("grade") && majority(i, (v) => /^(8|9|10|11|12)$/.test(v))) {
@@ -103,13 +104,15 @@ function guessMapping(headers: string[] | null, matrix: string[][]): ColumnKind[
     } else {
       continue;
     }
-    used.add(mapping[i]);
+    const assigned = mapping[i];
+    if (assigned) used.add(assigned);
   }
 
   // Remaining text columns map in order: name → username → password.
   const order: ColumnKind[] = ["full_name", "username", "password"];
   for (let i = 0; i < cols; i++) {
-    if (mapping[i] !== "ignore") continue;
+    const kind = mapping[i] ?? "ignore";
+    if (kind !== "ignore") continue;
     const next = order.find((k) => !used.has(k));
     if (!next) break;
     mapping[i] = next;
@@ -128,18 +131,16 @@ export function parsePastedTable(text: string): ParsedTable {
   const delim = detectDelimiter(rawLines);
   const rows = rawLines.map((l) => l.split(delim).map((c) => c.trim().replace(/^"|"$/g, "")));
 
-  if (rows.length > 1 && looksLikeHeader(rows[0])) {
-    const headers = rows[0];
+  const first = rows[0];
+  if (first && rows.length > 1 && looksLikeHeader(first)) {
     const matrix = rows.slice(1);
-    return { headers, matrix, mapping: guessMapping(headers, matrix) };
+    return { headers: first, matrix, mapping: guessMapping(first, matrix) };
   }
   // A lone row of header-like labels with no data is still treated as a header.
-  if (rows.length === 1 && looksLikeHeader(rows[0])) {
-    const headers = rows[0];
-    return { headers, matrix: [], mapping: guessMapping(headers, []) };
+  if (first && rows.length === 1 && looksLikeHeader(first)) {
+    return { headers: first, matrix: [], mapping: guessMapping(first, []) };
   }
-  const matrix = rows;
-  return { headers: null, matrix, mapping: guessMapping(null, matrix) };
+  return { headers: null, matrix: rows, mapping: guessMapping(null, rows) };
 }
 
 function normalizeUsername(v: string): string {

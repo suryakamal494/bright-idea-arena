@@ -5,9 +5,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export type ClientSession = {
   access_token: string;
   refresh_token: string;
-  expires_in?: number;
-  expires_at?: number;
-  token_type?: string;
+  expires_in?: number | undefined;
+  expires_at?: number | undefined;
+  token_type?: string | undefined;
 };
 
 /**

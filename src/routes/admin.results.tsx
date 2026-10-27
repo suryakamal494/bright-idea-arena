@@ -91,7 +91,12 @@ function ResultsManager() {
     const { error } = await supabase
       .from("results")
       .upsert(
-        { team_id: teamId, stage, outcome, updated_at: new Date().toISOString() },
+        {
+          team_id: teamId,
+          stage,
+          outcome: outcome as "shortlisted" | "not_selected" | "selected",
+          updated_at: new Date().toISOString(),
+        },
         { onConflict: "team_id,stage" },
       );
     if (error) {
@@ -296,7 +301,7 @@ function OutcomeSelect({
   onChange,
 }: {
   value: string | undefined;
-  published?: boolean;
+  published?: boolean | undefined;
   options: string[];
   onChange: (v: string) => void;
 }) {
