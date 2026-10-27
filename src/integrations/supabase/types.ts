@@ -52,6 +52,24 @@ export type Database = {
           },
         ]
       }
+      competition_settings: {
+        Row: {
+          id: number
+          stage_count: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          stage_count?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          stage_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       judge_assignments: {
         Row: {
           created_at: string
@@ -129,6 +147,7 @@ export type Database = {
           parent_email: string | null
           phone: string | null
           school_name: string | null
+          username: string | null
         }
         Insert: {
           city?: string | null
@@ -141,6 +160,7 @@ export type Database = {
           parent_email?: string | null
           phone?: string | null
           school_name?: string | null
+          username?: string | null
         }
         Update: {
           city?: string | null
@@ -153,8 +173,53 @@ export type Database = {
           parent_email?: string | null
           phone?: string | null
           school_name?: string | null
+          username?: string | null
         }
         Relationships: []
+      }
+      results: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          outcome: Database["public"]["Enums"]["result_outcome"]
+          published: boolean
+          published_at: string | null
+          stage: number
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          outcome: Database["public"]["Enums"]["result_outcome"]
+          published?: boolean
+          published_at?: string | null
+          stage: number
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          outcome?: Database["public"]["Enums"]["result_outcome"]
+          published?: boolean
+          published_at?: string | null
+          stage?: number
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "results_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rubric_criteria: {
         Row: {
@@ -662,6 +727,7 @@ export type Database = {
     }
     Enums: {
       app_role: "student" | "coordinator" | "judge" | "admin" | "mentor"
+      result_outcome: "shortlisted" | "not_selected" | "selected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -790,6 +856,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["student", "coordinator", "judge", "admin", "mentor"],
+      result_outcome: ["shortlisted", "not_selected", "selected"],
     },
   },
 } as const

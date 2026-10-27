@@ -28,3 +28,10 @@
 - [x] Evidence-file reconciliation job: server route + daily HTTP cron schedule (reconcile-evidence-files, bearer-secret auth, 24h grace period)
 - [x] QA report fixes: admin overview counts student-role accounts only (migration 0019, 19 students); zoya@demo.in detached from Aqua Guardians so the Teamless student persona can test team creation/joining; inline red validation on coordinator roster rows and the admin broadcast form; one-click "Demo role" switcher in the top bar
 - [ ] Load test with database-state reconciliation (k6 against published URL, ~2,000 users + 650-team burst) before the event
+- [ ] Coordinator portal revamp: rename to "My Portal", Excel paste-import box (CSV via same parser), mandatory per-student username + password + unique unverified email + mobile, no parent email, proper students table with team ID
+- [ ] Username login: profiles.username unique across platform; sign-in accepts email or username (server-side resolution, password verified by auth service)
+- [ ] School progress view: school-scoped RPC; coordinator sees teams (ID, members), stage 1/2 status, published results
+- [ ] Global stage-count setting (1 or 2); stage 2 hidden everywhere when 1
+- [ ] Shortlist + results: admin outcomes per team, publish round-1 and final results; publishing gates stage 2 in the backend; scores stay internal
+- [ ] Results cards on student dashboard + school portal (published outcomes only)
+- [ ] Cluster-level competition: parked per user (school/track fields kept extensible)
