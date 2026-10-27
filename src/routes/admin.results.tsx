@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCompetitionSettings } from "@/lib/team";
@@ -58,6 +58,7 @@ function ResultsManager() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const searchTimer = useRef<number | null>(null);
 
   const { data: teamsRes, isLoading } = useQuery({
     queryKey: ["admin-results-teams", search, page],
@@ -177,9 +178,10 @@ function ResultsManager() {
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value);
-              window.clearTimeout((setSearch as unknown as { t?: number }).t);
-              (setSearch as unknown as { t?: number }).t = window.setTimeout(() => {
-                setSearch(e.target.value);
+              if (searchTimer.current) window.clearTimeout(searchTimer.current);
+              const value = e.target.value;
+              searchTimer.current = window.setTimeout(() => {
+                setSearch(value);
                 setPage(0);
               }, 350);
             }}
