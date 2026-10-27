@@ -89,6 +89,24 @@ export async function fetchGlobalStageSettings(): Promise<StageSettingRow | null
   return (data as StageSettingRow) ?? null;
 }
 
+/** Global competition configuration: 1-stage or 2-stage event. */
+export async function fetchCompetitionSettings(): Promise<{ stage_count: number } | null> {
+  const { data } = await supabase
+    .from("competition_settings")
+    .select("stage_count")
+    .eq("id", 1)
+    .maybeSingle();
+  return (data as { stage_count: number } | null) ?? null;
+}
+
+export type PublishedResultRow = {
+  team_id: string;
+  stage: number;
+  outcome: "shortlisted" | "not_selected" | "selected";
+  published: boolean;
+  published_at: string | null;
+};
+
 export function stageOpen(settings: StageSettingRow | null, stage: 1 | 2): boolean {
   if (!settings) return false;
   const open = stage === 1 ? settings.stage1_open : settings.stage2_open;

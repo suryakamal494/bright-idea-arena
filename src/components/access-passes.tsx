@@ -4,6 +4,7 @@ import { Brand } from "@/components/app-nav";
 
 export type AccessPass = {
   full_name: string;
+  username: string;
   email: string;
   password: string;
   grade?: number | null;
@@ -47,10 +48,13 @@ export function AccessPasses({ passes }: { passes: AccessPass[] }) {
             </div>
             <div className="mt-3 space-y-1.5 text-sm">
               <p className="font-semibold text-foreground">{p.full_name}</p>
-              <p className="text-muted-foreground">{p.email}</p>
+              <p className="text-xs text-muted-foreground">
+                Login: <span className="font-mono font-medium text-foreground">{p.username}</span> or{" "}
+                <span className="font-mono">{p.email}</span>
+              </p>
               {p.school_name && <p className="text-xs text-muted-foreground">{p.school_name}</p>}
               <div className="mt-2 rounded-md bg-muted px-2.5 py-1.5">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Temporary password</span>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Password</span>
                 <p className="font-mono text-sm font-semibold text-forest">{p.password}</p>
               </div>
             </div>
