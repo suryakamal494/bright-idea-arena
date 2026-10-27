@@ -6,8 +6,8 @@ Make school-side registration paste-friendly and fool-proof, let users sign in w
 ## Decisions locked in (from your answers)
 - Schools **must** type a username AND password for every student — no auto-generation. Rows missing either cannot be submitted.
 - Usernames are **unique across the whole platform**.
+- Student email is **mandatory and unique across the platform** for school-added students too — any well-formed email is accepted and never verified, but a duplicate triggers an inline error. One email = one account, so email login is always unambiguous (your duplicate-email concern).
 - Stage count (1 or 2) is one **global** setting for the competition.
-- Duplicate student emails from a school are allowed; those extra accounts sign in with **username** (the email they gave is kept as data).
 
 ---
 
@@ -18,7 +18,7 @@ Make school-side registration paste-friendly and fool-proof, let users sign in w
 **Changes:**
 1. Rename nav item and page heading to **My Portal**.
 2. New **"Paste from Excel"** box: the school copies their Excel table, pastes it into a large box, presses **Paste data** — rows appear in the editable entry table. Parser (`src/lib/paste-import.ts`) handles tabs (Excel default), commas, semicolons; auto-detects an optional header row with fuzzy matching (name / full name / student name, class / grade / standard, username, password, email / email id / mail, mobile / phone / contact). A column-mapping preview shows what was detected so mistakes are visible before creating accounts. CSV upload stays as a secondary button using the same parser.
-3. Entry fields become: **Full name\***, **Class (8–12)\***, **Username\*** (inline uniqueness check, lowercase-trimmed), **Password\*** (min 8), **Student email\*** (mandatory, duplicates allowed in bulk), **Student mobile**. No school name (comes from the school account), **no parent email** — left blank in data.
+3. Entry fields become: **Full name\***, **Class (8–12)\***, **Username\*** (inline uniqueness check, lowercase-trimmed), **Password\*** (min 8), **Student email\*** (mandatory, unique across the platform, never verified), **Student mobile**. No school name (comes from the school account), **no parent email** — left blank in data.
 4. "Create accounts" is disabled until every row has all mandatory fields; inline errors per field (duplicate username across platform, bad email format, grade out of range).
 5. Registered students become a proper **table**: Name · Username · Class · Email · Mobile · Team ID · Access pass (printable passes keep showing the password the school set, generated at creation).
 
