@@ -24,6 +24,7 @@
 - [x] Account/demo role switching wipes cached queries + auth context before navigating (no stale cross-role data)
 - [x] Demo judge queue has an unscored Stage 2 entry (TEAM-HEALTH-007 · DawaDot) so the full score-entry flow is testable
 - [x] Speed/scalability audit: DB healthy (13/60 connections, no exhaustion), indexes verified, 50 user requests with zero failures; root cause of perceived slowness = sequential backend roundtrips × user network latency with no pending feedback
-- [ ] Speed fixes (migration 0016 done): one-roundtrip auth context RPC, instant sign-out, router pending UI, admin overview single RPC — verify with Playwright timings
-- [ ] Evidence-file reconciliation job: server route + daily HTTP cron schedule (reconcile-evidence-files)
+- [x] Speed fixes (migration 0016 done): one-roundtrip auth context RPC, instant sign-out, router pending UI, admin overview single RPC — verified with Playwright timings (0.71s admin demo login)
+- [x] Evidence-file reconciliation job: server route + daily HTTP cron schedule (reconcile-evidence-files, bearer-secret auth, 24h grace period)
+- [x] QA report fixes: admin overview counts student-role accounts only (migration 0019, 19 students); zoya@demo.in detached from Aqua Guardians so the Teamless student persona can test team creation/joining; inline red validation on coordinator roster rows and the admin broadcast form; one-click "Demo role" switcher in the top bar
 - [ ] Load test with database-state reconciliation (k6 against published URL, ~2,000 users + 650-team burst) before the event
