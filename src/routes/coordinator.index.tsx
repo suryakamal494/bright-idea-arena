@@ -112,7 +112,7 @@ function CoordinatorPortal() {
   const [rows, setRows] = useState<StudentSeed[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
   const [passes, setPasses] = useState<CreatedPass[]>([]);
-  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(true);
   const [pasteText, setPasteText] = useState("");
   const [parsed, setParsed] = useState<ParsedTable | null>(null);
 
