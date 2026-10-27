@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
-import { fetchGlobalStageSettings, fetchMyTeam, stageOpen, type StageSettingRow, type SubmissionRow, type TeamRow } from "@/lib/team";
+import { fetchCompetitionSettings, fetchGlobalStageSettings, fetchMyTeam, stageOpen, type PublishedResultRow, type StageSettingRow, type TeamRow } from "@/lib/team";
 import { Countdown } from "@/components/countdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,11 @@ function Dashboard() {
     queryKey: ["stage-settings-global"],
     queryFn: fetchGlobalStageSettings,
   });
+  const { data: competition } = useQuery({
+    queryKey: ["competition-settings"],
+    queryFn: fetchCompetitionSettings,
+  });
+  const twoStage = (competition?.stage_count ?? 2) === 2;
   const { data: announcements } = useQuery({
     queryKey: ["announcements"],
     queryFn: async () => {
@@ -47,6 +52,17 @@ function Dashboard() {
         .order("created_at", { ascending: false })
         .limit(6);
       return (data ?? []) as AnnouncementRow[];
+    },
+  });
+  const { data: results } = useQuery({
+    queryKey: ["my-results", team?.id],
+    enabled: !!team,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("results")
+        .select("team_id,stage,outcome,published,published_at")
+        .eq("team_id", team!.id);
+      return (data ?? []) as PublishedResultRow[];
     },
   });
 
@@ -64,11 +80,45 @@ function Dashboard() {
       ) : (
         <>
           <TeamSummaryCard team={team} />
-          <StageCards settings={settings ?? null} team={team} />
+          <ResultsBanner results={results ?? []} twoStage={twoStage} />
+          <StageCards settings={settings ?? null} team={team} twoStage={twoStage} results={results ?? []} />
         </>
       )}
 
       <AnnouncementsFeed items={announcements ?? []} />
+    </div>
+  );
+}
+
+function ResultsBanner({ results, twoStage }: { results: PublishedResultRow[]; twoStage: boolean }) {
+  const r1 = results.find((r) => r.stage === 1);
+  const r2 = results.find((r) => r.stage === 2);
+  const finalOutcome = twoStage ? r2 : r1;
+  const lines: { text: string; tone: "good" | "bad" }[] = [];
+  if (twoStage && r1?.published) {
+    if (r1.outcome === "shortlisted") lines.push({ text: "Shortlisted for Round 2 — the final prototype round is open for your team.", tone: "good" });
+    else lines.push({ text: "Round 1 result: not selected for Round 2. Thank you for participating!", tone: "bad" });
+  }
+  if (finalOutcome?.published) {
+    if (finalOutcome.outcome === "selected") lines.push({ text: "Final result: Selected. Congratulations — your team is a winner!", tone: "good" });
+    else lines.push({ text: "Final result: not selected. Thank you for participating!", tone: "bad" });
+  }
+  if (!lines.length) return null;
+  return (
+    <div className="space-y-2">
+      {lines.map((l) => (
+        <div
+          key={l.text}
+          className={
+            "rounded-xl border p-4 text-sm font-medium " +
+            (l.tone === "good"
+              ? "border-sage/40 bg-sage/10 text-secondary-foreground"
+              : "border-clay/40 bg-clay/10 text-clay")
+          }
+        >
+          {l.text}
+        </div>
+      ))}
     </div>
   );
 }
