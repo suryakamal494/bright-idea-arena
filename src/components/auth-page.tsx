@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, clearAuthContext, getAuthContext, homeFor } from "@/lib/auth";
+import { loginWithIdentifier, sendResetWithIdentifier } from "@/lib/auth-identifier.functions";
 
 /**
  * Wipes every cached read (the previous user's teams, roster, roles) before
@@ -166,7 +167,7 @@ export function AuthPage() {
 }
 
 function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,26 +177,46 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (err) {
-      setBusy(false);
-      setError(/invalid login/i.test(err.message) ? "Incorrect email or password." : err.message);
-      return;
-    }
+    const id = identifier.trim();
     try {
+      if (id.includes("@")) {
+        const { error: err } = await supabase.auth.signInWithPassword({ email: id, password });
+        if (err) {
+          setError(/invalid login/i.test(err.message) ? "Incorrect email/username or password." : err.message);
+          return;
+        }
+      } else {
+        // Username sign-in: the server resolves the account and verifies the
+        // password with the auth service, then hands back the session.
+        const res = await loginWithIdentifier({ data: { identifier: id, password } });
+        if (res.kind !== "session") {
+          setError("Incorrect email/username or password.");
+          return;
+        }
+        const { error: sessErr } = await supabase.auth.setSession({
+          access_token: res.session.access_token,
+          refresh_token: res.session.refresh_token,
+        });
+        if (sessErr) {
+          setError(sessErr.message);
+          return;
+        }
+      }
       await onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Incorrect email/username or password.");
     } finally {
       setBusy(false);
     }
   }
 
-  if (forgot) return <ForgotPasswordForm initialEmail={email} onBack={() => setForgot(false)} />;
+  if (forgot) return <ForgotPasswordForm initialIdentifier={identifier} onBack={() => setForgot(false)} />;
 
   return (
     <form onSubmit={submit} className="mt-4 space-y-4">
       <div className="space-y-1.5">
-        <Label>Email</Label>
-        <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.in" />
+        <Label>Email or username</Label>
+        <Input autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="you@school.in or username" />
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
@@ -214,10 +235,11 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
   );
 }
 
-function ForgotPasswordForm({ initialEmail, onBack }: { initialEmail: string; onBack: () => void }) {
-  const [email, setEmail] = useState(initialEmail);
+function ForgotPasswordForm({ initialIdentifier, onBack }: { initialIdentifier: string; onBack: () => void }) {
+  const [identifier, setIdentifier] = useState(initialIdentifier);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -227,50 +249,73 @@ function ForgotPasswordForm({ initialEmail, onBack }: { initialEmail: string; on
     return () => window.clearTimeout(t);
   }, [cooldown]);
 
-  const clean = email.trim().toLowerCase();
-  const isDemo = clean.endsWith("@demo.in");
+  const clean = identifier.trim();
+  const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean);
+  const demoEmail = looksEmail && clean.toLowerCase().endsWith("@demo.in");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (isDemo) return;
-    setBusy(true);
-    setError(null);
-    const { error: err } = await supabase.auth.resetPasswordForEmail(clean, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setBusy(false);
-    if (err && /rate|security purposes|429/i.test(err.message)) {
-      setError("Too many requests. Please wait a minute before trying again.");
-      setCooldown(60);
+    if (demoEmail) {
+      setIsDemo(true);
       return;
     }
-    // Same message whether or not the account exists, so emails can't be probed.
-    setSent(true);
-    setCooldown(60);
+    setBusy(true);
+    setError(null);
+    setSent(false);
+    try {
+      if (looksEmail) {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(clean.toLowerCase(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (err && /rate|security purposes|429/i.test(err.message)) {
+          setError("Too many requests. Please wait a minute before trying again.");
+          setCooldown(60);
+          return;
+        }
+        setSent(true);
+        setIsDemo(false);
+      } else {
+        // Username: the server resolves the account and sends the reset mail.
+        const res = await sendResetWithIdentifier({
+          data: { identifier: clean, origin: window.location.origin },
+        });
+        if (res.kind === "demo") {
+          setIsDemo(true);
+        } else {
+          setSent(true);
+          setIsDemo(false);
+        }
+      }
+      setCooldown(60);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the reset link");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <form onSubmit={submit} className="mt-4 space-y-4">
       <div>
         <h3 className="font-semibold text-forest">Reset your password</h3>
-        <p className="text-sm text-muted-foreground">Enter your account email and we'll send you a reset link.</p>
+        <p className="text-sm text-muted-foreground">Enter your account email or username and we'll send you a reset link.</p>
       </div>
       <div className="space-y-1.5">
-        <Label>Email</Label>
-        <Input type="email" autoComplete="email" required value={email} onChange={(e) => { setEmail(e.target.value); setSent(false); }} placeholder="you@school.in" />
+        <Label>Email or username</Label>
+        <Input autoComplete="username" required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); }} placeholder="you@school.in or username" />
       </div>
-      {isDemo && (
+      {(isDemo || demoEmail) && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm">
           Demo accounts can't be reset. Their password is <span className="font-mono">{DEMO_PASSWORD}</span>.
         </p>
       )}
-      {sent && !isDemo && (
+      {sent && !isDemo && !demoEmail && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm" role="status">
-          If an account exists for this email, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour.
+          If an account exists for this {looksEmail ? "email" : "username"}, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour.
         </p>
       )}
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
-      <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy || isDemo || cooldown > 0}>
+      <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy || demoEmail || cooldown > 0}>
         {busy ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : sent ? "Resend link" : "Send reset link"}
       </Button>
       <button type="button" onClick={onBack} className="block w-full text-center text-sm text-muted-foreground hover:text-foreground">

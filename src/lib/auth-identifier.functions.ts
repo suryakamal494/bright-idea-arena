@@ -71,6 +71,9 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const identifier = data.identifier.trim();
     if (EMAIL_RE.test(identifier)) {
+      if (identifier.toLowerCase().endsWith("@demo.in")) {
+        return { kind: "demo" as const };
+      }
       return { kind: "email" as const, email: identifier };
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -80,6 +83,9 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
       .eq("username", identifier.toLowerCase())
       .maybeSingle();
     if (profile?.email) {
+      if (profile.email.toLowerCase().endsWith("@demo.in")) {
+        return { kind: "demo" as const };
+      }
       const url = process.env["SUPABASE_URL"]!;
       const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
       const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;
