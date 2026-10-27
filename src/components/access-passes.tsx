@@ -9,6 +9,7 @@ export type AccessPass = {
   password: string;
   grade?: number | null;
   school_name?: string | null;
+  error?: string | undefined;
 };
 
 /** Printable student access passes for the school coordinator portal. */
