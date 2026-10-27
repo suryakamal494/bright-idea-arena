@@ -253,12 +253,18 @@ function TeamSummaryCard({ team }: { team: TeamRow }) {
 function StageCards({
   settings,
   team,
+  twoStage,
+  results,
 }: {
   settings: StageSettingRow | null;
   team: TeamRow;
+  twoStage: boolean;
+  results: PublishedResultRow[];
 }) {
   const s1 = stageOpen(settings, 1);
   const s2 = stageOpen(settings, 2);
+  const r1 = results.find((r) => r.stage === 1);
+  const shortlisted = r1?.published && r1.outcome === "shortlisted";
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Card className="flex flex-col">
@@ -280,25 +286,33 @@ function StageCards({
           </Button>
         </CardContent>
       </Card>
-      <Card className="flex flex-col">
-        <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 space-y-0">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Stage 2</p>
-            <CardTitle className="font-display mt-1 text-lg leading-snug">Final prototype</CardTitle>
-          </div>
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><CalendarClock className="h-4.5 w-4.5 text-ochre" /></span>
-        </CardHeader>
-        <CardContent className="mt-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          {s2 ? (
-            <Countdown deadline={settings?.stage2_deadline ?? null} />
-          ) : (
-            <p className="text-sm font-medium text-destructive">Closed</p>
-          )}
-          <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
-            <Link to="/submission">Open submission form</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      {twoStage && (
+        <Card className="flex flex-col">
+          <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 space-y-0">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Stage 2</p>
+              <CardTitle className="font-display mt-1 text-lg leading-snug">Final prototype</CardTitle>
+            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted"><CalendarClock className="h-4.5 w-4.5 text-ochre" /></span>
+          </CardHeader>
+          <CardContent className="mt-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            {!r1?.published ? (
+              <p className="text-sm font-medium text-muted-foreground">Round 1 results not published yet</p>
+            ) : !shortlisted ? (
+              <p className="text-sm font-medium text-destructive">Your team was not selected for Round 2</p>
+            ) : s2 ? (
+              <Countdown deadline={settings?.stage2_deadline ?? null} />
+            ) : (
+              <p className="text-sm font-medium text-destructive">Closed</p>
+            )}
+            {shortlisted && (
+              <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
+                <Link to="/submission">Open submission form</Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
