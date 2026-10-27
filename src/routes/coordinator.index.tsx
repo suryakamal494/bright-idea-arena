@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileSpreadsheet, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   createStudentAccounts,
   fetchSchoolRoster,
@@ -129,7 +130,7 @@ function CoordinatorPortal() {
         </CardHeader>
         <CardContent className="space-y-2.5">
           {rows.map((row, i) => {
-            const err = allErrs[i];
+            const err = allErrs[i] ?? {};
             const flag = (bad?: string) =>
               bad ? "border-destructive focus-visible:ring-destructive" : undefined;
             return (
