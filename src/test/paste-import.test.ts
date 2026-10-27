@@ -13,7 +13,7 @@ describe("paste-import parser", () => {
     expect(parsed.matrix).toHaveLength(2);
     expect(parsed.mapping).toEqual(["full_name", "grade", "username", "password", "email", "mobile"]);
     const rows = buildRows(parsed.matrix, parsed.mapping);
-    expect(rows[0]).toEqual({
+    expect(rows[0]!).toEqual({
       full_name: "Surya Kumar",
       username: "surya.k",
       password: "secret123",
@@ -28,28 +28,28 @@ describe("paste-import parser", () => {
     const parsed = parsePastedTable(text);
     expect(parsed.headers).toBeNull();
     const rows = buildRows(parsed.matrix, parsed.mapping);
-    expect(rows[0].full_name).toBe("Surya Kumar");
-    expect(rows[0].email).toBe("surya@school.in");
-    expect(rows[0].grade).toBe(10);
-    expect(rows[0].password).toBe("secret123");
-    expect(rows[0].username).toBe("surya.k");
+    expect(rows[0]!.full_name).toBe("Surya Kumar");
+    expect(rows[0]!.email).toBe("surya@school.in");
+    expect(rows[0]!.grade).toBe(10);
+    expect(rows[0]!.password).toBe("secret123");
+    expect(rows[0]!.username).toBe("surya.k");
   });
 
   it("tolerates messy header spellings", () => {
     const text = "name of student\tstandard\tlogin id\tpassword\tmail id\nAmit Verma\tGrade 11\tamit.v\tlongpass1\tamit@x.in";
     const parsed = parsePastedTable(text);
     const rows = buildRows(parsed.matrix, parsed.mapping);
-    expect(rows[0].full_name).toBe("Amit Verma");
-    expect(rows[0].username).toBe("amit.v");
-    expect(rows[0].email).toBe("amit@x.in");
-    expect(rows[0].grade).toBe(0); // "Grade 11" is not a bare number — flagged for manual fix
+    expect(rows[0]!.full_name).toBe("Amit Verma");
+    expect(rows[0]!.username).toBe("amit.v");
+    expect(rows[0]!.email).toBe("amit@x.in");
+    expect(rows[0]!.grade).toBe(0); // "Grade 11" is not a bare number — flagged for manual fix
   });
 
   it("normalizes usernames and emails", () => {
     const parsed = parsePastedTable("Name\tUsername\tPassword\tClass\tEmail\nRiya P\tRiya.P 9\tgoodpass9\t10\tRIYA@School.IN ");
     const rows = buildRows(parsed.matrix, parsed.mapping);
-    expect(rows[0].username).toBe("riya.p9");
-    expect(rows[0].email).toBe("riya@school.in");
+    expect(rows[0]!.username).toBe("riya.p9");
+    expect(rows[0]!.email).toBe("riya@school.in");
   });
 
   it("returns no rows for an empty paste", () => {
