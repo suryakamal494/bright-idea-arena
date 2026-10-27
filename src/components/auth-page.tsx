@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, LogIn } from "lucide-react";
+import { FlaskConical, Loader2, LogIn } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+/** Temporary demo-login button. Set to false before launch to hide it entirely. */
+const SHOW_DEMO_LOGINS = true;
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -80,13 +91,57 @@ export function AuthPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-linen">
-      <header className="mx-auto w-full max-w-6xl px-5 py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
         <Brand />
+        {/* TEMPORARY: remove before launch by setting SHOW_DEMO_LOGINS = false. */}
+        {SHOW_DEMO_LOGINS && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="border-dashed border-clay/50 text-clay hover:bg-clay/5">
+                <FlaskConical className="mr-1.5 h-4 w-4" /> Demo logins
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-forest">Demo logins</DialogTitle>
+                <DialogDescription>
+                  Temporary preview accounts. Password{" "}
+                  <span className="font-mono text-forest">{DEMO_PASSWORD}</span>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                {DEMO_ACCOUNTS.map((a) => (
+                  <button
+                    key={a.email}
+                    onClick={() => demoSignIn(a.email)}
+                    disabled={loadingDemo !== null}
+                    className="flex w-full items-center justify-between rounded-lg border border-border px-3.5 py-2.5 text-left transition-colors hover:border-clay/50 hover:bg-clay/5 disabled:opacity-60"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{a.label}</p>
+                      <p className="text-xs text-muted-foreground">{a.blurb}</p>
+                    </div>
+                    {loadingDemo === a.email ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-clay" />
+                    ) : (
+                      <LogIn className="h-4 w-4 text-clay" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </header>
-      <main className="mx-auto grid w-full max-w-5xl flex-1 items-start gap-8 px-5 pb-16 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-          <h1 className="font-display text-2xl font-semibold text-forest">Welcome</h1>
-          <Tabs defaultValue="signin" className="mt-4">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16 pt-4 sm:pt-10">
+        <div className="mb-6 text-center">
+          <h1 className="font-display text-2xl font-semibold text-forest sm:text-3xl">Welcome to the portal</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Sign in to continue, or create a student account.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          <Tabs defaultValue="signin">
             <TabsList className="w-full">
               <TabsTrigger value="signin" className="flex-1">
                 Sign in
@@ -124,42 +179,13 @@ export function AuthPage() {
             </svg>
             Continue with Google
           </Button>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Registering a school?{" "}
-            <a href="/school-register" className="font-medium text-clay underline underline-offset-2">
-              School registration
-            </a>
-          </p>
         </div>
-
-        {/* Demo quick logins */}
-        <aside className="rounded-2xl border border-dashed border-clay/40 bg-card p-5">
-          <h2 className="font-display text-lg font-semibold text-forest">Explore with a demo role</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Seeded preview accounts, password{" "}
-            <span className="font-mono text-[11px] text-forest">{DEMO_PASSWORD}</span>. One click to switch roles.
-          </p>
-          <div className="mt-4 space-y-2">
-            {DEMO_ACCOUNTS.map((a) => (
-              <button
-                key={a.email}
-                onClick={() => demoSignIn(a.email)}
-                disabled={loadingDemo !== null}
-                className="flex w-full items-center justify-between rounded-lg border border-border px-3.5 py-2.5 text-left transition-colors hover:border-clay/50 hover:bg-clay/5 disabled:opacity-60"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{a.label}</p>
-                  <p className="text-xs text-muted-foreground">{a.blurb}</p>
-                </div>
-                {loadingDemo === a.email ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-clay" />
-                ) : (
-                  <LogIn className="h-4 w-4 text-clay" />
-                )}
-              </button>
-            ))}
-          </div>
-        </aside>
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          Registering a school?{" "}
+          <a href="/school-register" className="font-medium text-clay underline underline-offset-2">
+            School registration
+          </a>
+        </p>
       </main>
       <OrgFooter />
     </div>
