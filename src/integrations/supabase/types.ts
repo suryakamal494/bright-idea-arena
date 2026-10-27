@@ -627,6 +627,7 @@ export type Database = {
         Returns: Json
       }
       auto_submit_due_submissions: { Args: never; Returns: number }
+      coordinator_school_overview: { Args: never; Returns: Json }
       create_team: {
         Args: { p_name: string; p_track_id: string }
         Returns: {
