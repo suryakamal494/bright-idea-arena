@@ -22,7 +22,7 @@ Make school-side registration paste-friendly and fool-proof, let users sign in w
 4. "Create accounts" is disabled until every row has all mandatory fields; inline errors per field (duplicate username across platform, bad email format, grade out of range).
 5. Registered students become a proper **table**: Name · Username · Class · Email · Mobile · Team ID · Access pass (printable passes keep showing the password the school set, generated at creation).
 
-**Edge cases:** duplicate usernames blocked inline and by a unique database index; duplicate emails get an internal login address automatically (username login still works); paste with no recognisable columns shows a clear error instead of garbage rows.
+**Edge cases:** duplicate usernames and duplicate emails are blocked inline and by unique database indexes (a duplicate email shows "this email is already registered — use another"); paste with no recognisable columns shows a clear error instead of garbage rows; passwords appear only on the printable access pass generated at creation, never stored in plain text.
 
 ## Part 2 — Sign in with username or email
 
@@ -31,7 +31,9 @@ Make school-side registration paste-friendly and fool-proof, let users sign in w
 **Changes:**
 1. Add a **username** to every account (new column on profiles, unique index; existing accounts seeded with usernames from their email names; demo accounts get readable ones).
 2. Login field becomes **"Email or username"**. A new public server function resolves a username to the account server-side, verifies the password through the normal auth service, and returns the session — the password check is never bypassed, and emails are not exposed to the browser.
-3. Schools continue with school email + password (unchanged). Students may use either. Password-reset field accepts email or username too; username-only accounts (duplicate-email case, no reachable mailbox) see "ask your school coordinator to reset your password" instead of a silent dead end.
+3. Schools continue with school email + password (unchanged). Students may use either. Because every account email is unique, password reset works for everyone: the reset field accepts email or username too.
+
+**Google sign-up (already live):** "Continue with Google" is on the homepage sign-in. A brand-new Google student lands on the existing **"Complete your profile"** step, which collects class grade, school, city, mobile and parent email before the dashboard opens — nothing new to build there; the plan keeps that flow and it applies to Google students automatically.
 
 ## Part 3 — Schools see student progress
 
