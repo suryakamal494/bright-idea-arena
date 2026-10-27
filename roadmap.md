@@ -28,10 +28,11 @@
 - [x] Evidence-file reconciliation job: server route + daily HTTP cron schedule (reconcile-evidence-files, bearer-secret auth, 24h grace period)
 - [x] QA report fixes: admin overview counts student-role accounts only (migration 0019, 19 students); zoya@demo.in detached from Aqua Guardians so the Teamless student persona can test team creation/joining; inline red validation on coordinator roster rows and the admin broadcast form; one-click "Demo role" switcher in the top bar
 - [ ] Load test with database-state reconciliation (k6 against published URL, ~2,000 users + 650-team burst) before the event
-- [ ] Coordinator portal revamp: rename to "My Portal", Excel paste-import box (CSV via same parser), mandatory per-student username + password + unique unverified email + mobile, no parent email, proper students table with team ID
-- [ ] Username login: profiles.username unique across platform; sign-in accepts email or username (server-side resolution, password verified by auth service)
-- [ ] School progress view: school-scoped RPC; coordinator sees teams (ID, members), stage 1/2 status, published results
-- [ ] Global stage-count setting (1 or 2); stage 2 hidden everywhere when 1
-- [ ] Shortlist + results: admin outcomes per team, publish round-1 and final results; publishing gates stage 2 in the backend; scores stay internal
-- [ ] Results cards on student dashboard + school portal (published outcomes only)
+- [x] Coordinator portal revamp: renamed "My Portal", Excel paste-import box (CSV via same parser) with fuzzy header detection and column-mapping preview, mandatory per-student username + password + unique unverified email + mobile, no parent email, students table with team ID, printable passes show login (username or email) + password; weak-password (HIBP) rejections surface on the pass
+- [x] Username login: profiles.username unique across platform (migration 0020 backfill); sign-in and password reset accept email or username — resolution + password grant server-side in src/lib/auth-identifier.functions.ts
+- [x] School progress view: coordinator_school_overview RPC (migration 0021); "Teams & progress" shows teams, members, stage 1/2 status, published results
+- [x] Global stage-count setting (1 or 2) on admin Deadlines page with stage-2-exists warning; stage 2 hidden everywhere when 1; upsert_submission rejects stage 2 in single-stage mode
+- [x] Shortlist + results: admin Results page (migration 0020 results table + RLS) — Round 1 outcome per team, publish/hide Round 1, final outcome + publish; publishing gates stage 2 in the backend; scores stay internal
+- [x] Results cards on student dashboard + school portal (published outcomes only)
+- [x] Verification: typecheck, 12 tests (incl. new paste-import parser tests), build OK; Playwright verified paste import, account creation, username login, coordinator teams view, results publish, student banner + stage-2 unlock, single-stage mode
 - [ ] Cluster-level competition: parked per user (school/track fields kept extensible)
