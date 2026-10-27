@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from "react";
-import { ArrowLeft, FileSpreadsheet, Printer, Table2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
@@ -93,44 +93,32 @@ function SchoolRegister() {
       </header>
       <main className="mx-auto grid w-full max-w-5xl flex-1 items-start gap-8 px-5 pb-16 lg:grid-cols-2">
         <div>
-          <p className="eyebrow">For teachers & coordinators</p>
+          <p className="eyebrow">For schools</p>
           <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-forest">
-            School registration
+            Register your school
           </h1>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-            Register your school for the Social Innovation Ideathon, add students with quick
-            tabular entry or a CSV upload, and hand out printed access passes — each student gets
-            their own login, no email round-trips needed.
+            Register your school to take part in the Social Innovation Ideathon. One faculty
+            coordinator signs up on behalf of the school and guides students from Grades 8–12
+            through the competition.
           </p>
-          <div className="mt-8 space-y-4">
+          <ol className="mt-8 space-y-4">
             {[
-              {
-                icon: Table2,
-                t: "Quick tabular entry",
-                b: "Type students straight into a row grid — name, grade, contact — and create accounts in one go.",
-              },
-              {
-                icon: FileSpreadsheet,
-                t: "CSV upload",
-                b: "Upload a spreadsheet with name, grade, email and parent contact columns.",
-              },
-              {
-                icon: Printer,
-                t: "Printable access passes",
-                b: "Download print-ready passes with each student's temporary password for the computer lab.",
-              },
-            ].map((f) => (
-              <div key={f.t} className="flex gap-3.5">
-                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-clay/12 text-clay">
-                  <f.icon className="h-5 w-5" />
+              { t: "Register your school", b: "Create the school's coordinator account with your official details." },
+              { t: "Enrol your students", b: "Add participating students from your coordinator portal." },
+              { t: "Follow their progress", b: "See teams, submissions and published results in one place." },
+            ].map((f, i) => (
+              <li key={f.t} className="flex gap-3.5">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-clay/12 text-sm font-semibold text-clay">
+                  {i + 1}
                 </span>
                 <div>
                   <p className="font-semibold text-foreground">{f.t}</p>
                   <p className="text-sm text-muted-foreground">{f.b}</p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
