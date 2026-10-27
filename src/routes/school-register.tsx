@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from "react";
-import { ArrowLeft, FileSpreadsheet, Printer, Table2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
