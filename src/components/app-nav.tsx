@@ -12,15 +12,22 @@ import {
   Inbox,
   LayoutDashboard,
   KeyRound,
+  Loader2,
   LogOut,
   Megaphone,
   PenLine,
   Scale,
+  UserCog,
   Users,
 } from "lucide-react";
 import icorgLogo from "@/assets/icorg-logo.png.asset.json";
 import { cn } from "@/lib/utils";
-import { clearAuthContext, type AppRole } from "@/lib/auth";
+import {
+  DEMO_ACCOUNTS,
+  DEMO_PASSWORD,
+  clearAuthContext,
+  type AppRole,
+} from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -113,6 +120,31 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
   }
 
   const [pwOpen, setPwOpen] = useState(false);
+  const [switching, setSwitching] = useState<string | null>(null);
+
+  /** One-click demo persona switch: signs in as the seeded account and lands
+   * on its home route after wiping the previous user's cached data. */
+  async function switchTo(email: string) {
+    setSwitching(email);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: DEMO_PASSWORD,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      const account = DEMO_ACCOUNTS.find((a) => a.email === email);
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      clearAuthContext();
+      await router.navigate({ to: account?.home ?? "/dashboard" });
+    } finally {
+      setSwitching(null);
+    }
+  }
+
   async function handleSignOut() {
     setBusy(true);
     try {
@@ -270,6 +302,39 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
           <span className="hidden shrink-0 font-display text-sm font-semibold text-forest md:block" aria-hidden>
             Social Innovation Ideathon
           </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
+                aria-label="Switch demo role"
+                title="Switch demo role (for testing)"
+                disabled={switching !== null}
+              >
+                {switching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserCog className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Demo role</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel className="text-muted-foreground">Switch demo role</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {DEMO_ACCOUNTS.map((a) => (
+                <DropdownMenuItem
+                  key={a.email}
+                  onSelect={() => switchTo(a.email)}
+                  disabled={switching !== null}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium">{a.label}</span>
+                    <span className="block text-xs text-muted-foreground">{a.blurb}</span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="shrink-0 md:hidden" aria-label="Account">

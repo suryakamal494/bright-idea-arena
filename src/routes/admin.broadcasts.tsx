@@ -41,6 +41,8 @@ const KINDS = [
   { value: "resource", label: "Resource link" },
 ];
 
+type FormErrors = { title?: string; body?: string; link?: string };
+
 function Broadcasts() {
   const queryClient = useQueryClient();
   const [kind, setKind] = useState("broadcast");
@@ -48,6 +50,7 @@ function Broadcasts() {
   const [body, setBody] = useState("");
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const { data: items } = useQuery({
     queryKey: ["admin-announcements"],
@@ -60,14 +63,26 @@ function Broadcasts() {
     },
   });
 
+  function validate(): FormErrors {
+    const errs: FormErrors = {};
+    if (!title.trim()) errs.title = "Give the announcement a title.";
+    if (!body.trim()) errs.body = "Write the message students should see.";
+    const l = link.trim();
+    if (l && !/^https?:\/\/\S+\.\S+/i.test(l)) errs.link = "Enter a full URL starting with https://";
+    return errs;
+  }
+
   async function publish(e: React.FormEvent) {
     e.preventDefault();
+    const errs = validate();
+    setErrors(errs);
+    if (errs.title || errs.body || errs.link) return; // inline errors guide the fix
     setBusy(true);
     const user = await getSessionUser();
     const { error } = await supabase.from("announcements").insert({
       kind,
-      title,
-      body,
+      title: title.trim(),
+      body: body.trim(),
       link: link.trim() || null,
       created_by: user?.id ?? null,
     });
@@ -77,6 +92,7 @@ function Broadcasts() {
     setTitle("");
     setBody("");
     setLink("");
+    setErrors({});
     queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
   }
 
@@ -85,6 +101,9 @@ function Broadcasts() {
     if (error) { toast.error(error.message); return; }
     queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
   }
+
+  const flag = (bad?: string) =>
+    bad ? "border-destructive focus-visible:ring-destructive" : undefined;
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[400px_1fr]">
@@ -95,7 +114,7 @@ function Broadcasts() {
         </header>
         <Card>
           <CardContent className="pt-5">
-            <form onSubmit={publish} className="space-y-3.5">
+            <form onSubmit={publish} noValidate className="space-y-3.5">
               <div className="space-y-1.5">
                 <Label>Type</Label>
                 <Select value={kind} onValueChange={setKind}>
@@ -113,15 +132,37 @@ function Broadcasts() {
               </div>
               <div className="space-y-1.5">
                 <Label>Title</Label>
-                <Input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Prototype clinic on Saturday" />
+                <Input
+                  aria-invalid={!!errors.title}
+                  className={flag(errors.title)}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Prototype clinic on Saturday"
+                />
+                {errors.title && <p className="text-xs text-destructive" role="alert">{errors.title}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Message</Label>
-                <Textarea required rows={4} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details students should see…" />
+                <Textarea
+                  rows={4}
+                  aria-invalid={!!errors.body}
+                  className={flag(errors.body)}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Details students should see…"
+                />
+                {errors.body && <p className="text-xs text-destructive" role="alert">{errors.body}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Link (optional)</Label>
-                <Input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://zoom.us/… or toolkit URL" />
+                <Input
+                  aria-invalid={!!errors.link}
+                  className={flag(errors.link)}
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                  placeholder="https://zoom.us/… or toolkit URL"
+                />
+                {errors.link && <p className="text-xs text-destructive" role="alert">{errors.link}</p>}
               </div>
               <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
                 <Megaphone className="mr-1.5 h-4 w-4" /> {busy ? "Publishing…" : "Publish"}

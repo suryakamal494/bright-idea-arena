@@ -21,6 +21,20 @@ export const Route = createFileRoute("/coordinator/")({
   component: CoordinatorPortal,
 });
 
+type RowErrors = { name?: string; email?: string; grade?: string };
+
+function rowErrors(row: StudentSeed, all: StudentSeed[]): RowErrors {
+  const errs: RowErrors = {};
+  if (!row.full_name.trim()) errs.name = "Name is required";
+  const email = row.email.trim();
+  if (!email) errs.email = "Email is required";
+  else if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = "Enter a valid email";
+  else if (all.filter((x) => x.email.trim().toLowerCase() === email.toLowerCase()).length > 1)
+    errs.email = "Duplicate email in this list";
+  if (row.grade && (row.grade < 8 || row.grade > 12)) errs.grade = "Grade must be 8–12";
+  return errs;
+}
+
 function CoordinatorPortal() {
   const queryClient = useQueryClient();
   const { data: roster, isLoading } = useQuery({
@@ -32,25 +46,29 @@ function CoordinatorPortal() {
   const [busy, setBusy] = useState(false);
   const [passes, setPasses] = useState<CreatedPass[]>([]);
 
+  // Inline validation: every keystroke re-checks each row so problems show
+  // next to the field instead of only after a failed submit.
+  const allErrs = rows.map((row) => rowErrors(row, rows));
+  const hasErrors = allErrs.some((e) => e.name || e.email || e.grade);
+
   function updateRow(i: number, patch: Partial<StudentSeed>) {
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
   }
 
   async function createAccounts() {
-    const valid = rows.filter((r) => r.full_name.trim() && r.email.trim());
-    if (valid.length === 0) { toast.error("Add at least one student with name and email."); return; }
+    if (hasErrors) return; // the inline errors already explain what to fix
     setBusy(true);
     try {
-      const results = await createStudentAccounts({ data: { students: valid } });
+      const results = await createStudentAccounts({ data: { students: rows } });
       const ok = results.filter((r) => !r.error);
       const failed = results.filter((r) => r.error);
       if (ok.length) {
-        toast.success(`${ok.length} student account${ok.length === 1 ? "" : "s"} created`);
         setPasses((p) => [...p, ...ok]);
+        toast.success(`${ok.length} student account${ok.length === 1 ? "" : "s"} created`);
       }
       if (failed.length) {
-        toast.error(`${failed.length} failed — likely duplicate emails.`);
         setPasses((p) => [...p, ...failed]);
+        toast.error(`${failed.length} failed — likely duplicate emails.`);
       }
       setRows([{ full_name: "", email: "", grade: 8, parent_email: "" }]);
       queryClient.invalidateQueries({ queryKey: ["school-roster"] });
@@ -75,7 +93,10 @@ function CoordinatorPortal() {
         parent_email: cols[3] || "",
       });
     }
-    if (!seeds.length) { toast.error("No valid rows found (need name, email, grade columns)."); return; }
+    if (!seeds.length) {
+      toast.error("No valid rows found (need name, email, grade columns).");
+      return;
+    }
     setRows((r) => [...r.filter((x) => x.full_name || x.email), ...seeds]);
     toast.info(`${seeds.length} rows loaded from CSV — review and press "Create accounts".`);
   }
@@ -108,43 +129,67 @@ function CoordinatorPortal() {
           </label>
         </CardHeader>
         <CardContent className="space-y-2.5">
-          {rows.map((row, i) => (
-            <div key={i} className="grid gap-2 sm:grid-cols-[1.4fr_1.4fr_72px_1.4fr_36px]">
-              <Input
-                placeholder="Full name"
-                value={row.full_name}
-                onChange={(e) => updateRow(i, { full_name: e.target.value })}
-              />
-              <Input
-                placeholder="Email"
-                type="email"
-                value={row.email}
-                onChange={(e) => updateRow(i, { email: e.target.value })}
-              />
-              <Input
-                type="number"
-                min={8}
-                max={12}
-                value={row.grade}
-                onChange={(e) => updateRow(i, { grade: Number(e.target.value) || 8 })}
-              />
-              <Input
-                placeholder="Parent email (optional)"
-                type="email"
-                value={row.parent_email ?? ""}
-                onChange={(e) => updateRow(i, { parent_email: e.target.value })}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Remove row"
-                onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))}
-                disabled={rows.length === 1}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+          {rows.map((row, i) => {
+            const err = allErrs[i] ?? {};
+            const flag = (bad?: string) =>
+              bad ? "border-destructive focus-visible:ring-destructive" : undefined;
+            return (
+              <div key={i} className="space-y-1">
+                <div className="grid gap-2 sm:grid-cols-[1.4fr_1.4fr_72px_1.4fr_36px]">
+                  <Input
+                    placeholder="Full name"
+                    aria-invalid={!!err.name}
+                    className={flag(err.name)}
+                    value={row.full_name}
+                    onChange={(e) => updateRow(i, { full_name: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Email"
+                    type="email"
+                    aria-invalid={!!err.email}
+                    className={flag(err.email)}
+                    value={row.email}
+                    onChange={(e) => updateRow(i, { email: e.target.value })}
+                  />
+                  <Input
+                    type="number"
+                    min={8}
+                    max={12}
+                    aria-label="Grade"
+                    aria-invalid={!!err.grade}
+                    className={flag(err.grade)}
+                    value={row.grade}
+                    onChange={(e) => updateRow(i, { grade: Number(e.target.value) || 8 })}
+                  />
+                  <Input
+                    placeholder="Parent email (optional)"
+                    type="email"
+                    value={row.parent_email ?? ""}
+                    onChange={(e) => updateRow(i, { parent_email: e.target.value })}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remove row"
+                    onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))}
+                    disabled={rows.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                {(err.name || err.email || err.grade) && (
+                  <p className="text-xs text-destructive" role="alert">
+                    {[err.name, err.email, err.grade].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          {hasErrors && !busy && (
+            <p className="text-sm text-destructive" role="alert">
+              Fix the highlighted rows — each student needs a name and a valid email (grade 8–12).
+            </p>
+          )}
           <div className="flex flex-wrap gap-2 pt-1">
             <Button
               variant="outline"
@@ -153,7 +198,7 @@ function CoordinatorPortal() {
             >
               <Plus className="mr-1.5 h-4 w-4" /> Add row
             </Button>
-            <Button className="bg-clay hover:bg-clay/90" size="sm" onClick={createAccounts} disabled={busy}>
+            <Button className="bg-clay hover:bg-clay/90" size="sm" onClick={createAccounts} disabled={busy || hasErrors}>
               {busy ? "Creating…" : "Create accounts"}
             </Button>
           </div>
