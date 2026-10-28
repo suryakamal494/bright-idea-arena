@@ -53,10 +53,10 @@ const NAV: Record<string, NavItem[]> = {
   ],
   admin: [
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
+    { to: "/admin/deadlines", label: "Deadlines & stages", icon: CalendarClock },
     { to: "/admin/registrations", label: "Registrations", icon: Users },
     { to: "/admin/submissions", label: "Submissions", icon: Inbox },
     { to: "/admin/results", label: "Results", icon: Trophy },
-    { to: "/admin/deadlines", label: "Deadlines", icon: CalendarClock },
     { to: "/admin/judges", label: "Judges", icon: Scale },
     { to: "/admin/broadcasts", label: "Broadcast", icon: Megaphone },
   ],
@@ -97,6 +97,7 @@ const MOBILE_SHORT: Record<string, string> = {
   "Evaluation queue": "Queue",
   "My portal": "Portal",
   Registrations: "Students",
+  "Deadlines & stages": "Deadlines",
 };
 
 export function AppNav({ role, name }: { role: AppRole; name: string }) {
