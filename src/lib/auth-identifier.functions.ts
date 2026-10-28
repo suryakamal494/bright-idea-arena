@@ -18,7 +18,7 @@ export type ClientSession = {
  * browser.
  */
 export const loginWithIdentifier = createServerFn({ method: "POST" })
-  .inputValidator((input: { identifier: string; password: string }) => input)
+  .validator((input: { identifier: string; password: string }) => input)
   .handler(async ({ data }) => {
     const identifier = data.identifier.trim();
     if (!identifier || !data.password) {
@@ -67,7 +67,7 @@ export const loginWithIdentifier = createServerFn({ method: "POST" })
  * same whether or not the account exists, so usernames can't be probed.
  */
 export const sendResetWithIdentifier = createServerFn({ method: "POST" })
-  .inputValidator((input: { identifier: string; origin: string }) => input)
+  .validator((input: { identifier: string; origin: string }) => input)
   .handler(async ({ data }) => {
     const identifier = data.identifier.trim();
     if (EMAIL_RE.test(identifier)) {

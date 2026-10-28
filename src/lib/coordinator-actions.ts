@@ -74,7 +74,7 @@ export type BulkAvailability = {
  */
 export const checkBulkAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { students: Pick<StudentSeed, "username" | "email">[] }) => input)
+  .validator((input: { students: Pick<StudentSeed, "username" | "email">[] }) => input)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: isCoord } = await supabase.rpc("has_role", {
@@ -108,7 +108,7 @@ export const checkBulkAvailability = createServerFn({ method: "POST" })
 
 export const createStudentAccounts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { students: StudentSeed[] }) => input)
+  .validator((input: { students: StudentSeed[] }) => input)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: isCoord } = await supabase.rpc("has_role", {
