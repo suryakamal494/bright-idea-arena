@@ -188,7 +188,7 @@ function SubmissionsManager() {
                 setSelectedTeam(null);
               }}
               className={`-mb-px border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
-                round === r ? "border-terracotta text-forest" : "border-transparent text-muted-foreground hover:text-forest"
+                round === r ? "border-clay text-forest" : "border-transparent text-muted-foreground hover:text-forest"
               }`}
             >
               {r === 1 ? "Round 1 — Idea screening" : "Round 2 — Shortlisted teams"}
