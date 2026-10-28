@@ -329,6 +329,33 @@ function CreateTeamForm({ onDone }: { onDone: () => void }) {
           </SelectContent>
         </Select>
       </div>
+      {clusterRequired && (
+        lockedCluster ? (
+          <div className="space-y-1.5">
+            <Label>Cluster</Label>
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+              <span className="font-semibold text-forest">{lockedCluster.name}</span>{" "}
+              <span className="text-xs text-muted-foreground">· set by your school coordinator</span>
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <Label>Cluster</Label>
+            <Select value={clusterId} onValueChange={setClusterId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pick your cluster" />
+              </SelectTrigger>
+              <SelectContent>
+                {(clusters ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )
+      )}
       <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
         {busy ? "Creating…" : "Create team (you become captain)"}
       </Button>
@@ -368,5 +395,79 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
         {busy ? "Joining…" : "Join team"}
       </Button>
     </form>
+  );
+}
+
+/**
+ * Cluster gate: while clusters exist, the captain of a cluster-less team picks
+ * one here — submissions stay blocked until the team belongs to a cluster.
+ */
+function ClusterGate({
+  team,
+  onChanged,
+}: {
+  team: NonNullable<Awaited<ReturnType<typeof fetchMyTeam>>>;
+  onChanged: () => void;
+}) {
+  const isCaptain = true; // refined below via user query
+  return <ClusterGateInner team={team} onChanged={onChanged} isCaptainHint={isCaptain} />;
+}
+
+function ClusterGateInner({
+  team,
+  onChanged,
+}: {
+  team: NonNullable<Awaited<ReturnType<typeof fetchMyTeam>>>;
+  onChanged: () => void;
+  isCaptainHint?: boolean;
+}) {
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+    enabled: !team.cluster,
+  });
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  if (team.cluster || (clusters ?? []).length === 0) return null;
+  const isCaptain = !!team.captain_id && team.captain_id === user?.id;
+
+  async function save() {
+    if (!value) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("set_team_cluster", { p_cluster_id: value });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Cluster saved for your team");
+    onChanged();
+  }
+
+  return (
+    <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4">
+      <p className="text-sm font-semibold text-ochre">Choose your team's cluster</p>
+      <p className="mt-1 text-sm text-foreground/90">
+        {isCaptain
+          ? "Every team belongs to a competition cluster. Pick yours — the submission form stays locked until you do."
+          : "Every team belongs to a competition cluster. Your captain picks it on this page — the submission form stays locked until then."}
+      </p>
+      {isCaptain && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Select value={value} onValueChange={setValue}>
+            <SelectTrigger className="w-48" aria-label="Team cluster">
+              <SelectValue placeholder="Pick a cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              {(clusters ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" className="bg-clay hover:bg-clay/90" onClick={save} disabled={busy || !value}>
+            {busy ? "Saving…" : "Save cluster"}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
