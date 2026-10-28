@@ -27,6 +27,7 @@ type AnnouncementRow = {
 };
 
 function Dashboard() {
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
   const { data: team } = useQuery({
     queryKey: ["my-team"],
     queryFn: async () => {
@@ -80,6 +81,7 @@ function Dashboard() {
       ) : (
         <>
           <TeamSummaryCard team={team} />
+          {!team.cluster && <ClusterPrompt team={team} isCaptain={!!me && team.captain_id === me.id} />}
           <ResultsBanner results={results ?? []} twoStage={twoStage} />
           <StageCards settings={settings ?? null} team={team} twoStage={twoStage} results={results ?? []} />
         </>
@@ -217,6 +219,7 @@ function TeamSummaryCard({ team }: { team: TeamRow }) {
           <CardTitle className="font-display text-2xl text-forest">{team.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Theme · {team.track?.name ?? "Not set"}
+            {team.cluster ? ` · Cluster · ${team.cluster.name}` : " · Cluster not set"}
           </p>
         </div>
         <span className="rounded-full bg-forest px-3 py-1 font-mono text-xs font-semibold text-linen">
