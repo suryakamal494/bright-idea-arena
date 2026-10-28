@@ -61,6 +61,7 @@ function DeadlineManager() {
       </div>
 
       <ThemesCard />
+      <ClustersCard />
     </div>
   );
 }
@@ -227,6 +228,112 @@ function ThemeRow({ track, onSaved, onDelete }: { track: Track; onSaved: () => v
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={save} disabled={!changed || !name.trim()}>Save</Button>
         <Button variant="ghost" size="sm" onClick={onDelete} aria-label={`Delete ${track.name}`}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </li>
+  );
+}
+
+type Cluster = { id: string; name: string; description: string | null };
+
+function ClustersCard() {
+  const queryClient = useQueryClient();
+  const { data: clusters } = useQuery({
+    queryKey: ["admin-clusters"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clusters").select("id,name,description").order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as Cluster[];
+    },
+  });
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ["admin-clusters"] });
+    queryClient.invalidateQueries({ queryKey: ["clusters"] });
+  }
+
+  async function add() {
+    const n = name.trim();
+    if (!n) return;
+    setBusy(true);
+    const { error } = await supabase.from("clusters").insert({ name: n, description: desc.trim() || null });
+    setBusy(false);
+    if (error) {
+      toast.error(error.code === "23505" ? "A cluster with this name already exists" : error.message);
+      return;
+    }
+    setName(""); setDesc("");
+    toast.success(`Cluster "${n}" added`);
+    refresh();
+  }
+
+  async function remove(c: Cluster) {
+    const { count } = await supabase.from("teams").select("id", { count: "exact", head: true }).eq("cluster_id", c.id);
+    if ((count ?? 0) > 0) {
+      toast.error(`${count} team(s) belong to "${c.name}" — it can't be deleted.`);
+      return;
+    }
+    if (!window.confirm(`Delete cluster "${c.name}"?`)) return;
+    const { error } = await supabase.from("clusters").delete().eq("id", c.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Cluster deleted");
+    refresh();
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-lg">Clusters</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Schools and student teams pick one cluster each. With no clusters here, every cluster
+          selector and filter across the platform disappears.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ul className="divide-y divide-border rounded-lg border border-border">
+          {(clusters ?? []).map((c) => (
+            <ClusterRow key={c.id} cluster={c} onSaved={refresh} onDelete={() => remove(c)} />
+          ))}
+          {clusters?.length === 0 && <li className="p-3 text-sm text-muted-foreground">No clusters — cluster features are off.</li>}
+        </ul>
+        <div className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+          <Input placeholder="Cluster name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder="Short description (optional)" value={desc} onChange={(e) => setDesc(e.target.value)} />
+          <Button className="bg-clay hover:bg-clay/90" onClick={add} disabled={busy || !name.trim()}>
+            Add cluster
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ClusterRow({ cluster, onSaved, onDelete }: { cluster: Cluster; onSaved: () => void; onDelete: () => void }) {
+  const [name, setName] = useState(cluster.name);
+  const [desc, setDesc] = useState(cluster.description ?? "");
+  const changed = name.trim() !== cluster.name || desc.trim() !== (cluster.description ?? "");
+
+  async function save() {
+    const { error } = await supabase
+      .from("clusters")
+      .update({ name: name.trim(), description: desc.trim() || null })
+      .eq("id", cluster.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Cluster updated");
+    onSaved();
+  }
+
+  return (
+    <li className="grid gap-2 p-3 sm:grid-cols-[1fr_2fr_auto] sm:items-center">
+      <Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Cluster name" />
+      <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description" aria-label="Cluster description" />
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={save} disabled={!changed || !name.trim()}>Save</Button>
+        <Button variant="ghost" size="sm" onClick={onDelete} aria-label={`Delete ${cluster.name}`}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>

@@ -17,7 +17,8 @@ import {
   type ColumnKind,
   type ParsedTable,
 } from "@/lib/paste-import";
-import { fetchCompetitionSettings } from "@/lib/team";
+import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
+import { getSessionUser } from "@/lib/auth";
 import { AccessPasses } from "@/components/access-passes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ type OverviewTeam = {
   team_id: string;
   team_code: string | null;
   team_name: string;
+  cluster_name: string | null;
   members: { full_name: string; grade: number | null }[];
   stage1_status: string | null;
   stage2_status: string | null;
@@ -100,14 +102,29 @@ function CoordinatorPortal() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("coordinator_school_overview");
       if (error) throw new Error(error.message);
-      return data as { teams: OverviewTeam[]; students: OverviewStudent[] };
+      return data as {
+        cluster: { id: string | null; name: string | null } | null;
+        teams: OverviewTeam[];
+        students: OverviewStudent[];
+      };
     },
+  });
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+  const { data: myId } = useQuery({
+    queryKey: ["coordinator-me-id"],
+    queryFn: async () => (await getSessionUser())?.id ?? null,
   });
   const { data: competition } = useQuery({
     queryKey: ["competition-settings"],
     queryFn: fetchCompetitionSettings,
   });
   const twoStage = (competition?.stage_count ?? 2) === 2;
+  const clusterChosen = !!overview?.cluster?.id;
+  const clusterRequired = (clusters ?? []).length > 0;
 
   const [rows, setRows] = useState<StudentSeed[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
@@ -214,6 +231,16 @@ function CoordinatorPortal() {
           Register students from your Excel sheet and follow their teams and submissions.
         </p>
       </header>
+
+      {clusterRequired && (
+        <ClusterBanner
+          key={overview?.cluster?.id ?? "unset"}
+          chosen={overview?.cluster ?? null}
+          clusters={clusters ?? []}
+          userId={myId ?? null}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["coordinator-overview"] })}
+        />
+      )}
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -374,10 +401,20 @@ function CoordinatorPortal() {
             >
               <Plus className="mr-1.5 h-4 w-4" /> Add row
             </Button>
-            <Button className="bg-clay hover:bg-clay/90" size="sm" onClick={createAccounts} disabled={busy || hasErrors}>
+            <Button
+              className="bg-clay hover:bg-clay/90"
+              size="sm"
+              onClick={createAccounts}
+              disabled={busy || hasErrors || (clusterRequired && !clusterChosen)}
+            >
               {busy ? "Creating…" : "Create accounts"}
             </Button>
           </div>
+          {clusterRequired && !clusterChosen && (
+            <p className="text-sm font-medium text-ochre" role="alert">
+              Choose your school's cluster above before registering students.
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Usernames and emails must be new on the platform. Passwords show on the printable passes below.
           </p>
@@ -403,6 +440,7 @@ function CoordinatorPortal() {
                 <thead>
                   <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-3 font-semibold">Team ID</th>
+                    <th className="py-2 pr-3 font-semibold">Cluster</th>
                     <th className="py-2 pr-3 font-semibold">Members</th>
                     <th className="py-2 pr-3 font-semibold">Stage 1</th>
                     {twoStage && <th className="py-2 pr-3 font-semibold">Stage 2</th>}
@@ -413,6 +451,7 @@ function CoordinatorPortal() {
                   {teams.map((t) => (
                     <tr key={t.team_id}>
                       <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-forest">{t.team_code ?? "—"}</td>
+                      <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.cluster_name ?? "—"}</td>
                       <td className="py-2.5 pr-3 text-xs text-muted-foreground">
                         {t.members.map((m) => m.full_name).join(", ")}
                       </td>
@@ -494,4 +533,58 @@ function ResultPill({ result }: { result: string | null }) {
   if (result === "not_selected")
     return <span className="rounded-full bg-clay/15 px-2.5 py-0.5 text-xs font-semibold text-clay">Not selected</span>;
   return <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Not published</span>;
+}
+
+function ClusterBanner({
+  chosen,
+  clusters,
+  userId,
+  onSaved,
+}: {
+  chosen: { id: string | null; name: string | null } | null;
+  clusters: { id: string; name: string }[];
+  userId: string | null;
+  onSaved: () => void;
+}) {
+  const [value, setValue] = useState(chosen?.id ?? "");
+  const [busy, setBusy] = useState(false);
+  const dirty = value !== (chosen?.id ?? "");
+
+  async function save() {
+    if (!userId || !value) return;
+    setBusy(true);
+    const { error } = await supabase.from("profiles").update({ cluster_id: value }).eq("id", userId);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Cluster saved — it applies to teams formed from now on");
+    onSaved();
+  }
+
+  return (
+    <Card className={chosen?.id ? undefined : "border-ochre/40 bg-ochre/5"}>
+      <CardContent className="flex flex-wrap items-center gap-3 py-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-forest">Your school's cluster</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {chosen?.id
+              ? "Teams formed by your students belong to this cluster. Changing it only affects future teams."
+              : "Choose your competition cluster first — student teams from your school will belong to it."}
+          </p>
+        </div>
+        <Select value={value} onValueChange={setValue}>
+          <SelectTrigger className="w-44" aria-label="School cluster">
+            <SelectValue placeholder="Choose cluster" />
+          </SelectTrigger>
+          <SelectContent>
+            {clusters.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="sm" className="bg-clay hover:bg-clay/90" onClick={save} disabled={busy || !dirty || !value}>
+          {busy ? "Saving…" : "Save cluster"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }

@@ -9,6 +9,7 @@ export type TeamRow = {
   captain_id: string | null;
   track_id: string | null;
   track: { id: string; name: string; slug: string; description: string | null } | null;
+  cluster: { id: string; name: string } | null;
 };
 
 export type TeamMemberRow = {
@@ -53,6 +54,16 @@ export const MAX_TEAM_SIZE = 3;
 
 export type SutraRow = { id: string; name: string; description: string | null; sort_order: number };
 
+export type ClusterRow = { id: string; name: string; description: string | null };
+
+export async function fetchClusters(): Promise<ClusterRow[]> {
+  const { data } = await supabase
+    .from("clusters")
+    .select("id,name,description")
+    .order("sort_order");
+  return (data ?? []) as ClusterRow[];
+}
+
 let sutrasCache: SutraRow[] | null = null;
 export async function fetchSutras(): Promise<SutraRow[]> {
   if (sutrasCache) return sutrasCache;
@@ -64,7 +75,7 @@ export async function fetchSutras(): Promise<SutraRow[]> {
 export async function fetchMyTeam(userId: string): Promise<TeamRow | null> {
   const { data } = await supabase
     .from("team_members")
-    .select("team:teams(*, track:tracks(*))")
+    .select("team:teams(*, track:tracks(*), cluster:clusters(id,name))")
     .eq("user_id", userId)
     .maybeSingle();
   if (!data?.team) return null;

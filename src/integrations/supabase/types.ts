@@ -52,6 +52,27 @@ export type Database = {
           },
         ]
       }
+      clusters: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       competition_settings: {
         Row: {
           id: number
@@ -138,6 +159,7 @@ export type Database = {
       profiles: {
         Row: {
           city: string | null
+          cluster_id: string | null
           created_at: string
           designation: string | null
           email: string
@@ -151,6 +173,7 @@ export type Database = {
         }
         Insert: {
           city?: string | null
+          cluster_id?: string | null
           created_at?: string
           designation?: string | null
           email?: string
@@ -164,6 +187,7 @@ export type Database = {
         }
         Update: {
           city?: string | null
+          cluster_id?: string | null
           created_at?: string
           designation?: string | null
           email?: string
@@ -175,7 +199,15 @@ export type Database = {
           school_name?: string | null
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "clusters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       results: {
         Row: {
@@ -540,6 +572,7 @@ export type Database = {
       teams: {
         Row: {
           captain_id: string | null
+          cluster_id: string | null
           created_at: string
           id: string
           join_code: string
@@ -550,6 +583,7 @@ export type Database = {
         }
         Insert: {
           captain_id?: string | null
+          cluster_id?: string | null
           created_at?: string
           id?: string
           join_code: string
@@ -560,6 +594,7 @@ export type Database = {
         }
         Update: {
           captain_id?: string | null
+          cluster_id?: string | null
           created_at?: string
           id?: string
           join_code?: string
@@ -574,6 +609,13 @@ export type Database = {
             columns: ["captain_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "clusters"
             referencedColumns: ["id"]
           },
           {
@@ -632,6 +674,7 @@ export type Database = {
       admin_overview_kpis: { Args: never; Returns: Json }
       admin_registration_directory: {
         Args: {
+          p_cluster_id?: string
           p_grade?: number
           p_page?: number
           p_page_size?: number
@@ -642,6 +685,7 @@ export type Database = {
       }
       admin_results_directory: {
         Args: {
+          p_cluster_id?: string
           p_outcome?: string
           p_page?: number
           p_page_size?: number
@@ -654,6 +698,7 @@ export type Database = {
       }
       admin_submission_directory: {
         Args: {
+          p_cluster_id?: string
           p_page?: number
           p_page_size?: number
           p_search?: string
@@ -664,11 +709,17 @@ export type Database = {
         Returns: Json
       }
       admin_submission_export: {
-        Args: { p_search?: string; p_status?: string; p_track_id?: string }
+        Args: {
+          p_cluster_id?: string
+          p_search?: string
+          p_status?: string
+          p_track_id?: string
+        }
         Returns: Json
       }
       admin_team_directory: {
         Args: {
+          p_cluster_id?: string
           p_page?: number
           p_page_size?: number
           p_review?: string
@@ -682,9 +733,10 @@ export type Database = {
       auto_submit_due_submissions: { Args: never; Returns: number }
       coordinator_school_overview: { Args: never; Returns: Json }
       create_team: {
-        Args: { p_name: string; p_track_id: string }
+        Args: { p_cluster_id?: string; p_name: string; p_track_id: string }
         Returns: {
           captain_id: string | null
+          cluster_id: string | null
           created_at: string
           id: string
           join_code: string
@@ -728,6 +780,7 @@ export type Database = {
         Args: { p_code: string }
         Returns: {
           captain_id: string | null
+          cluster_id: string | null
           created_at: string
           id: string
           join_code: string
@@ -748,6 +801,7 @@ export type Database = {
       parent_revoke_info: { Args: { p_token: string }; Returns: Json }
       request_coordinator_role: { Args: never; Returns: undefined }
       revoke_parent_access: { Args: { p_token: string }; Returns: boolean }
+      set_team_cluster: { Args: { p_cluster_id: string }; Returns: undefined }
       transfer_captaincy: { Args: { p_user_id: string }; Returns: undefined }
       upsert_submission: {
         Args: { p_payload: Json; p_stage: number; p_submit?: boolean }

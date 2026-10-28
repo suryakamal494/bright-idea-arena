@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchClusters } from "@/lib/team";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,6 +38,7 @@ type Row = {
   team_code: string | null;
   team_name: string;
   track_name: string | null;
+  cluster_name: string | null;
   school: string | null;
   members: string[];
   member_count: number;
@@ -60,6 +62,7 @@ function SubmissionsManager() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [trackId, setTrackId] = useState("all");
+  const [clusterId, setClusterId] = useState("all");
   const [status, setStatus] = useState("all");
   const [review, setReview] = useState<"all" | ReviewStatus>("all");
   const [round, setRound] = useState<1 | 2>(1);
@@ -81,20 +84,21 @@ function SubmissionsManager() {
       const { data, error } = await supabase.rpc("admin_submission_export", {
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
+        ...(clusterId === "all" ? {} : { p_cluster_id: clusterId }),
         p_status: status,
       });
       if (error) throw error;
       type ExportRow = {
         school: string | null; student_name: string; email: string | null; phone: string | null;
-        theme: string | null; team_code: string | null; team_name: string; stage1: string | null; stage2: string | null;
+        theme: string | null; cluster_name: string | null; team_code: string | null; team_name: string; stage1: string | null; stage2: string | null;
       };
       const all = (data ?? []) as unknown as ExportRow[];
-      const header = ["School", "Student name", "Email", "Mobile", "Theme", "Team ID", "Team name", "Stage 1", "Stage 2"];
+      const header = ["School", "Student name", "Email", "Mobile", "Theme", "Cluster", "Team ID", "Team name", "Stage 1", "Stage 2"];
       const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const csv = [
         header.join(","),
         ...all.map((r) =>
-          [r.school, r.student_name, r.email, r.phone, r.theme, r.team_code, r.team_name, r.stage1 ?? "not started", r.stage2 ?? "not started"]
+          [r.school, r.student_name, r.email, r.phone, r.theme, r.cluster_name, r.team_code, r.team_name, r.stage1 ?? "not started", r.stage2 ?? "not started"]
             .map(esc)
             .join(","),
         ),
@@ -127,14 +131,21 @@ function SubmissionsManager() {
     },
   });
 
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-directory", stage, search, trackId, status, review, page],
+    queryKey: ["admin-directory", stage, search, trackId, clusterId, status, review, page],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_team_directory", {
         p_page: page,
         p_page_size: PAGE_SIZE,
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
+        ...(clusterId === "all" ? {} : { p_cluster_id: clusterId }),
         p_status: status,
         p_review: review,
         p_stage: stage,
@@ -251,6 +262,27 @@ function SubmissionsManager() {
             ))}
           </SelectContent>
         </Select>
+        {(clusters ?? []).length > 0 && (
+          <Select
+            value={clusterId}
+            onValueChange={(v) => {
+              setClusterId(v);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clusters</SelectItem>
+              {(clusters ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select
           value={status}
           onValueChange={(v) => {
@@ -290,10 +322,11 @@ function SubmissionsManager() {
             </div>
           ) : (
             <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
-              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.9fr)_70px_80px_80px_210px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                 <span>Team ID</span>
                 <span>Team</span>
                 <span>School</span>
+                <span>Cluster</span>
                 <span>Theme</span>
                 <span className="text-center">Members</span>
                 <span className="text-center">Stage 1</span>
@@ -308,7 +341,7 @@ function SubmissionsManager() {
                     tabIndex={0}
                     onClick={() => setSelectedTeam(r)}
                     onKeyDown={(e) => e.key === "Enter" && setSelectedTeam(r)}
-                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] lg:items-center lg:gap-3"
+                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.9fr)_70px_80px_80px_210px] lg:items-center lg:gap-3"
                   >
                     <span className="font-mono text-xs font-semibold text-forest">
                       {r.team_code ?? "—"}
@@ -321,6 +354,9 @@ function SubmissionsManager() {
                     </span>
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
                       {r.school ?? "No school"}
+                    </span>
+                    <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
+                      {r.cluster_name ?? "—"}
                     </span>
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
                       {r.track_name ?? "No theme"}
@@ -453,6 +489,7 @@ function TeamEntryInspector({ team }: { team: Row }) {
         </p>
         <p className="mt-1">
           <span className="font-semibold">School:</span> {team.school ?? "—"} ·{" "}
+          <span className="font-semibold">Cluster:</span> {team.cluster_name ?? "—"} ·{" "}
           <span className="font-semibold">Theme:</span> {team.track_name ?? "—"}
         </p>
         <p className="mt-1">

@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchCompetitionSettings } from "@/lib/team";
+import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +35,7 @@ type Row = {
   team_code: string | null;
   team_name: string;
   track_name: string | null;
+  cluster_name: string | null;
   school: string | null;
   title: string | null;
   status: string;
@@ -107,6 +108,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [trackId, setTrackId] = useState("all");
+  const [clusterId, setClusterId] = useState("all");
   const [outcome, setOutcome] = useState("all");
   const [sort, setSort] = useState("score");
   const [page, setPage] = useState(0);
@@ -122,7 +124,13 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
     },
   });
 
-  const key = ["admin-results", stage, search, trackId, outcome, sort, page];
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+
+  const key = ["admin-results", stage, search, trackId, clusterId, outcome, sort, page];
   const { data, isLoading } = useQuery({
     queryKey: key,
     placeholderData: keepPreviousData,
@@ -134,6 +142,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
         p_sort: sort,
         ...(search ? { p_search: search } : {}),
         ...(trackId !== "all" ? { p_track_id: trackId } : {}),
+        ...(clusterId !== "all" ? { p_cluster_id: clusterId } : {}),
         ...(outcome !== "all" ? { p_outcome: outcome } : {}),
       });
       if (error) throw new Error(error.message);
@@ -256,7 +265,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
             Round 1 results are still in draft. Shortlisted teams can only start their Round 2 submission once you publish Round 1.
           </p>
         )}
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto]">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto]">
           <Input
             placeholder="Search team ID, name, project or school…"
             value={searchInput}
@@ -279,6 +288,17 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
               ))}
             </SelectContent>
           </Select>
+          {(clusters ?? []).length > 0 && (
+            <Select value={clusterId} onValueChange={(v) => { setClusterId(v); setPage(0); }}>
+              <SelectTrigger className="lg:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All clusters</SelectItem>
+                {(clusters ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={outcome} onValueChange={(v) => { setOutcome(v); setPage(0); }}>
             <SelectTrigger className="lg:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -350,6 +370,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                   <th className="py-2 pr-3 font-semibold">Team ID</th>
                   <th className="py-2 pr-3 font-semibold">Team &amp; project</th>
                   <th className="py-2 pr-3 font-semibold">School</th>
+                  <th className="py-2 pr-3 font-semibold">Cluster</th>
                   <th className="py-2 pr-3 font-semibold">Theme</th>
                   <th className="py-2 pr-3 font-semibold">Judge score</th>
                   <th className="py-2 pr-3 font-semibold">Submission</th>
@@ -387,6 +408,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                       <p className="text-xs text-muted-foreground">{t.title || "No project title yet"}</p>
                     </td>
                     <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.school ?? "—"}</td>
+                    <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.cluster_name ?? "—"}</td>
                     <td className="py-2.5 pr-3 text-xs">{t.track_name ?? "—"}</td>
                     <td className="py-2.5 pr-3">
                       {t.avg_score != null ? (
@@ -416,7 +438,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                 ))}
                 {(data?.rows ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-sm text-muted-foreground">
+                    <td colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
                       {stage === 2 ? "No shortlisted teams match. Shortlist teams in Round 1 first." : "No teams found."}
                     </td>
                   </tr>

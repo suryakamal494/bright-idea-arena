@@ -4,8 +4,8 @@ import { Crown, LogOut, ShieldAlert, UserRoundCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getSessionUser } from "@/lib/auth";
-import { MAX_TEAM_SIZE, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
+import { getAuthContext, getSessionUser } from "@/lib/auth";
+import { MAX_TEAM_SIZE, fetchClusters, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,9 +97,12 @@ function TeamRoster({
         <p className="eyebrow">Team workspace</p>
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">{team.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Track · {team.track?.name ?? "Not set"} · {roster.length}/{MAX_TEAM_SIZE} members
+          Track · {team.track?.name ?? "Not set"} · Cluster · {team.cluster?.name ?? "Not set"} ·{" "}
+          {roster.length}/{MAX_TEAM_SIZE} members
         </p>
       </header>
+
+      <ClusterGate team={team} onChanged={onChanged} />
 
       {team.locked && (
         <div className="flex gap-2.5 rounded-xl border border-ochre/40 bg-ochre/10 p-3.5 text-sm text-ochre">
@@ -264,6 +267,7 @@ function TeamFormation({ onDone }: { onDone: () => void }) {
 function CreateTeamForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [trackId, setTrackId] = useState("");
+  const [clusterId, setClusterId] = useState("");
   const [busy, setBusy] = useState(false);
   const { data: tracks } = useQuery({
     queryKey: ["public-tracks"],
@@ -272,14 +276,31 @@ function CreateTeamForm({ onDone }: { onDone: () => void }) {
       return data ?? [];
     },
   });
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+  const { data: schoolCluster } = useQuery({
+    queryKey: ["school-cluster"],
+    queryFn: async () => (await getAuthContext())?.school_cluster ?? null,
+    staleTime: 60_000,
+  });
+  const clusterRequired = (clusters ?? []).length > 0;
+  const lockedCluster = schoolCluster?.id ? schoolCluster : null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!trackId) { toast.error("Choose an innovation track"); return; }
+    if (clusterRequired && !lockedCluster && !clusterId) {
+      toast.error("Choose your cluster");
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase.rpc("create_team", {
       p_name: name,
       p_track_id: trackId,
+      ...(clusterRequired && !lockedCluster && clusterId ? { p_cluster_id: clusterId } : {}),
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -308,6 +329,33 @@ function CreateTeamForm({ onDone }: { onDone: () => void }) {
           </SelectContent>
         </Select>
       </div>
+      {clusterRequired && (
+        lockedCluster ? (
+          <div className="space-y-1.5">
+            <Label>Cluster</Label>
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+              <span className="font-semibold text-forest">{lockedCluster.name}</span>{" "}
+              <span className="text-xs text-muted-foreground">· set by your school coordinator</span>
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <Label>Cluster</Label>
+            <Select value={clusterId} onValueChange={setClusterId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pick your cluster" />
+              </SelectTrigger>
+              <SelectContent>
+                {(clusters ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )
+      )}
       <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
         {busy ? "Creating…" : "Create team (you become captain)"}
       </Button>
@@ -347,5 +395,67 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
         {busy ? "Joining…" : "Join team"}
       </Button>
     </form>
+  );
+}
+
+/**
+ * Cluster gate: while clusters exist, the captain of a cluster-less team picks
+ * one here — submissions stay blocked until the team belongs to a cluster.
+ */
+function ClusterGate({
+  team,
+  onChanged,
+}: {
+  team: NonNullable<Awaited<ReturnType<typeof fetchMyTeam>>>;
+  onChanged: () => void;
+}) {
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+    enabled: !team.cluster,
+  });
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  if (team.cluster || (clusters ?? []).length === 0) return null;
+  const isCaptain = !!team.captain_id && team.captain_id === user?.id;
+
+  async function save() {
+    if (!value) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("set_team_cluster", { p_cluster_id: value });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Cluster saved for your team");
+    onChanged();
+  }
+
+  return (
+    <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4">
+      <p className="text-sm font-semibold text-ochre">Choose your team's cluster</p>
+      <p className="mt-1 text-sm text-foreground/90">
+        {isCaptain
+          ? "Every team belongs to a competition cluster. Pick yours — the submission form stays locked until you do."
+          : "Every team belongs to a competition cluster. Your captain picks it on this page — the submission form stays locked until then."}
+      </p>
+      {isCaptain && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Select value={value} onValueChange={setValue}>
+            <SelectTrigger className="w-48" aria-label="Team cluster">
+              <SelectValue placeholder="Pick a cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              {(clusters ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" className="bg-clay hover:bg-clay/90" onClick={save} disabled={busy || !value}>
+            {busy ? "Saving…" : "Save cluster"}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchClusters } from "@/lib/team";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -36,6 +37,7 @@ type RegistrationRow = {
   team_id: string | null;
   team_code: string | null;
   team_name: string | null;
+  cluster_name: string | null;
 };
 
 const PAGE_SIZE = 25;
@@ -46,6 +48,7 @@ function Registrations() {
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("all");
   const [school, setSchool] = useState("all");
+  const [cluster, setCluster] = useState("all");
   const [page, setPage] = useState(0);
   const [exporting, setExporting] = useState(false);
 
@@ -62,6 +65,7 @@ function Registrations() {
           ...(search.trim() ? { p_search: search.trim() } : {}),
           ...(grade === "all" ? {} : { p_grade: Number(grade) }),
           ...(school === "all" ? {} : { p_school: school }),
+          ...(cluster === "all" ? {} : { p_cluster_id: cluster }),
         });
         if (error) throw error;
         const res = data as unknown as { total: number; rows: RegistrationRow[] };
@@ -122,8 +126,14 @@ function Registrations() {
     staleTime: 60_000,
   });
 
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-registrations", search, grade, school, page],
+    queryKey: ["admin-registrations", search, grade, school, cluster, page],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_registration_directory", {
         p_page: page,
@@ -131,6 +141,7 @@ function Registrations() {
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(grade === "all" ? {} : { p_grade: Number(grade) }),
         ...(school === "all" ? {} : { p_school: school }),
+        ...(cluster === "all" ? {} : { p_cluster_id: cluster }),
       });
       if (error) throw error;
       return data as unknown as { total: number; rows: RegistrationRow[] };
@@ -202,6 +213,27 @@ function Registrations() {
             ))}
           </SelectContent>
         </Select>
+        {(clusters ?? []).length > 0 && (
+          <Select
+            value={cluster}
+            onValueChange={(v) => {
+              setCluster(v);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clusters</SelectItem>
+              {(clusters ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv} className="ml-auto">
           <Download className="mr-1.5 h-4 w-4" />
           {exporting ? "Preparing…" : "Export CSV"}
@@ -224,10 +256,11 @@ function Registrations() {
             </div>
           ) : (
             <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
-              <div className="hidden grid-cols-[minmax(0,1.1fr)_60px_minmax(0,1fr)_minmax(0,1.2fr)_90px_minmax(0,1fr)_120px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className="hidden grid-cols-[minmax(0,1.1fr)_60px_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,1.2fr)_90px_minmax(0,1fr)_120px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                 <span>Student</span>
                 <span>Class</span>
                 <span>School · city</span>
+                <span>Cluster</span>
                 <span>Email</span>
                 <span>Phone</span>
                 <span>Parent email</span>
@@ -237,7 +270,7 @@ function Registrations() {
                 {(data?.rows ?? []).map((r) => (
                   <div
                     key={r.id}
-                    className="grid grid-cols-1 gap-1.5 px-4 py-3 lg:grid-cols-[minmax(0,1.1fr)_60px_minmax(0,1fr)_minmax(0,1.2fr)_90px_minmax(0,1fr)_120px] lg:items-center lg:gap-3"
+                    className="grid grid-cols-1 gap-1.5 px-4 py-3 lg:grid-cols-[minmax(0,1.1fr)_60px_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,1.2fr)_90px_minmax(0,1fr)_120px] lg:items-center lg:gap-3"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold">{r.full_name || "—"}</span>
@@ -252,6 +285,9 @@ function Registrations() {
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
                       {r.school_name ?? "No school"}
                       {r.city ? ` · ${r.city}` : ""}
+                    </span>
+                    <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
+                      {r.cluster_name ?? "—"}
                     </span>
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
                       {r.email}

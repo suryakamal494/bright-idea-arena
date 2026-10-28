@@ -27,6 +27,7 @@ type AnnouncementRow = {
 };
 
 function Dashboard() {
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
   const { data: team } = useQuery({
     queryKey: ["my-team"],
     queryFn: async () => {
@@ -80,12 +81,31 @@ function Dashboard() {
       ) : (
         <>
           <TeamSummaryCard team={team} />
+          {!team.cluster && <ClusterPrompt team={team} isCaptain={!!me && team.captain_id === me.id} />}
           <ResultsBanner results={results ?? []} twoStage={twoStage} />
           <StageCards settings={settings ?? null} team={team} twoStage={twoStage} results={results ?? []} />
         </>
       )}
 
       <AnnouncementsFeed items={announcements ?? []} />
+    </div>
+  );
+}
+
+function ClusterPrompt({ team, isCaptain }: { team: TeamRow; isCaptain: boolean }) {
+  return (
+    <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm">
+      <p className="font-semibold text-ochre">Your team has no cluster yet</p>
+      <p className="mt-1 text-foreground/90">
+        {isCaptain
+          ? "Pick your team's competition cluster on the team page — the submission form stays locked until you do."
+          : "Every team belongs to a competition cluster. Your captain picks it on the team page — the submission form stays locked until then."}
+      </p>
+      {isCaptain && (
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link to="/team">Open team page</Link>
+        </Button>
+      )}
     </div>
   );
 }
@@ -217,6 +237,7 @@ function TeamSummaryCard({ team }: { team: TeamRow }) {
           <CardTitle className="font-display text-2xl text-forest">{team.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Theme · {team.track?.name ?? "Not set"}
+            {team.cluster ? ` · Cluster · ${team.cluster.name}` : " · Cluster not set"}
           </p>
         </div>
         <span className="rounded-full bg-forest px-3 py-1 font-mono text-xs font-semibold text-linen">
