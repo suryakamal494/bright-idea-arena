@@ -252,7 +252,7 @@ function SubmissionsManager() {
             </div>
           ) : (
             <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
-              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_130px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                 <span>Team ID</span>
                 <span>Team</span>
                 <span>School</span>
@@ -270,7 +270,7 @@ function SubmissionsManager() {
                     tabIndex={0}
                     onClick={() => setSelectedTeam(r)}
                     onKeyDown={(e) => e.key === "Enter" && setSelectedTeam(r)}
-                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_130px] lg:items-center lg:gap-3"
+                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] lg:items-center lg:gap-3"
                   >
                     <span className="font-mono text-xs font-semibold text-forest">
                       {r.team_code ?? "—"}

@@ -69,7 +69,7 @@ export function ReviewButtons({
         }`}
       >
         <Star className="h-3.5 w-3.5" />
-        {size === "md" ? "Marked for review" : "Review"}
+        {size === "md" ? "Marked for review" : "For review"}
       </button>
       <button
         type="button"
@@ -83,7 +83,7 @@ export function ReviewButtons({
         }`}
       >
         <X className="h-3.5 w-3.5" />
-        {size === "md" ? "Not selected" : "No"}
+        Not selected
       </button>
     </span>
   );
