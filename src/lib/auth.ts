@@ -40,7 +40,11 @@ export async function getSessionUser(): Promise<User | null> {
  */
 async function fetchContextFor(
   userId: string,
-): Promise<{ roles: AppRole[]; profile: Profile | null }> {
+): Promise<{
+  roles: AppRole[];
+  profile: Profile | null;
+  school_cluster: { id: string | null; name: string | null } | null;
+}> {
   const { data, error } = await supabase.rpc("get_auth_context");
   if (error || !data) {
     const [roles, profile] = await Promise.all([
@@ -56,16 +60,26 @@ async function fetchContextFor(
         .maybeSingle()
         .then(({ data }) => (data as Profile) ?? null),
     ]);
-    return { roles, profile };
+    return { roles, profile, school_cluster: null };
   }
-  const payload = data as { roles: string[] | null; profile: Profile | null };
+  const payload = data as {
+    roles: string[] | null;
+    profile: Profile | null;
+    school_cluster?: { id: string | null; name: string | null } | null;
+  };
   return {
     roles: (payload.roles ?? []) as AppRole[],
     profile: payload.profile ?? null,
+    school_cluster: payload.school_cluster ?? null,
   };
 }
 
-export type AuthContext = { user: User; roles: AppRole[]; profile: Profile | null };
+export type AuthContext = {
+  user: User;
+  roles: AppRole[];
+  profile: Profile | null;
+  school_cluster: { id: string | null; name: string | null } | null;
+};
 
 // Short-lived in-memory cache so route guards and child pages within the same
 // navigation share one roles+profile fetch instead of repeating the queries.
@@ -88,8 +102,8 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   }
   // Concurrent callers (e.g. preload + navigation) share one fetch.
   if (!inflight) {
-    inflight = fetchContextFor(user.id).then(({ roles, profile }) => {
-      const value: AuthContext = { user, roles, profile };
+    inflight = fetchContextFor(user.id).then(({ roles, profile, school_cluster }) => {
+      const value: AuthContext = { user, roles, profile, school_cluster };
       authCache = { userId: user.id, at: Date.now(), value };
       return value;
     }).finally(() => {
