@@ -166,7 +166,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
       },
       { onConflict: "team_id,stage" },
     );
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   }
 
@@ -184,7 +184,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
       .from("results")
       .update({ published: state, published_at: state ? new Date().toISOString() : null })
       .eq("stage", stage);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(state ? `${label} published` : `${label} hidden`);
     refresh();
   }
