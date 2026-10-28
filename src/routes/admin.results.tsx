@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/admin/results")({
   head: () => ({
@@ -41,12 +42,13 @@ type Row = {
   published: boolean;
   avg_score: number | null;
   reviews: number;
+  review_status: string;
 };
 
 type DirRes = {
   total: number;
   max_score: number;
-  counts: { teams: number; decided: number; positive: number; published: boolean | null };
+  counts: { teams: number; decided: number; positive: number; marked: number; published: boolean | null };
   rows: Row[];
 };
 
@@ -108,6 +110,8 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
   const [outcome, setOutcome] = useState("all");
   const [sort, setSort] = useState("score");
   const [page, setPage] = useState(0);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const timer = useRef<number | null>(null);
 
   const { data: tracks } = useQuery({
@@ -170,6 +174,28 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
     refresh();
   }
 
+  async function bulkOutcome(value: string | null) {
+    const ids = [...picked];
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { error } = value
+      ? await supabase.from("results").upsert(
+          ids.map((team_id) => ({
+            team_id,
+            stage,
+            outcome: value as "shortlisted" | "not_selected" | "selected",
+            updated_at: new Date().toISOString(),
+          })),
+          { onConflict: "team_id,stage" },
+        )
+      : await supabase.from("results").delete().eq("stage", stage).in("team_id", ids);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${ids.length} team${ids.length === 1 ? "" : "s"} updated`);
+    setPicked(new Set());
+    refresh();
+  }
+
   const label = !twoStage ? "Results" : stage === 1 ? "Round 1 shortlist" : "Final results";
 
   async function publish(state: boolean) {
@@ -194,6 +220,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const c = data?.counts;
+  const rows = data?.rows ?? [];
   const max = data?.max_score ?? 0;
 
   return (
@@ -257,6 +284,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
             <SelectContent>
               <SelectItem value="all">All outcomes</SelectItem>
               <SelectItem value="none">Not decided</SelectItem>
+              <SelectItem value="marked">Marked for review</SelectItem>
               {options.map((o) => (
                 <SelectItem key={o} value={o}>{OUTCOME_LABEL[o]}</SelectItem>
               ))}
@@ -271,6 +299,34 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
           </Select>
         </div>
 
+        {(c?.marked ?? 0) > 0 && (
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-sage" />
+            {c?.marked} team{c?.marked === 1 ? "" : "s"} marked for review in Submissions
+          </p>
+        )}
+        {picked.size > 0 && (
+          <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-lg border border-forest/30 bg-card px-3 py-2 shadow-sm">
+            <span className="text-sm font-semibold text-forest">{picked.size} selected</span>
+            {options.map((o) => (
+              <Button
+                key={o}
+                size="sm"
+                disabled={bulkBusy}
+                variant={o === "not_selected" ? "outline" : "default"}
+                onClick={() => bulkOutcome(o)}
+              >
+                {OUTCOME_LABEL[o]}
+              </Button>
+            ))}
+            <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={() => bulkOutcome(null)}>
+              Clear outcome
+            </Button>
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setPicked(new Set())}>
+              Cancel
+            </Button>
+          </div>
+        )}
         {isLoading ? (
           <p className="py-4 text-center text-sm text-muted-foreground">Loading teams…</p>
         ) : (
@@ -278,6 +334,19 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
             <table className="w-full min-w-[980px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="w-8 py-2 pr-2">
+                    <Checkbox
+                      aria-label="Select all on this page"
+                      checked={rows.length > 0 && rows.every((r) => picked.has(r.team_id))}
+                      onCheckedChange={(v) =>
+                        setPicked((prev) => {
+                          const n = new Set(prev);
+                          rows.forEach((r) => (v ? n.add(r.team_id) : n.delete(r.team_id)));
+                          return n;
+                        })
+                      }
+                    />
+                  </th>
                   <th className="py-2 pr-3 font-semibold">Team ID</th>
                   <th className="py-2 pr-3 font-semibold">Team &amp; project</th>
                   <th className="py-2 pr-3 font-semibold">School</th>
@@ -288,9 +357,31 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(data?.rows ?? []).map((t) => (
-                  <tr key={t.team_id}>
-                    <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-forest">{t.team_code ?? "—"}</td>
+                {rows.map((t) => (
+                  <tr key={t.team_id} className={picked.has(t.team_id) ? "bg-muted/50" : undefined}>
+                    <td className="py-2.5 pr-2">
+                      <Checkbox
+                        aria-label={`Select ${t.team_code ?? t.team_name}`}
+                        checked={picked.has(t.team_id)}
+                        onCheckedChange={(v) =>
+                          setPicked((prev) => {
+                            const n = new Set(prev);
+                            if (v) n.add(t.team_id); else n.delete(t.team_id);
+                            return n;
+                          })
+                        }
+                      />
+                    </td>
+                    <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-xs font-semibold text-forest">
+                      {t.review_status === "marked" && (
+                        <span
+                          title="Marked for review in Submissions"
+                          aria-label="Marked for review"
+                          className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-sage align-middle"
+                        />
+                      )}
+                      {t.team_code ?? "—"}
+                    </td>
                     <td className="py-2.5 pr-3">
                       <p className="font-medium">{t.team_name}</p>
                       <p className="text-xs text-muted-foreground">{t.title || "No project title yet"}</p>
@@ -325,7 +416,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                 ))}
                 {(data?.rows ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
+                    <td colSpan={8} className="py-6 text-center text-sm text-muted-foreground">
                       {stage === 2 ? "No shortlisted teams match. Shortlist teams in Round 1 first." : "No teams found."}
                     </td>
                   </tr>

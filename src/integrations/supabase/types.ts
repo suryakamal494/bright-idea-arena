@@ -502,6 +502,38 @@ export type Database = {
           },
         ]
       }
+      team_reviews: {
+        Row: {
+          notes: string | null
+          status: string
+          team_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          notes?: string | null
+          status?: string
+          team_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          notes?: string | null
+          status?: string
+          team_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_reviews_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           captain_id: string | null
@@ -636,6 +668,7 @@ export type Database = {
         Args: {
           p_page?: number
           p_page_size?: number
+          p_review?: string
           p_search?: string
           p_status?: string
           p_track_id?: string

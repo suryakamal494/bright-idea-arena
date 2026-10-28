@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { SubmissionDetails } from "@/components/submission-details";
 import { printOnePager } from "@/lib/onepager";
+import { ReviewButtons, ReviewNotes, type ReviewStatus } from "@/components/review-controls";
 
 export const Route = createFileRoute("/admin/submissions")({
   head: () => ({
@@ -42,7 +43,16 @@ type Row = {
   s1_status: string | null;
   s2_status: string | null;
   last_activity: string | null;
+  review_status: ReviewStatus;
+  review_notes: string | null;
 };
+
+const REVIEW_TABS: { key: "all" | ReviewStatus; label: string }[] = [
+  { key: "all", label: "All submissions" },
+  { key: "marked", label: "Marked for review" },
+  { key: "unreviewed", label: "Unreviewed" },
+  { key: "not_selected", label: "Not selected" },
+];
 
 const PAGE_SIZE = 25;
 
@@ -51,6 +61,7 @@ function SubmissionsManager() {
   const [search, setSearch] = useState("");
   const [trackId, setTrackId] = useState("all");
   const [status, setStatus] = useState("all");
+  const [review, setReview] = useState<"all" | ReviewStatus>("all");
   const [page, setPage] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<Row | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -108,7 +119,7 @@ function SubmissionsManager() {
   });
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-directory", search, trackId, status, page],
+    queryKey: ["admin-directory", search, trackId, status, review, page],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_team_directory", {
         p_page: page,
@@ -116,9 +127,14 @@ function SubmissionsManager() {
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
         p_status: status,
+        p_review: review,
       });
       if (error) throw error;
-      return data as unknown as { total: number; rows: Row[] };
+      return data as unknown as {
+        total: number;
+        counts: Record<"all" | ReviewStatus, number>;
+        rows: Row[];
+      };
     },
     placeholderData: keepPreviousData,
   });
@@ -147,6 +163,26 @@ function SubmissionsManager() {
           and attachments.
         </p>
       </header>
+
+      <div role="tablist" className="flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
+        {REVIEW_TABS.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={review === t.key}
+            onClick={() => {
+              setReview(t.key);
+              setPage(0);
+            }}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors sm:flex-none ${
+              review === t.key ? "bg-forest text-primary-foreground" : "text-muted-foreground hover:text-forest"
+            }`}
+          >
+            {t.label}
+            {data?.counts && <span className="ml-1.5 opacity-75">{data.counts[t.key] ?? 0}</span>}
+          </button>
+        ))}
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <div className="relative min-w-52 flex-1">
@@ -216,7 +252,7 @@ function SubmissionsManager() {
             </div>
           ) : (
             <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
-              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_90px_90px_110px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                 <span>Team ID</span>
                 <span>Team</span>
                 <span>School</span>
@@ -224,13 +260,17 @@ function SubmissionsManager() {
                 <span className="text-center">Members</span>
                 <span className="text-center">Stage 1</span>
                 <span className="text-center">Stage 2</span>
+                <span className="text-center">Screening</span>
               </div>
               <div className="divide-y divide-border">
                 {(data?.rows ?? []).map((r) => (
-                  <button
+                  <div
                     key={r.team_id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedTeam(r)}
-                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_90px_90px_110px] lg:items-center lg:gap-3"
+                    onKeyDown={(e) => e.key === "Enter" && setSelectedTeam(r)}
+                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] lg:items-center lg:gap-3"
                   >
                     <span className="font-mono text-xs font-semibold text-forest">
                       {r.team_code ?? "—"}
@@ -257,7 +297,10 @@ function SubmissionsManager() {
                     </span>
                     <span className="lg:text-center">{statusBadge(r.s1_status)}</span>
                     <span className="lg:text-center">{statusBadge(r.s2_status)}</span>
-                  </button>
+                    <span className="lg:text-center">
+                      <ReviewButtons teamId={r.team_id} status={r.review_status} />
+                    </span>
+                  </div>
                 ))}
                 {(data?.rows ?? []).length === 0 && (
                   <p className="py-10 text-center text-sm text-muted-foreground">
@@ -295,6 +338,20 @@ function SubmissionsManager() {
           <SheetHeader>
             <SheetTitle>{selectedTeam?.team_name}</SheetTitle>
           </SheetHeader>
+          {selectedTeam && (
+            <div className="mt-4 space-y-4 rounded-xl border border-sage/30 bg-sage/5 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="eyebrow">Screening</p>
+                <ReviewButtons
+                  size="md"
+                  teamId={selectedTeam.team_id}
+                  status={selectedTeam.review_status}
+                  onChanged={(s) => setSelectedTeam((t) => (t ? { ...t, review_status: s } : t))}
+                />
+              </div>
+              <ReviewNotes key={selectedTeam.team_id} teamId={selectedTeam.team_id} initial={selectedTeam.review_notes} />
+            </div>
+          )}
           {selectedTeam && <TeamEntryInspector team={selectedTeam} />}
         </SheetContent>
       </Sheet>
