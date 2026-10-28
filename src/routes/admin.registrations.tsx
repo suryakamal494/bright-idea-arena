@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchClusters } from "@/lib/team";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -36,6 +37,7 @@ type RegistrationRow = {
   team_id: string | null;
   team_code: string | null;
   team_name: string | null;
+  cluster_name: string | null;
 };
 
 const PAGE_SIZE = 25;
@@ -46,6 +48,7 @@ function Registrations() {
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("all");
   const [school, setSchool] = useState("all");
+  const [cluster, setCluster] = useState("all");
   const [page, setPage] = useState(0);
   const [exporting, setExporting] = useState(false);
 
@@ -62,6 +65,7 @@ function Registrations() {
           ...(search.trim() ? { p_search: search.trim() } : {}),
           ...(grade === "all" ? {} : { p_grade: Number(grade) }),
           ...(school === "all" ? {} : { p_school: school }),
+          ...(cluster === "all" ? {} : { p_cluster_id: cluster }),
         });
         if (error) throw error;
         const res = data as unknown as { total: number; rows: RegistrationRow[] };
