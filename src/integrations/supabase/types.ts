@@ -605,6 +605,18 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_results_directory: {
+        Args: {
+          p_outcome?: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_sort?: string
+          p_stage?: number
+          p_track_id?: string
+        }
+        Returns: Json
+      }
       admin_submission_directory: {
         Args: {
           p_page?: number
