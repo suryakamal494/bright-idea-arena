@@ -534,3 +534,57 @@ function ResultPill({ result }: { result: string | null }) {
     return <span className="rounded-full bg-clay/15 px-2.5 py-0.5 text-xs font-semibold text-clay">Not selected</span>;
   return <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Not published</span>;
 }
+
+function ClusterBanner({
+  chosen,
+  clusters,
+  userId,
+  onSaved,
+}: {
+  chosen: { id: string | null; name: string | null } | null;
+  clusters: { id: string; name: string }[];
+  userId: string | null;
+  onSaved: () => void;
+}) {
+  const [value, setValue] = useState(chosen?.id ?? "");
+  const [busy, setBusy] = useState(false);
+  const dirty = value !== (chosen?.id ?? "");
+
+  async function save() {
+    if (!userId || !value) return;
+    setBusy(true);
+    const { error } = await supabase.from("profiles").update({ cluster_id: value }).eq("id", userId);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Cluster saved — it applies to teams formed from now on");
+    onSaved();
+  }
+
+  return (
+    <Card className={chosen?.id ? undefined : "border-ochre/40 bg-ochre/5"}>
+      <CardContent className="flex flex-wrap items-center gap-3 py-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-forest">Your school's cluster</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {chosen?.id
+              ? "Teams formed by your students belong to this cluster. Changing it only affects future teams."
+              : "Choose your competition cluster first — student teams from your school will belong to it."}
+          </p>
+        </div>
+        <Select value={value} onValueChange={setValue}>
+          <SelectTrigger className="w-44" aria-label="School cluster">
+            <SelectValue placeholder="Choose cluster" />
+          </SelectTrigger>
+          <SelectContent>
+            {clusters.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="sm" className="bg-clay hover:bg-clay/90" onClick={save} disabled={busy || !dirty || !value}>
+          {busy ? "Saving…" : "Save cluster"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
