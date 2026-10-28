@@ -616,6 +616,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_submission_export: {
+        Args: { p_search?: string; p_status?: string; p_track_id?: string }
+        Returns: Json
+      }
       admin_team_directory: {
         Args: {
           p_page?: number
