@@ -92,6 +92,24 @@ function Dashboard() {
   );
 }
 
+function ClusterPrompt({ team, isCaptain }: { team: TeamRow; isCaptain: boolean }) {
+  return (
+    <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm">
+      <p className="font-semibold text-ochre">Your team has no cluster yet</p>
+      <p className="mt-1 text-foreground/90">
+        {isCaptain
+          ? "Pick your team's competition cluster on the team page — the submission form stays locked until you do."
+          : "Every team belongs to a competition cluster. Your captain picks it on the team page — the submission form stays locked until then."}
+      </p>
+      {isCaptain && (
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link to="/team">Open team page</Link>
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function ResultsBanner({ results, twoStage }: { results: PublishedResultRow[]; twoStage: boolean }) {
   const r1 = results.find((r) => r.stage === 1);
   const r2 = results.find((r) => r.stage === 2);
