@@ -232,6 +232,16 @@ function CoordinatorPortal() {
         </p>
       </header>
 
+      {clusterRequired && (
+        <ClusterBanner
+          key={overview?.cluster?.id ?? "unset"}
+          chosen={overview?.cluster ?? null}
+          clusters={clusters ?? []}
+          userId={myId ?? null}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["coordinator-overview"] })}
+        />
+      )}
+
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="font-display text-lg">Add students</CardTitle>
@@ -391,10 +401,20 @@ function CoordinatorPortal() {
             >
               <Plus className="mr-1.5 h-4 w-4" /> Add row
             </Button>
-            <Button className="bg-clay hover:bg-clay/90" size="sm" onClick={createAccounts} disabled={busy || hasErrors}>
+            <Button
+              className="bg-clay hover:bg-clay/90"
+              size="sm"
+              onClick={createAccounts}
+              disabled={busy || hasErrors || (clusterRequired && !clusterChosen)}
+            >
               {busy ? "Creating…" : "Create accounts"}
             </Button>
           </div>
+          {clusterRequired && !clusterChosen && (
+            <p className="text-sm font-medium text-ochre" role="alert">
+              Choose your school's cluster above before registering students.
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Usernames and emails must be new on the platform. Passwords show on the printable passes below.
           </p>
@@ -420,6 +440,7 @@ function CoordinatorPortal() {
                 <thead>
                   <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-3 font-semibold">Team ID</th>
+                    <th className="py-2 pr-3 font-semibold">Cluster</th>
                     <th className="py-2 pr-3 font-semibold">Members</th>
                     <th className="py-2 pr-3 font-semibold">Stage 1</th>
                     {twoStage && <th className="py-2 pr-3 font-semibold">Stage 2</th>}
@@ -430,6 +451,7 @@ function CoordinatorPortal() {
                   {teams.map((t) => (
                     <tr key={t.team_id}>
                       <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-forest">{t.team_code ?? "—"}</td>
+                      <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.cluster_name ?? "—"}</td>
                       <td className="py-2.5 pr-3 text-xs text-muted-foreground">
                         {t.members.map((m) => m.full_name).join(", ")}
                       </td>
