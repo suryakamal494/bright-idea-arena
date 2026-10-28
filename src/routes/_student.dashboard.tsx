@@ -76,7 +76,9 @@ function Dashboard() {
         </h1>
       </header>
 
-      {!team ? (
+      {teamLoading || meLoading ? (
+        <div className="h-64 animate-pulse rounded-xl bg-muted/40" />
+      ) : !team ? (
         <NoTeamCards />
       ) : (
         <>
