@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchClusters } from "@/lib/team";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,6 +38,7 @@ type Row = {
   team_code: string | null;
   team_name: string;
   track_name: string | null;
+  cluster_name: string | null;
   school: string | null;
   members: string[];
   member_count: number;
@@ -60,6 +62,7 @@ function SubmissionsManager() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [trackId, setTrackId] = useState("all");
+  const [clusterId, setClusterId] = useState("all");
   const [status, setStatus] = useState("all");
   const [review, setReview] = useState<"all" | ReviewStatus>("all");
   const [round, setRound] = useState<1 | 2>(1);
@@ -127,14 +130,21 @@ function SubmissionsManager() {
     },
   });
 
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-directory", stage, search, trackId, status, review, page],
+    queryKey: ["admin-directory", stage, search, trackId, clusterId, status, review, page],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_team_directory", {
         p_page: page,
         p_page_size: PAGE_SIZE,
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
+        ...(clusterId === "all" ? {} : { p_cluster_id: clusterId }),
         p_status: status,
         p_review: review,
         p_stage: stage,
