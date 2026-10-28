@@ -505,6 +505,7 @@ export type Database = {
       team_reviews: {
         Row: {
           notes: string | null
+          stage: number
           status: string
           team_id: string
           updated_at: string
@@ -512,6 +513,7 @@ export type Database = {
         }
         Insert: {
           notes?: string | null
+          stage?: number
           status?: string
           team_id: string
           updated_at?: string
@@ -519,6 +521,7 @@ export type Database = {
         }
         Update: {
           notes?: string | null
+          stage?: number
           status?: string
           team_id?: string
           updated_at?: string
@@ -528,7 +531,7 @@ export type Database = {
           {
             foreignKeyName: "team_reviews_team_id_fkey"
             columns: ["team_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
@@ -670,6 +673,7 @@ export type Database = {
           p_page_size?: number
           p_review?: string
           p_search?: string
+          p_stage?: number
           p_status?: string
           p_track_id?: string
         }
