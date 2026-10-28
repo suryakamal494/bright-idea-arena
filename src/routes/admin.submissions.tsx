@@ -62,6 +62,15 @@ function SubmissionsManager() {
   const [trackId, setTrackId] = useState("all");
   const [status, setStatus] = useState("all");
   const [review, setReview] = useState<"all" | ReviewStatus>("all");
+  const [round, setRound] = useState<1 | 2>(1);
+  const { data: stageCount = 2 } = useQuery({
+    queryKey: ["competition-stage-count"],
+    queryFn: async () => {
+      const { data } = await supabase.from("competition_settings").select("stage_count").eq("id", 1).maybeSingle();
+      return data?.stage_count ?? 2;
+    },
+  });
+  const stage = stageCount === 1 ? 1 : round;
   const [page, setPage] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<Row | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -119,7 +128,7 @@ function SubmissionsManager() {
   });
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-directory", search, trackId, status, review, page],
+    queryKey: ["admin-directory", stage, search, trackId, status, review, page],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_team_directory", {
         p_page: page,
@@ -128,6 +137,7 @@ function SubmissionsManager() {
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
         p_status: status,
         p_review: review,
+        p_stage: stage,
       });
       if (error) throw error;
       return data as unknown as {
@@ -163,6 +173,34 @@ function SubmissionsManager() {
           and attachments.
         </p>
       </header>
+
+      {stageCount === 2 && (
+        <div role="tablist" aria-label="Round" className="flex gap-1 border-b border-border">
+          {([1, 2] as const).map((r) => (
+            <button
+              key={r}
+              role="tab"
+              aria-selected={round === r}
+              onClick={() => {
+                setRound(r);
+                setReview("all");
+                setPage(0);
+                setSelectedTeam(null);
+              }}
+              className={`-mb-px border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
+                round === r ? "border-terracotta text-forest" : "border-transparent text-muted-foreground hover:text-forest"
+              }`}
+            >
+              {r === 1 ? "Round 1 — Idea screening" : "Round 2 — Shortlisted teams"}
+            </button>
+          ))}
+        </div>
+      )}
+      {stage === 2 && (
+        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Only teams shortlisted in published Round 1 results appear here. Marks and notes are separate from Round 1.
+        </p>
+      )}
 
       <div role="tablist" className="flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
         {REVIEW_TABS.map((t) => (
@@ -298,7 +336,7 @@ function SubmissionsManager() {
                     <span className="lg:text-center">{statusBadge(r.s1_status)}</span>
                     <span className="lg:text-center">{statusBadge(r.s2_status)}</span>
                     <span className="lg:text-center">
-                      <ReviewButtons teamId={r.team_id} status={r.review_status} />
+                      <ReviewButtons teamId={r.team_id} stage={stage} status={r.review_status} />
                     </span>
                   </div>
                 ))}
@@ -341,15 +379,16 @@ function SubmissionsManager() {
           {selectedTeam && (
             <div className="mt-4 space-y-4 rounded-xl border border-sage/30 bg-sage/5 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="eyebrow">Screening</p>
+                <p className="eyebrow">Round {stage} screening</p>
                 <ReviewButtons
                   size="md"
                   teamId={selectedTeam.team_id}
+                  stage={stage}
                   status={selectedTeam.review_status}
                   onChanged={(s) => setSelectedTeam((t) => (t ? { ...t, review_status: s } : t))}
                 />
               </div>
-              <ReviewNotes key={selectedTeam.team_id} teamId={selectedTeam.team_id} initial={selectedTeam.review_notes} />
+              <ReviewNotes key={`${selectedTeam.team_id}-${stage}`} teamId={selectedTeam.team_id} stage={stage} initial={selectedTeam.review_notes} />
             </div>
           )}
           {selectedTeam && <TeamEntryInspector team={selectedTeam} />}
