@@ -126,8 +126,14 @@ function Registrations() {
     staleTime: 60_000,
   });
 
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-registrations", search, grade, school, page],
+    queryKey: ["admin-registrations", search, grade, school, cluster, page],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_registration_directory", {
         p_page: page,
@@ -135,6 +141,7 @@ function Registrations() {
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(grade === "all" ? {} : { p_grade: Number(grade) }),
         ...(school === "all" ? {} : { p_school: school }),
+        ...(cluster === "all" ? {} : { p_cluster_id: cluster }),
       });
       if (error) throw error;
       return data as unknown as { total: number; rows: RegistrationRow[] };
@@ -206,6 +213,27 @@ function Registrations() {
             ))}
           </SelectContent>
         </Select>
+        {(clusters ?? []).length > 0 && (
+          <Select
+            value={cluster}
+            onValueChange={(v) => {
+              setCluster(v);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clusters</SelectItem>
+              {(clusters ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv} className="ml-auto">
           <Download className="mr-1.5 h-4 w-4" />
           {exporting ? "Preparing…" : "Export CSV"}
