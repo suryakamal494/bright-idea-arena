@@ -409,18 +409,6 @@ function ClusterGate({
   team: NonNullable<Awaited<ReturnType<typeof fetchMyTeam>>>;
   onChanged: () => void;
 }) {
-  const isCaptain = true; // refined below via user query
-  return <ClusterGateInner team={team} onChanged={onChanged} isCaptainHint={isCaptain} />;
-}
-
-function ClusterGateInner({
-  team,
-  onChanged,
-}: {
-  team: NonNullable<Awaited<ReturnType<typeof fetchMyTeam>>>;
-  onChanged: () => void;
-  isCaptainHint?: boolean;
-}) {
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
   const { data: clusters } = useQuery({
     queryKey: ["clusters"],
