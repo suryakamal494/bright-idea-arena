@@ -2,24 +2,20 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchCompetitionSettings } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/admin/deadlines")({
   head: () => ({
-    meta: [{ title: "Deadline management — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Deadlines & stages — Social Innovation Ideathon" },
+      { name: "description", content: "Set stage deadlines and manage competition themes." },
+    ],
   }),
   component: DeadlineManager,
 });
@@ -46,111 +42,30 @@ function DeadlineManager() {
       return (data ?? []) as SettingRow[];
     },
   });
-  const { data: competition } = useQuery({
-    queryKey: ["competition-settings"],
-    queryFn: fetchCompetitionSettings,
-  });
-  const twoStage = (competition?.stage_count ?? 2) === 2;
 
   return (
     <div className="space-y-5">
       <header>
-        <p className="eyebrow">Deadline management</p>
-        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">Stages &amp; windows</h1>
+        <p className="eyebrow">Deadlines &amp; stages</p>
+        <h1 className="font-display mt-1.5 text-3xl font-semibold text-forest">Deadlines &amp; stages</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose how many rounds the competition runs, and open or close each submission stage.
+          Stage 1 is always open until its deadline. Open Stage 2 when you are ready for shortlisted teams.
         </p>
       </header>
-
-      <StageCountCard stageCount={competition?.stage_count ?? 2} onSaved={() => {
-        queryClient.invalidateQueries({ queryKey: ["competition-settings"] });
-      }} />
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
       <div className="space-y-4">
         {(rows ?? []).map((row) => (
-          <DeadlineCard key={row.id} row={row} twoStage={twoStage} onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-stage-settings"] })} />
+          <DeadlineCard key={row.id} row={row} onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-stage-settings"] })} />
         ))}
       </div>
+
+      <ThemesCard />
     </div>
   );
 }
 
-function StageCountCard({ stageCount, onSaved }: { stageCount: number; onSaved: () => void }) {
-  const [value, setValue] = useState(String(stageCount));
-  const [busy, setBusy] = useState(false);
-  const changed = Number(value) !== stageCount;
-  const { data: stage2Count } = useQuery({
-    queryKey: ["stage2-submission-count"],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("submissions")
-        .select("id", { count: "exact", head: true })
-        .eq("stage", 2);
-      return count ?? 0;
-    },
-  });
-
-  async function save() {
-    setBusy(true);
-    const next = Number(value);
-    if (next === 1 && (stage2Count ?? 0) > 0) {
-      const go = window.confirm(
-        `${stage2Count} stage-2 entries already exist. Switching to a single stage hides stage 2 everywhere and blocks new stage-2 saves. Continue?`,
-      );
-      if (!go) {
-        setBusy(false);
-        return;
-      }
-    }
-    const { error } = await supabase
-      .from("competition_settings")
-      .update({ stage_count: next, updated_at: new Date().toISOString() })
-      .eq("id", 1);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(next === 1 ? "Competition set to a single stage" : "Competition set to two stages");
-    onSaved();
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-display text-lg">Number of stages</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1.5">
-            <Label>This competition runs</Label>
-            <Select value={value} onValueChange={setValue}>
-              <SelectTrigger className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">One stage — single round</SelectItem>
-                <SelectItem value="2">Two stages — Round 1 + final round</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button className="bg-clay hover:bg-clay/90" onClick={save} disabled={busy || !changed}>
-            {busy ? "Saving…" : "Save"}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {stageCount === 2
-            ? "Two stages: after Round 1 closes, shortlist teams on the Results page and publish results — stage 2 opens only for shortlisted teams."
-            : "Single stage: publish the final results directly from the Results page when Round 1 closes."}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function DeadlineCard({ row, twoStage, onSaved }: { row: SettingRow; twoStage: boolean; onSaved: () => void }) {
-  const [s1Open, setS1Open] = useState(row.stage1_open);
+function DeadlineCard({ row, onSaved }: { row: SettingRow; onSaved: () => void }) {
   const [s1Deadline, setS1Deadline] = useState(toLocal(row.stage1_deadline));
   const [s2Open, setS2Open] = useState(row.stage2_open);
   const [s2Deadline, setS2Deadline] = useState(toLocal(row.stage2_deadline));
@@ -161,7 +76,7 @@ function DeadlineCard({ row, twoStage, onSaved }: { row: SettingRow; twoStage: b
     const { error } = await supabase
       .from("stage_settings")
       .update({
-        stage1_open: s1Open,
+        stage1_open: true,
         stage1_deadline: s1Deadline ? new Date(s1Deadline).toISOString() : null,
         stage2_open: s2Open,
         stage2_deadline: s2Deadline ? new Date(s2Deadline).toISOString() : null,
@@ -169,7 +84,7 @@ function DeadlineCard({ row, twoStage, onSaved }: { row: SettingRow; twoStage: b
       .eq("id", row.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(row.track ? `${row.track.name} windows saved` : "Global windows saved");
+    toast.success("Deadlines saved");
     onSaved();
   }
 
@@ -177,39 +92,145 @@ function DeadlineCard({ row, twoStage, onSaved }: { row: SettingRow; twoStage: b
     <Card>
       <CardHeader>
         <CardTitle className="font-display text-lg">
-          {row.track ? `Theme · ${row.track.name}` : "Global (all themes)"}
+          {row.track ? `Theme · ${row.track.name}` : "Stage deadlines"}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Stage 1 open</Label>
-            <Switch checked={s1Open} onCheckedChange={setS1Open} />
+          <div className="flex h-6 items-center justify-between">
+            <Label>Stage 1</Label>
+            <span className="rounded-full bg-forest/10 px-2.5 py-0.5 text-xs font-medium text-forest">Always open</span>
           </div>
           <div className="space-y-1.5">
             <Label>Stage 1 deadline</Label>
             <Input type="datetime-local" value={s1Deadline} onChange={(e) => setS1Deadline(e.target.value)} />
           </div>
         </div>
-        {twoStage && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Stage 2 open</Label>
-              <Switch checked={s2Open} onCheckedChange={setS2Open} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Stage 2 deadline</Label>
-              <Input type="datetime-local" value={s2Deadline} onChange={(e) => setS2Deadline(e.target.value)} />
-            </div>
+        <div className="space-y-3">
+          <div className="flex h-6 items-center justify-between">
+            <Label>Stage 2 open</Label>
+            <Switch checked={s2Open} onCheckedChange={setS2Open} />
           </div>
-        )}
+          <div className="space-y-1.5">
+            <Label>Stage 2 deadline</Label>
+            <Input type="datetime-local" value={s2Deadline} onChange={(e) => setS2Deadline(e.target.value)} />
+          </div>
+        </div>
         <div className="sm:col-span-2">
           <Button className="bg-clay hover:bg-clay/90" onClick={save} disabled={busy}>
-            {busy ? "Saving…" : "Save windows"}
+            {busy ? "Saving…" : "Save deadlines"}
           </Button>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+type Track = { id: string; name: string; slug: string; description: string | null };
+
+function slugify(s: string) {
+  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function ThemesCard() {
+  const queryClient = useQueryClient();
+  const { data: tracks } = useQuery({
+    queryKey: ["admin-tracks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tracks").select("id,name,slug,description").order("name");
+      if (error) throw error;
+      return (data ?? []) as Track[];
+    },
+  });
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ["admin-tracks"] });
+    queryClient.invalidateQueries({ queryKey: ["public-tracks"] });
+    queryClient.invalidateQueries({ queryKey: ["tracks"] });
+  }
+
+  async function add() {
+    const n = name.trim();
+    if (!n) return;
+    setBusy(true);
+    const { error } = await supabase.from("tracks").insert({ name: n, slug: slugify(n), description: desc.trim() || null });
+    setBusy(false);
+    if (error) {
+      toast.error(error.code === "23505" ? "A theme with this name already exists" : error.message);
+      return;
+    }
+    setName(""); setDesc("");
+    toast.success(`Theme "${n}" added`);
+    refresh();
+  }
+
+  async function remove(t: Track) {
+    const { count } = await supabase.from("teams").select("id", { count: "exact", head: true }).eq("track_id", t.id);
+    if ((count ?? 0) > 0) {
+      toast.error(`${count} team(s) already chose "${t.name}" — it can't be deleted.`);
+      return;
+    }
+    if (!window.confirm(`Delete theme "${t.name}"?`)) return;
+    const { error } = await supabase.from("tracks").delete().eq("id", t.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Theme deleted");
+    refresh();
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-lg">Themes</CardTitle>
+        <p className="text-sm text-muted-foreground">Each team picks one theme when it is created.</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ul className="divide-y divide-border rounded-lg border border-border">
+          {(tracks ?? []).map((t) => (
+            <ThemeRow key={t.id} track={t} onSaved={refresh} onDelete={() => remove(t)} />
+          ))}
+          {tracks?.length === 0 && <li className="p-3 text-sm text-muted-foreground">No themes yet.</li>}
+        </ul>
+        <div className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+          <Input placeholder="Theme name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder="Short description (optional)" value={desc} onChange={(e) => setDesc(e.target.value)} />
+          <Button className="bg-clay hover:bg-clay/90" onClick={add} disabled={busy || !name.trim()}>
+            Add theme
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ThemeRow({ track, onSaved, onDelete }: { track: Track; onSaved: () => void; onDelete: () => void }) {
+  const [name, setName] = useState(track.name);
+  const [desc, setDesc] = useState(track.description ?? "");
+  const changed = name.trim() !== track.name || desc.trim() !== (track.description ?? "");
+
+  async function save() {
+    const { error } = await supabase
+      .from("tracks")
+      .update({ name: name.trim(), description: desc.trim() || null })
+      .eq("id", track.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Theme updated");
+    onSaved();
+  }
+
+  return (
+    <li className="grid gap-2 p-3 sm:grid-cols-[1fr_2fr_auto] sm:items-center">
+      <Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Theme name" />
+      <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description" aria-label="Description" />
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={save} disabled={!changed || !name.trim()}>Save</Button>
+        <Button variant="ghost" size="sm" onClick={onDelete} aria-label={`Delete ${track.name}`}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </li>
   );
 }
 
