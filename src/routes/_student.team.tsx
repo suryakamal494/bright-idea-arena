@@ -4,7 +4,7 @@ import { Crown, LogOut, ShieldAlert, UserRoundCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getSessionUser } from "@/lib/auth";
+import { getAuthContext, getSessionUser } from "@/lib/auth";
 import { MAX_TEAM_SIZE, fetchClusters, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
