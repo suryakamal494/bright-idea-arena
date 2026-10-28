@@ -288,6 +288,17 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
               ))}
             </SelectContent>
           </Select>
+          {(clusters ?? []).length > 0 && (
+            <Select value={clusterId} onValueChange={(v) => { setClusterId(v); setPage(0); }}>
+              <SelectTrigger className="lg:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All clusters</SelectItem>
+                {(clusters ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={outcome} onValueChange={(v) => { setOutcome(v); setPage(0); }}>
             <SelectTrigger className="lg:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -359,6 +370,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                   <th className="py-2 pr-3 font-semibold">Team ID</th>
                   <th className="py-2 pr-3 font-semibold">Team &amp; project</th>
                   <th className="py-2 pr-3 font-semibold">School</th>
+                  <th className="py-2 pr-3 font-semibold">Cluster</th>
                   <th className="py-2 pr-3 font-semibold">Theme</th>
                   <th className="py-2 pr-3 font-semibold">Judge score</th>
                   <th className="py-2 pr-3 font-semibold">Submission</th>
@@ -396,6 +408,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                       <p className="text-xs text-muted-foreground">{t.title || "No project title yet"}</p>
                     </td>
                     <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.school ?? "—"}</td>
+                    <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.cluster_name ?? "—"}</td>
                     <td className="py-2.5 pr-3 text-xs">{t.track_name ?? "—"}</td>
                     <td className="py-2.5 pr-3">
                       {t.avg_score != null ? (
@@ -425,7 +438,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                 ))}
                 {(data?.rows ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-sm text-muted-foreground">
+                    <td colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
                       {stage === 2 ? "No shortlisted teams match. Shortlist teams in Round 1 first." : "No teams found."}
                     </td>
                   </tr>
