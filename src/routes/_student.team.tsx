@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
-import { MAX_TEAM_SIZE, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
+import { MAX_TEAM_SIZE, fetchClusters, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,9 +97,12 @@ function TeamRoster({
         <p className="eyebrow">Team workspace</p>
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">{team.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Track · {team.track?.name ?? "Not set"} · {roster.length}/{MAX_TEAM_SIZE} members
+          Track · {team.track?.name ?? "Not set"} · Cluster · {team.cluster?.name ?? "Not set"} ·{" "}
+          {roster.length}/{MAX_TEAM_SIZE} members
         </p>
       </header>
+
+      <ClusterGate team={team} onChanged={onChanged} />
 
       {team.locked && (
         <div className="flex gap-2.5 rounded-xl border border-ochre/40 bg-ochre/10 p-3.5 text-sm text-ochre">
@@ -264,6 +267,7 @@ function TeamFormation({ onDone }: { onDone: () => void }) {
 function CreateTeamForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [trackId, setTrackId] = useState("");
+  const [clusterId, setClusterId] = useState("");
   const [busy, setBusy] = useState(false);
   const { data: tracks } = useQuery({
     queryKey: ["public-tracks"],
@@ -272,14 +276,31 @@ function CreateTeamForm({ onDone }: { onDone: () => void }) {
       return data ?? [];
     },
   });
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+  const { data: schoolCluster } = useQuery({
+    queryKey: ["school-cluster"],
+    queryFn: async () => (await getAuthContext())?.school_cluster ?? null,
+    staleTime: 60_000,
+  });
+  const clusterRequired = (clusters ?? []).length > 0;
+  const lockedCluster = schoolCluster?.id ? schoolCluster : null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!trackId) { toast.error("Choose an innovation track"); return; }
+    if (clusterRequired && !lockedCluster && !clusterId) {
+      toast.error("Choose your cluster");
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase.rpc("create_team", {
       p_name: name,
       p_track_id: trackId,
+      ...(clusterRequired && !lockedCluster && clusterId ? { p_cluster_id: clusterId } : {}),
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
