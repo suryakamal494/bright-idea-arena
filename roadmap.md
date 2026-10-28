@@ -35,4 +35,4 @@
 - [x] Shortlist + results: admin Results page (migration 0020 results table + RLS) — Round 1 outcome per team, publish/hide Round 1, final outcome + publish; publishing gates stage 2 in the backend; scores stay internal
 - [x] Results cards on student dashboard + school portal (published outcomes only)
 - [x] Verification: typecheck, 12 tests (incl. new paste-import parser tests), build OK; Playwright verified paste import, account creation, username login, coordinator teams view, results publish, student banner + stage-2 unlock, single-stage mode
-- [ ] Cluster-level competition: parked per user (school/track fields kept extensible)
+- [x] Cluster-level competition (migration 0026): clusters table (seeded Cluster 1–4, admin-managed on Deadlines & stages), teams.cluster_id + profiles.cluster_id, create_team enforces school-locked cluster, set_team_cluster for existing cluster-less teams, upsert_submission rejects cluster-less teams, coordinator banner gates bulk entry, Cluster column + filter on admin Registrations/Submissions/Results + CSV export; no on/off toggle — empty cluster list turns cluster UI off everywhere
