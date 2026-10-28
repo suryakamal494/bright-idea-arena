@@ -13,11 +13,11 @@ export const REVIEW_LABEL: Record<ReviewStatus, string> = {
   not_selected: "Not selected",
 };
 
-export async function saveReview(teamId: string, patch: { status?: ReviewStatus; notes?: string }) {
+export async function saveReview(teamId: string, stage: number, patch: { status?: ReviewStatus; notes?: string }) {
   const { data: u } = await supabase.auth.getUser();
   const { error } = await supabase.from("team_reviews").upsert(
-    { team_id: teamId, ...patch, updated_by: u.user?.id ?? null, updated_at: new Date().toISOString() },
-    { onConflict: "team_id" },
+    { team_id: teamId, stage, ...patch, updated_by: u.user?.id ?? null, updated_at: new Date().toISOString() },
+    { onConflict: "team_id,stage" },
   );
   if (error) throw error;
 }
@@ -25,11 +25,13 @@ export async function saveReview(teamId: string, patch: { status?: ReviewStatus;
 /** Two compact buttons. Clicking the active one returns the team to Unreviewed. */
 export function ReviewButtons({
   teamId,
+  stage,
   status,
   onChanged,
   size = "sm",
 }: {
   teamId: string;
+  stage: number;
   status: ReviewStatus;
   onChanged?: (s: ReviewStatus) => void;
   size?: "sm" | "md";
@@ -44,7 +46,7 @@ export function ReviewButtons({
     const prev = current;
     setCurrent(value);
     try {
-      await saveReview(teamId, { status: value });
+      await saveReview(teamId, stage, { status: value });
       onChanged?.(value);
       qc.invalidateQueries({ queryKey: ["admin-directory"] });
       qc.invalidateQueries({ queryKey: ["admin-results"] });
@@ -90,7 +92,7 @@ export function ReviewButtons({
 }
 
 /** Internal notes, saved automatically after typing stops. */
-export function ReviewNotes({ teamId, initial }: { teamId: string; initial: string | null }) {
+export function ReviewNotes({ teamId, stage, initial }: { teamId: string; stage: number; initial: string | null }) {
   const qc = useQueryClient();
   const [value, setValue] = useState(initial ?? "");
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
@@ -100,9 +102,9 @@ export function ReviewNotes({ teamId, initial }: { teamId: string; initial: stri
   useEffect(() => () => {
     if (timer.current) {
       window.clearTimeout(timer.current);
-      void saveReview(teamId, { notes: latest.current });
+      void saveReview(teamId, stage, { notes: latest.current });
     }
-  }, [teamId]);
+  }, [teamId, stage]);
 
   return (
     <div>
@@ -125,7 +127,7 @@ export function ReviewNotes({ teamId, initial }: { teamId: string; initial: stri
           timer.current = window.setTimeout(async () => {
             timer.current = null;
             try {
-              await saveReview(teamId, { notes: v });
+              await saveReview(teamId, stage, { notes: v });
               setState("saved");
               qc.invalidateQueries({ queryKey: ["admin-directory"] });
             } catch (err) {
