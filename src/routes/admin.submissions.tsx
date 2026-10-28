@@ -261,6 +261,27 @@ function SubmissionsManager() {
             ))}
           </SelectContent>
         </Select>
+        {(clusters ?? []).length > 0 && (
+          <Select
+            value={clusterId}
+            onValueChange={(v) => {
+              setClusterId(v);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clusters</SelectItem>
+              {(clusters ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select
           value={status}
           onValueChange={(v) => {
@@ -300,10 +321,11 @@ function SubmissionsManager() {
             </div>
           ) : (
             <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
-              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.9fr)_70px_80px_80px_210px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                 <span>Team ID</span>
                 <span>Team</span>
                 <span>School</span>
+                <span>Cluster</span>
                 <span>Theme</span>
                 <span className="text-center">Members</span>
                 <span className="text-center">Stage 1</span>
@@ -318,7 +340,7 @@ function SubmissionsManager() {
                     tabIndex={0}
                     onClick={() => setSelectedTeam(r)}
                     onKeyDown={(e) => e.key === "Enter" && setSelectedTeam(r)}
-                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_70px_80px_80px_210px] lg:items-center lg:gap-3"
+                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.9fr)_70px_80px_80px_210px] lg:items-center lg:gap-3"
                   >
                     <span className="font-mono text-xs font-semibold text-forest">
                       {r.team_code ?? "—"}
@@ -331,6 +353,9 @@ function SubmissionsManager() {
                     </span>
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
                       {r.school ?? "No school"}
+                    </span>
+                    <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
+                      {r.cluster_name ?? "—"}
                     </span>
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
                       {r.track_name ?? "No theme"}
@@ -463,6 +488,7 @@ function TeamEntryInspector({ team }: { team: Row }) {
         </p>
         <p className="mt-1">
           <span className="font-semibold">School:</span> {team.school ?? "—"} ·{" "}
+          <span className="font-semibold">Cluster:</span> {team.cluster_name ?? "—"} ·{" "}
           <span className="font-semibold">Theme:</span> {team.track_name ?? "—"}
         </p>
         <p className="mt-1">
