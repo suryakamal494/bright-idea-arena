@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchCompetitionSettings } from "@/lib/team";
+import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +35,7 @@ type Row = {
   team_code: string | null;
   team_name: string;
   track_name: string | null;
+  cluster_name: string | null;
   school: string | null;
   title: string | null;
   status: string;
@@ -107,6 +108,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [trackId, setTrackId] = useState("all");
+  const [clusterId, setClusterId] = useState("all");
   const [outcome, setOutcome] = useState("all");
   const [sort, setSort] = useState("score");
   const [page, setPage] = useState(0);
@@ -122,7 +124,13 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
     },
   });
 
-  const key = ["admin-results", stage, search, trackId, outcome, sort, page];
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+
+  const key = ["admin-results", stage, search, trackId, clusterId, outcome, sort, page];
   const { data, isLoading } = useQuery({
     queryKey: key,
     placeholderData: keepPreviousData,
@@ -134,6 +142,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
         p_sort: sort,
         ...(search ? { p_search: search } : {}),
         ...(trackId !== "all" ? { p_track_id: trackId } : {}),
+        ...(clusterId !== "all" ? { p_cluster_id: clusterId } : {}),
         ...(outcome !== "all" ? { p_outcome: outcome } : {}),
       });
       if (error) throw new Error(error.message);
