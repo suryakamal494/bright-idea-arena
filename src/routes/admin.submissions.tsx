@@ -84,20 +84,21 @@ function SubmissionsManager() {
       const { data, error } = await supabase.rpc("admin_submission_export", {
         ...(search.trim() ? { p_search: search.trim() } : {}),
         ...(trackId === "all" ? {} : { p_track_id: trackId }),
+        ...(clusterId === "all" ? {} : { p_cluster_id: clusterId }),
         p_status: status,
       });
       if (error) throw error;
       type ExportRow = {
         school: string | null; student_name: string; email: string | null; phone: string | null;
-        theme: string | null; team_code: string | null; team_name: string; stage1: string | null; stage2: string | null;
+        theme: string | null; cluster_name: string | null; team_code: string | null; team_name: string; stage1: string | null; stage2: string | null;
       };
       const all = (data ?? []) as unknown as ExportRow[];
-      const header = ["School", "Student name", "Email", "Mobile", "Theme", "Team ID", "Team name", "Stage 1", "Stage 2"];
+      const header = ["School", "Student name", "Email", "Mobile", "Theme", "Cluster", "Team ID", "Team name", "Stage 1", "Stage 2"];
       const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const csv = [
         header.join(","),
         ...all.map((r) =>
-          [r.school, r.student_name, r.email, r.phone, r.theme, r.team_code, r.team_name, r.stage1 ?? "not started", r.stage2 ?? "not started"]
+          [r.school, r.student_name, r.email, r.phone, r.theme, r.cluster_name, r.team_code, r.team_name, r.stage1 ?? "not started", r.stage2 ?? "not started"]
             .map(esc)
             .join(","),
         ),

@@ -265,7 +265,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
             Round 1 results are still in draft. Shortlisted teams can only start their Round 2 submission once you publish Round 1.
           </p>
         )}
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto]">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto]">
           <Input
             placeholder="Search team ID, name, project or school…"
             value={searchInput}
