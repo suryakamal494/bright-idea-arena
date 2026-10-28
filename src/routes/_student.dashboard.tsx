@@ -27,8 +27,8 @@ type AnnouncementRow = {
 };
 
 function Dashboard() {
-  const { data: me } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
-  const { data: team } = useQuery({
+  const { data: me, isLoading: meLoading } = useQuery({ queryKey: ["me"], queryFn: getSessionUser });
+  const { data: team, isLoading: teamLoading } = useQuery({
     queryKey: ["my-team"],
     queryFn: async () => {
       const user = await getSessionUser();
