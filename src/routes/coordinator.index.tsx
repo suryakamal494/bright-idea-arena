@@ -17,7 +17,8 @@ import {
   type ColumnKind,
   type ParsedTable,
 } from "@/lib/paste-import";
-import { fetchCompetitionSettings } from "@/lib/team";
+import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
+import { getSessionUser } from "@/lib/auth";
 import { AccessPasses } from "@/components/access-passes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ type OverviewTeam = {
   team_id: string;
   team_code: string | null;
   team_name: string;
+  cluster_name: string | null;
   members: { full_name: string; grade: number | null }[];
   stage1_status: string | null;
   stage2_status: string | null;
@@ -100,14 +102,29 @@ function CoordinatorPortal() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("coordinator_school_overview");
       if (error) throw new Error(error.message);
-      return data as { teams: OverviewTeam[]; students: OverviewStudent[] };
+      return data as {
+        cluster: { id: string | null; name: string | null } | null;
+        teams: OverviewTeam[];
+        students: OverviewStudent[];
+      };
     },
+  });
+  const { data: clusters } = useQuery({
+    queryKey: ["clusters"],
+    queryFn: fetchClusters,
+    staleTime: 60_000,
+  });
+  const { data: myId } = useQuery({
+    queryKey: ["coordinator-me-id"],
+    queryFn: async () => (await getSessionUser())?.id ?? null,
   });
   const { data: competition } = useQuery({
     queryKey: ["competition-settings"],
     queryFn: fetchCompetitionSettings,
   });
   const twoStage = (competition?.stage_count ?? 2) === 2;
+  const clusterChosen = !!overview?.cluster?.id;
+  const clusterRequired = (clusters ?? []).length > 0;
 
   const [rows, setRows] = useState<StudentSeed[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
