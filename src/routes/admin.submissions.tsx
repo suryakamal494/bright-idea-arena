@@ -58,39 +58,23 @@ function SubmissionsManager() {
   async function exportCsv() {
     setExporting(true);
     try {
-      const pageSize = 100;
-      const all: Row[] = [];
-      let p = 0;
-      for (;;) {
-        const { data, error } = await supabase.rpc("admin_team_directory", {
-          p_page: p,
-          p_page_size: pageSize,
-          ...(search.trim() ? { p_search: search.trim() } : {}),
-          ...(trackId === "all" ? {} : { p_track_id: trackId }),
-          p_status: status,
-        });
-        if (error) throw error;
-        const res = data as unknown as { total: number; rows: Row[] };
-        all.push(...res.rows);
-        if (res.rows.length < pageSize || all.length >= res.total || all.length >= 5000) break;
-        p++;
-      }
-      const header = ["team_id", "team_name", "school", "theme", "member_count", "members", "stage1", "stage2", "last_activity"];
+      const { data, error } = await supabase.rpc("admin_submission_export", {
+        ...(search.trim() ? { p_search: search.trim() } : {}),
+        ...(trackId === "all" ? {} : { p_track_id: trackId }),
+        p_status: status,
+      });
+      if (error) throw error;
+      type ExportRow = {
+        school: string | null; student_name: string; email: string | null; phone: string | null;
+        theme: string | null; team_code: string | null; team_name: string; stage1: string | null; stage2: string | null;
+      };
+      const all = (data ?? []) as unknown as ExportRow[];
+      const header = ["School", "Student name", "Email", "Mobile", "Theme", "Team ID", "Team name", "Stage 1", "Stage 2"];
       const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const csv = [
         header.join(","),
         ...all.map((r) =>
-          [
-            r.team_code ?? "",
-            r.team_name,
-            r.school ?? "",
-            r.track_name ?? "",
-            r.member_count,
-            (r.members ?? []).join("; "),
-            r.s1_status ?? "",
-            r.s2_status ?? "",
-            r.last_activity?.slice(0, 10) ?? "",
-          ]
+          [r.school, r.student_name, r.email, r.phone, r.theme, r.team_code, r.team_name, r.stage1 ?? "not started", r.stage2 ?? "not started"]
             .map(esc)
             .join(","),
         ),
@@ -232,10 +216,11 @@ function SubmissionsManager() {
             </div>
           ) : (
             <div className={isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
-              <div className="hidden grid-cols-[130px_minmax(0,1.2fr)_minmax(0,1fr)_90px_90px_110px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className="hidden grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_90px_90px_110px] gap-3 border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                 <span>Team ID</span>
                 <span>Team</span>
-                <span>School · theme</span>
+                <span>School</span>
+                <span>Theme</span>
                 <span className="text-center">Members</span>
                 <span className="text-center">Stage 1</span>
                 <span className="text-center">Stage 2</span>
@@ -245,7 +230,7 @@ function SubmissionsManager() {
                   <button
                     key={r.team_id}
                     onClick={() => setSelectedTeam(r)}
-                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.2fr)_minmax(0,1fr)_90px_90px_110px] lg:items-center lg:gap-3"
+                    className="grid w-full grid-cols-1 gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)_90px_90px_110px] lg:items-center lg:gap-3"
                   >
                     <span className="font-mono text-xs font-semibold text-forest">
                       {r.team_code ?? "—"}
@@ -257,7 +242,10 @@ function SubmissionsManager() {
                       </span>
                     </span>
                     <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
-                      {r.school ?? "No school"} · {r.track_name ?? "No track"}
+                      {r.school ?? "No school"}
+                    </span>
+                    <span className="hidden min-w-0 truncate text-xs text-muted-foreground lg:block">
+                      {r.track_name ?? "No theme"}
                     </span>
                     <span className="text-xs text-muted-foreground lg:text-center">
                       {r.member_count}{" "}
