@@ -428,7 +428,6 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
           onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
           placeholder="e.g. 482913"
           className="font-mono text-lg tracking-widest"
-          maxLength={6}
           inputMode="numeric"
         />
       </div>
