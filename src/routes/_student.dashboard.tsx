@@ -191,7 +191,7 @@ function NoTeamCards() {
               Have the 6-digit join code from your team captain? Enter it and you're in.
             </p>
             <Button asChild variant="outline" className="mt-4">
-              <Link to="/team">Join a team</Link>
+              <Link to="/team" search={{ tab: "join" }}>Join a team</Link>
             </Button>
           </CardContent>
         </Card>

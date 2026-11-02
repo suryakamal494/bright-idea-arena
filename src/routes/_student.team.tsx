@@ -269,6 +269,8 @@ function TeamRoster({
 }
 
 function TeamFormation({ onDone }: { onDone: () => void }) {
+  const { tab } = Route.useSearch();
+  const navigate = useNavigate();
   return (
     <div className="space-y-5">
       <header>
@@ -276,7 +278,10 @@ function TeamFormation({ onDone }: { onDone: () => void }) {
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">Build your team</h1>
         <p className="mt-1 text-sm text-muted-foreground">Teams of 2–3 students. One track per team.</p>
       </header>
-      <Tabs defaultValue="create">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => navigate({ to: "/team", search: { tab: v === "join" ? "join" : "create" }, replace: true })}
+      >
         <TabsList className="w-full">
           <TabsTrigger value="create" className="flex-1">
             Create a team
@@ -401,8 +406,11 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Pasted codes can carry spaces, dashes or label text — keep digits only.
+    const clean = code.replace(/\D/g, "");
+    if (clean.length !== 6) { toast.error("Enter the full 6-digit join code"); return; }
     setBusy(true);
-    const { error } = await supabase.rpc("join_team", { p_code: code.trim() });
+    const { error } = await supabase.rpc("join_team", { p_code: clean });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Welcome to the team!");
@@ -416,7 +424,7 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
         <Input
           required
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
           placeholder="e.g. 482913"
           className="font-mono text-lg tracking-widest"
           maxLength={6}
