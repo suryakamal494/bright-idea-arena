@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_student/team")({
   // ?tab=join deep-links the formation tabs (e.g. the dashboard "Join a team"
   // button); anything else defaults to the create tab.
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search.tab === "join" ? ("join" as const) : ("create" as const),
+    tab: search["tab"] === "join" ? ("join" as const) : ("create" as const),
   }),
   component: TeamPage,
 });
