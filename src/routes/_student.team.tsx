@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogOut, ShieldAlert, UserRoundCheck } from "lucide-react";
 import { useState } from "react";
@@ -6,6 +6,17 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthContext, getSessionUser } from "@/lib/auth";
 import { MAX_TEAM_SIZE, fetchClusters, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +33,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const Route = createFileRoute("/_student/team")({
   head: () => ({
     meta: [{ title: "My team — Social Innovation Ideathon" }],
+  }),
+  // ?tab=join deep-links the formation tabs (e.g. the dashboard "Join a team"
+  // button); anything else defaults to the create tab.
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: search.tab === "join" ? ("join" as const) : ("create" as const),
   }),
   component: TeamPage,
 });
@@ -84,7 +100,6 @@ function TeamRoster({
   }
 
   async function disband() {
-    if (!window.confirm("Disband this team? All members will be removed. This cannot be undone.")) return;
     const { error } = await supabase.rpc("disband_team");
     if (error) { toast.error(error.message); return; }
     toast.success("Team disbanded");
@@ -220,9 +235,26 @@ function TeamRoster({
               </Button>
             )}
             {isCaptain && !team.locked && (
-              <Button variant="destructive" onClick={disband}>
-                Disband team
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">Disband team</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Disband this team?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      All members will be removed and the join code stops working. This cannot be
+                      undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep the team</AlertDialogCancel>
+                    <AlertDialogAction onClick={disband} className="bg-destructive text-white hover:bg-destructive/90">
+                      Disband team
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
           {team.locked && (
