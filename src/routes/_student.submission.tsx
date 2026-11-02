@@ -791,17 +791,25 @@ function StageEditor({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <Countdown deadline={deadline} />
-        <Button
-          className="bg-clay hover:bg-clay/90"
-          disabled={!open}
-          onClick={() => {
-            if (window.confirm("Submit for review? Your entry and team roster lock after this.")) {
-              save(true);
-            }
-          }}
-        >
-          Submit for review
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button className="bg-clay hover:bg-clay/90" disabled={!open}>
+              Submit for review
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Submit for review?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your entry and team roster lock after this — no further edits will be possible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep editing</AlertDialogCancel>
+              <AlertDialogAction onClick={() => save(true)}>Submit for review</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       {!open && (
         <p className="text-xs text-destructive">
