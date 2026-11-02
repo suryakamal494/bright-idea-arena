@@ -79,7 +79,7 @@ function SubmissionPage() {
           Submissions belong to a team. Create or join one first.
         </p>
         <Button asChild className="mt-4 bg-clay hover:bg-clay/90">
-          <Link to="/team">Go to team formation</Link>
+          <Link to="/team" search={{ tab: "create" }}>Go to team formation</Link>
         </Button>
       </div>
     );
@@ -194,7 +194,7 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
                 Team page using your join code.
               </p>
               <Button asChild size="sm" className="bg-clay hover:bg-clay/90">
-                <Link to="/team">Invite teammates</Link>
+                <Link to="/team" search={{ tab: "create" }}>Invite teammates</Link>
               </Button>
             </div>
           </div>

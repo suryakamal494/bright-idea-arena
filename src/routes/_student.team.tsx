@@ -269,7 +269,8 @@ function TeamRoster({
 }
 
 function TeamFormation({ onDone }: { onDone: () => void }) {
-  const { tab } = Route.useSearch();
+  const search = Route.useSearch();
+  const tab = search["tab"];
   const navigate = useNavigate();
   return (
     <div className="space-y-5">

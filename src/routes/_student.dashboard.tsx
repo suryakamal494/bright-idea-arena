@@ -105,7 +105,7 @@ function ClusterPrompt({ team, isCaptain }: { team: TeamRow; isCaptain: boolean 
       </p>
       {isCaptain && (
         <Button asChild size="sm" variant="outline" className="mt-3">
-          <Link to="/team">Open team page</Link>
+          <Link to="/team" search={{ tab: "create" }}>Open team page</Link>
         </Button>
       )}
     </div>
@@ -175,7 +175,7 @@ function NoTeamCards() {
               teammates.
             </p>
             <Button asChild className="mt-4 bg-clay hover:bg-clay/90">
-              <Link to="/team">Create a team</Link>
+              <Link to="/team" search={{ tab: "create" }}>Create a team</Link>
             </Button>
           </CardContent>
         </Card>
