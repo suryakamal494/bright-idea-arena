@@ -17,6 +17,7 @@
 - [x] Admin: submissions manager CSV export, per-entry printable one-pager download; directory CSV export (members + submissions)
 - [x] Judge blind view updated with theme + Sutras + titled attachment previews
 - [x] Verification: typecheck, tests, build, Playwright flows (student form + autosave + attachment, gate for short teams, admin inspector + export, judge blind view) — all green
+- [x] Issues-doc bug fixes verified end-to-end in browser: coordinator role auto-assigned during school registration (no claim page after signup, informational fallback card remains), dashboard "Join a team" opens the Join tab via /team?tab=join, join-code input accepts pasted codes with dashes/spaces (removed native maxLength that truncated pastes), final-submit and team-disband use accessible dialogs; tests 12/12 + build OK; QA test data cleaned up
 - [ ] Final competition themes: currently the 4 seeded themes (AgriTech, CleanTech, Health, Education); user will finalize the full theme list later — theme selection UX (per-team theme pick before submission) to be revisited then
 - [ ] Mentor role: future access to submission forms with blind surfaces (team code + title only); schema already identity-safe
 - [x] Left sidebar UX rework: big ICORG logo, collapse toggle at top (icons-only state remembered), "Social Innovation Ideathon · Organized by ICORG" moved to the top strip's right side; sidebar auto-collapses on desktops under 1100px
