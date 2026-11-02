@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogOut, ShieldAlert, UserRoundCheck } from "lucide-react";
 import { useState } from "react";
@@ -6,6 +6,17 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthContext, getSessionUser } from "@/lib/auth";
 import { MAX_TEAM_SIZE, fetchClusters, fetchMyTeam, fetchTeamMembers } from "@/lib/team";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +33,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const Route = createFileRoute("/_student/team")({
   head: () => ({
     meta: [{ title: "My team — Social Innovation Ideathon" }],
+  }),
+  // ?tab=join deep-links the formation tabs (e.g. the dashboard "Join a team"
+  // button); anything else defaults to the create tab.
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: search["tab"] === "join" ? ("join" as const) : ("create" as const),
   }),
   component: TeamPage,
 });
@@ -84,7 +100,6 @@ function TeamRoster({
   }
 
   async function disband() {
-    if (!window.confirm("Disband this team? All members will be removed. This cannot be undone.")) return;
     const { error } = await supabase.rpc("disband_team");
     if (error) { toast.error(error.message); return; }
     toast.success("Team disbanded");
@@ -220,9 +235,26 @@ function TeamRoster({
               </Button>
             )}
             {isCaptain && !team.locked && (
-              <Button variant="destructive" onClick={disband}>
-                Disband team
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">Disband team</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Disband this team?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      All members will be removed and the join code stops working. This cannot be
+                      undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep the team</AlertDialogCancel>
+                    <AlertDialogAction onClick={disband} className="bg-destructive text-white hover:bg-destructive/90">
+                      Disband team
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
           {team.locked && (
@@ -237,6 +269,9 @@ function TeamRoster({
 }
 
 function TeamFormation({ onDone }: { onDone: () => void }) {
+  const search = Route.useSearch();
+  const tab = search["tab"];
+  const navigate = useNavigate();
   return (
     <div className="space-y-5">
       <header>
@@ -244,7 +279,10 @@ function TeamFormation({ onDone }: { onDone: () => void }) {
         <h1 className="font-display mt-1.5 text-2xl font-semibold leading-tight text-forest sm:text-3xl">Build your team</h1>
         <p className="mt-1 text-sm text-muted-foreground">Teams of 2–3 students. One track per team.</p>
       </header>
-      <Tabs defaultValue="create">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => navigate({ to: "/team", search: { tab: v === "join" ? "join" : "create" }, replace: true })}
+      >
         <TabsList className="w-full">
           <TabsTrigger value="create" className="flex-1">
             Create a team
@@ -369,8 +407,11 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Pasted codes can carry spaces, dashes or label text — keep digits only.
+    const clean = code.replace(/\D/g, "");
+    if (clean.length !== 6) { toast.error("Enter the full 6-digit join code"); return; }
     setBusy(true);
-    const { error } = await supabase.rpc("join_team", { p_code: code.trim() });
+    const { error } = await supabase.rpc("join_team", { p_code: clean });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Welcome to the team!");
@@ -384,10 +425,9 @@ function JoinTeamForm({ onDone }: { onDone: () => void }) {
         <Input
           required
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
           placeholder="e.g. 482913"
           className="font-mono text-lg tracking-widest"
-          maxLength={6}
           inputMode="numeric"
         />
       </div>

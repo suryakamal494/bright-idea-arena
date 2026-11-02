@@ -13,6 +13,18 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { getSessionUser } from "@/lib/auth";
 import {
   MAX_TEAM_SIZE,
@@ -67,7 +79,7 @@ function SubmissionPage() {
           Submissions belong to a team. Create or join one first.
         </p>
         <Button asChild className="mt-4 bg-clay hover:bg-clay/90">
-          <Link to="/team">Go to team formation</Link>
+          <Link to="/team" search={{ tab: "create" }}>Go to team formation</Link>
         </Button>
       </div>
     );
@@ -182,7 +194,7 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
                 Team page using your join code.
               </p>
               <Button asChild size="sm" className="bg-clay hover:bg-clay/90">
-                <Link to="/team">Invite teammates</Link>
+                <Link to="/team" search={{ tab: "create" }}>Invite teammates</Link>
               </Button>
             </div>
           </div>
@@ -779,17 +791,25 @@ function StageEditor({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <Countdown deadline={deadline} />
-        <Button
-          className="bg-clay hover:bg-clay/90"
-          disabled={!open}
-          onClick={() => {
-            if (window.confirm("Submit for review? Your entry and team roster lock after this.")) {
-              save(true);
-            }
-          }}
-        >
-          Submit for review
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button className="bg-clay hover:bg-clay/90" disabled={!open}>
+              Submit for review
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Submit for review?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your entry and team roster lock after this — no further edits will be possible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep editing</AlertDialogCancel>
+              <AlertDialogAction onClick={() => save(true)}>Submit for review</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       {!open && (
         <p className="text-xs text-destructive">

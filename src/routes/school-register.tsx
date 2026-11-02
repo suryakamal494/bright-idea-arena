@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAuthContext } from "@/lib/auth";
+import { claimCoordinatorRole } from "@/lib/coordinator-actions";
 import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +70,22 @@ function SchoolRegister() {
       return;
     }
     if (data.session) {
-      // Auto-confirmed: straight to the school portal to claim the roster.
+      // The teacher who registers a school IS its coordinator — assign the
+      // coordinator role immediately, no separate claim step or password
+      // re-entry. One coordinator per school is enforced by the server fn.
+      try {
+        await claimCoordinatorRole();
+      } catch (claimErr) {
+        setBusy(false);
+        setError(
+          claimErr instanceof Error && claimErr.message
+            ? claimErr.message
+            : "Your account was created, but coordinator access could not be assigned. Please contact the organisers.",
+        );
+        return;
+      }
+      // Drop any cached auth context so the coordinator guard re-reads roles.
+      clearAuthContext();
       await navigate({ to: "/coordinator" });
       return;
     }

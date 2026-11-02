@@ -360,7 +360,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
 
       <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
       {/* Mobile bottom thumb navigation */}
-      <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav className="no-print fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-md">
           {items.map((item) => (
             <Link
