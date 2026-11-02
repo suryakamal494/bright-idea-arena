@@ -34,29 +34,14 @@ function CoordinatorLayout() {
 }
 
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { School } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { claimCoordinatorRole } from "@/lib/coordinator-actions";
 
-function ClaimCoordinator({ profile }: { profile: Profile | null }) {
-  const queryClient = useQueryClient();
-  const [busy, setBusy] = useState(false);
-
-  async function claim() {
-    setBusy(true);
-    try {
-      const res = await claimCoordinatorRole();
-      toast.success(`Coordinator access granted for ${res.school}`);
-      queryClient.invalidateQueries();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not claim coordinator role");
-    }
-    setBusy(false);
-  }
-
+/**
+ * A signed-in user without the coordinator role. Coordinator access is
+ * granted automatically during school registration — there is no claim step.
+ */
+function NotCoordinator({ profile }: { profile: Profile | null }) {
   return (
     <div className="mx-auto max-w-md pt-10">
       <div className="rounded-2xl border border-border bg-card p-6 text-center">
@@ -64,30 +49,25 @@ function ClaimCoordinator({ profile }: { profile: Profile | null }) {
           <School className="h-6 w-6" />
         </span>
         <h1 className="font-display mt-4 text-2xl font-semibold text-forest">
-          Claim coordinator access
+          School coordinator portal
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Signed in as <span className="font-medium text-foreground">{profile?.full_name}</span> (
-          {profile?.email}). Confirm below to become the coordinator for{" "}
-          <span className="font-medium text-foreground">{profile?.school_name}</span> and unlock the
-          roster portal, bulk student registration and printable access passes.
+          {profile?.email}). This account doesn't have coordinator access — only the faculty
+          coordinator registered for a school can open this portal.
         </p>
-        {!profile?.school_name && (
-          <p className="mt-3 text-sm text-destructive">
-            Your profile has no school name yet — complete your profile first.
-          </p>
-        )}
-        <Button
-          className="mt-5 w-full bg-clay hover:bg-clay/90"
-          onClick={claim}
-          disabled={busy || !profile?.school_name}
-        >
-          {busy ? "Claiming…" : "I am the coordinator for this school"}
+        <p className="mt-2 text-sm text-muted-foreground">
+          If your school hasn't registered yet, its teacher can register it from the{" "}
+          <a href="/school-register" className="font-medium text-clay underline underline-offset-2">
+            school registration page
+          </a>
+          . Students can head straight to their dashboard.
+        </p>
+        <Button asChild className="mt-5 w-full bg-clay hover:bg-clay/90">
+          <Link to="/dashboard">Go to my dashboard</Link>
         </Button>
-        <p className="mt-3 text-xs text-muted-foreground">
-          One coordinator per school. The first claim for a school is accepted.
-        </p>
       </div>
     </div>
   );
 }
+
