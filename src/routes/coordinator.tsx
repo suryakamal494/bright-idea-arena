@@ -1,4 +1,4 @@
-import { redirect, Outlet, createFileRoute } from "@tanstack/react-router";
+import { redirect, Outlet, createFileRoute, Link } from "@tanstack/react-router";
 import { AppNav } from "@/components/app-nav";
 import { getAuthContext, homeFor } from "@/lib/auth";
 import type { Profile } from "@/lib/auth";
@@ -26,12 +26,13 @@ function CoordinatorLayout() {
         {isCoordinator ? (
           <Outlet />
         ) : (
-          <ClaimCoordinator profile={profile} />
+          <NotCoordinator profile={profile} />
         )}
       </main>
     </div>
   );
 }
+
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
