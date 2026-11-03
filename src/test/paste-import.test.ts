@@ -108,7 +108,7 @@ describe("paste-import parser", () => {
   });
 
   it("defaults a headerless 5-column paste to the advertised order (C03)", () => {
-    const parsed = parsePastedTable("Amit Verma\tStd 10\tamit.v\tlongpass1\troom 12");
+    const parsed = parsePastedTable("Amit Verma\tStd 10\tamit.v\ttiger123\troom 12");
     expect(parsed.headers).toBeNull();
     expect(parsed.mapping).toEqual(["full_name", "grade", "username", "password", "email"]);
     expect(tableHasSignal(parsed)).toBe(true); // name-like first column, 5-column shape
