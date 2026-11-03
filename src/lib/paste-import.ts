@@ -233,6 +233,15 @@ export function tableHasSignal(table: ParsedTable): boolean {
   if (table.headers && table.headers.some((h) => HEADER_PATTERNS.some(([, re]) => re.test(h.trim())))) {
     return true;
   }
+  // A headerless paste shaped exactly like the advertised layout (5 or 6
+  // columns, name-like first column) counts as a signal too.
+  const cols = table.headers
+    ? table.headers.length
+    : Math.max(0, ...table.matrix.map((r) => r.length));
+  if (!table.headers && (cols === 5 || cols === 6)) {
+    const nameLike = (v: string) => /^[\p{L}.'-]+( [\p{L}.'-]+)+$/u.test(v.trim());
+    if (table.matrix.some((r) => nameLike(r[0] ?? ""))) return true;
+  }
   for (const row of table.matrix.slice(0, 100)) {
     for (const cell of row) {
       const v = (cell ?? "").trim();

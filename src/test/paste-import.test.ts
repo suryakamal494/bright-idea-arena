@@ -108,8 +108,14 @@ describe("paste-import parser", () => {
   });
 
   it("defaults a headerless 5-column paste to the advertised order (C03)", () => {
-    const parsed = parsePastedTable("Amit Verma\tStd 10\tamit.v\tlongpass1\tamit@x.in");
+    const parsed = parsePastedTable("Amit Verma\tStd 10\tamit.v\tlongpass1\troom 12");
     expect(parsed.headers).toBeNull();
     expect(parsed.mapping).toEqual(["full_name", "grade", "username", "password", "email"]);
+    expect(tableHasSignal(parsed)).toBe(true); // name-like first column, 5-column shape
+  });
+
+  it("rejects an arbitrary word list pasted as a table (C02)", () => {
+    const parsed = parsePastedTable("apple,banana,cherry,dates,elderberry\nfig,guava,kiwi,lemon,mango");
+    expect(tableHasSignal(parsed)).toBe(false);
   });
 });
