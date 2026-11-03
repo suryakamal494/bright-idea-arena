@@ -21,7 +21,7 @@ import {
 } from "@/lib/paste-import";
 import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
 import { getSessionUser } from "@/lib/auth";
-import { AccessPasses } from "@/components/access-passes";
+import { AccessPasses, type AccessPass } from "@/components/access-passes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

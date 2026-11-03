@@ -107,7 +107,7 @@ function joinQuotedLines(lines: string[]): string[] {
   let open: string | null = null;
   for (const line of lines) {
     if (open !== null) {
-      const joined = `${open}\n${line}`;
+      const joined: string = `${open}\n${line}`;
       if (countQuotes(joined) % 2 === 0) {
         out.push(joined);
         open = null;
