@@ -8,7 +8,6 @@ import {
   checkBulkAvailability,
   createStudentAccounts,
   resetStudentPassword,
-  type CreatedPass,
   type StudentSeed,
 } from "@/lib/coordinator-actions";
 import {
@@ -57,7 +56,7 @@ function readStoredPasses(): AccessPass[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.sessionStorage.getItem(PASS_KEY);
-    const parsed = raw ? (JSON.parse(raw) as CreatedPass[]) : [];
+    const parsed = raw ? (JSON.parse(raw) as AccessPass[]) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
