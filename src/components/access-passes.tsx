@@ -1,4 +1,4 @@
-import { Printer } from "lucide-react";
+import { Download, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Brand } from "@/components/app-nav";
 
@@ -12,19 +12,63 @@ export type AccessPass = {
   error?: string | undefined;
 };
 
+function csvCell(v: string | number | null | undefined): string {
+  const s = (v ?? "").toString();
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** Master credentials sheet — the only way to recover passwords later. */
+function downloadCredentialsCsv(passes: AccessPass[]) {
+  const ok = passes.filter((p) => !p.error && p.password);
+  if (!ok.length) return;
+  const lines = [
+    ["Student Name", "Grade", "Username", "Password", "Email", "School"],
+    ...ok.map((p) => [p.full_name, p.grade ?? "", p.username, p.password, p.email, p.school_name ?? ""]),
+  ];
+  const csv = "\ufeff" + lines.map((l) => l.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const school = (ok[0]?.school_name ?? "students").toString().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
+  a.href = url;
+  a.download = `${school || "students"}-student-credentials.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /** Printable student access passes for the school coordinator portal. */
-export function AccessPasses({ passes }: { passes: AccessPass[] }) {
+export function AccessPasses({
+  passes,
+  onClear,
+}: {
+  passes: AccessPass[];
+  onClear?: () => void;
+}) {
   if (passes.length === 0) return null;
   return (
     <div>
-      <div className="no-print mb-3 flex items-center justify-between">
+      <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {passes.length} access pass{passes.length === 1 ? "" : "es"} ready — print and hand out in class.
         </p>
-        <Button variant="outline" size="sm" onClick={() => window.print()}>
-          <Printer className="mr-2 h-4 w-4" /> Print passes
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => downloadCredentialsCsv(passes)}>
+            <Download className="mr-2 h-4 w-4" /> Download CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" /> Print passes
+          </Button>
+          {onClear && (
+            <Button variant="ghost" size="sm" aria-label="Clear printed passes" onClick={onClear}>
+              <X className="mr-1.5 h-4 w-4" /> Clear
+            </Button>
+          )}
+        </div>
       </div>
+      <p className="no-print mb-3 rounded-md border border-ochre/30 bg-ochre/10 px-3 py-2 text-xs text-ochre">
+        Download the CSV or print the passes now — passwords are stored securely and cannot be
+        retrieved once you clear these passes or close this browser session.
+      </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {passes.map((p, i) => (
           <div
