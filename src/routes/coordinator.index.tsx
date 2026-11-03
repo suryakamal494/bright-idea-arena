@@ -535,7 +535,8 @@ function CoordinatorPortal() {
                     <th className="py-2 pr-3 font-semibold">Class</th>
                     <th className="py-2 pr-3 font-semibold">Email</th>
                     <th className="py-2 pr-3 font-semibold">Mobile</th>
-                    <th className="py-2 font-semibold">Team ID</th>
+                    <th className="py-2 pr-3 font-semibold">Team ID</th>
+                    <th className="py-2 font-semibold">Password</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -548,12 +549,18 @@ function CoordinatorPortal() {
                       </td>
                       <td className="py-2.5 pr-3 text-xs text-muted-foreground">{s.email}</td>
                       <td className="py-2.5 pr-3 text-xs text-muted-foreground">{s.phone ?? "—"}</td>
-                      <td className="py-2.5 font-mono text-xs font-semibold text-forest">{s.team_code ?? "—"}</td>
+                      <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-forest">{s.team_code ?? "—"}</td>
+                      <td className="py-2.5">
+                        <ResetPasswordDialog
+                          student={s}
+                          onReset={(pass) => setPasses((p) => [...p, pass])}
+                        />
+                      </td>
                     </tr>
                   ))}
                   {students.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-4 text-center text-sm text-muted-foreground">
+                      <td colSpan={7} className="py-4 text-center text-sm text-muted-foreground">
                         No students yet — add your first batch above.
                       </td>
                     </tr>
@@ -574,6 +581,83 @@ function StatusPill({ status }: { status: string | null }) {
   if (status === "draft")
     return <span className="rounded-full bg-ochre/15 px-2.5 py-0.5 text-xs font-semibold text-ochre">Draft</span>;
   return <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Not started</span>;
+}
+
+/** C06: coordinator sets a new password for one student, then prints a pass. */
+function ResetPasswordDialog({
+  student,
+  onReset,
+}: {
+  student: OverviewStudent;
+  onReset: (pass: CreatedPass) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [busy, setBusy] = useState(false);
+  const valid = pwd.length >= 8;
+
+  async function submit() {
+    if (!valid || busy) return;
+    setBusy(true);
+    try {
+      const pass = await resetStudentPassword({ data: { studentId: student.id, password: pwd } });
+      onReset({
+        full_name: pass.full_name,
+        username: pass.username,
+        email: pass.email,
+        password: pass.password,
+        grade: pass.grade,
+        school_name: null,
+      });
+      toast.success(`Password reset for ${pass.full_name} — a fresh pass was added above.`);
+      setOpen(false);
+      setPwd("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Password reset failed");
+    }
+    setBusy(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs">
+          <KeyRound className="h-3.5 w-3.5" /> Reset
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-display text-lg text-forest">Reset password</DialogTitle>
+          <DialogDescription>
+            Set a new password for <span className="font-medium text-foreground">{student.full_name}</span>. The old
+            password stops working immediately, and a fresh access pass is added above so you can print it.
+          </DialogDescription>
+        </DialogHeader>
+        <Input
+          type="text"
+          autoComplete="off"
+          aria-label="New password"
+          placeholder="New password (min 8 characters)"
+          value={pwd}
+          onChange={(e) => setPwd(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void submit();
+          }}
+        />
+        {pwd.length > 0 && !valid && (
+          <p className="text-xs text-destructive" role="alert">Password must be at least 8 characters.</p>
+        )}
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={busy}>
+            Cancel
+          </Button>
+          <Button size="sm" className="bg-clay hover:bg-clay/90" onClick={() => void submit()} disabled={!valid || busy}>
+            {busy ? "Resetting…" : "Reset password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function ResultPill({ result }: { result: string | null }) {
