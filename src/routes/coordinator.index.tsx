@@ -1,18 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardPaste, FileSpreadsheet, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, FileSpreadsheet, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   checkBulkAvailability,
   createStudentAccounts,
+  resetStudentPassword,
   type CreatedPass,
   type StudentSeed,
 } from "@/lib/coordinator-actions";
 import {
   buildRows,
   parsePastedTable,
+  tableHasSignal,
   COLUMN_KINDS,
   type ColumnKind,
   type ParsedTable,
@@ -29,6 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/coordinator/")({
@@ -37,6 +48,21 @@ export const Route = createFileRoute("/coordinator/")({
   }),
   component: CoordinatorPortal,
 });
+
+// Printed passes survive reloads within the same browser session until the
+// coordinator clears them — passwords cannot be recovered afterwards.
+const PASS_KEY = "sii-coordinator-passes";
+
+function readStoredPasses(): CreatedPass[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(PASS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as CreatedPass[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 type OverviewTeam = {
   team_id: string;
@@ -128,10 +154,20 @@ function CoordinatorPortal() {
 
   const [rows, setRows] = useState<StudentSeed[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
-  const [passes, setPasses] = useState<CreatedPass[]>([]);
+  const [passes, setPasses] = useState<CreatedPass[]>(readStoredPasses);
   const [pasteOpen, setPasteOpen] = useState(true);
   const [pasteText, setPasteText] = useState("");
   const [parsed, setParsed] = useState<ParsedTable | null>(null);
+  const [pasteWarning, setPasteWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      if (passes.length) window.sessionStorage.setItem(PASS_KEY, JSON.stringify(passes));
+      else window.sessionStorage.removeItem(PASS_KEY);
+    } catch {
+      /* storage unavailable — passes simply stay in memory */
+    }
+  }, [passes]);
 
   // Inline uniqueness against the platform, refreshed (debounced) as rows change.
   const [taken, setTaken] = useState<{ usernames: string[]; emails: string[] }>({ usernames: [], emails: [] });
@@ -169,9 +205,17 @@ function CoordinatorPortal() {
     setParsed(table);
     const derived = buildRows(table.matrix, table.mapping);
     if (!derived.length) {
+      setPasteWarning(null);
       toast.error("No rows found — paste the table including its header row if it has one.");
       return;
     }
+    if (!tableHasSignal(table)) {
+      setPasteWarning(
+        "This doesn't look like a student table — we couldn't find any emails, class numbers or column headings in it. Nothing was imported. Check what you copied and paste it again.",
+      );
+      return;
+    }
+    setPasteWarning(null);
     setRows(derived);
     toast.info(`${derived.length} row${derived.length === 1 ? "" : "s"} pasted — check the highlighted columns, then press "Create accounts".`);
   }
@@ -182,6 +226,7 @@ function CoordinatorPortal() {
     const table = { ...parsed, mapping };
     setParsed(table);
     setRows(buildRows(table.matrix, table.mapping));
+    setPasteWarning(null);
   }
 
   async function handlePaste() {
@@ -421,7 +466,13 @@ function CoordinatorPortal() {
         </CardContent>
       </Card>
 
-      <AccessPasses passes={passes} />
+      {pasteWarning && (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+          {pasteWarning}
+        </p>
+      )}
+
+      <AccessPasses passes={passes} onClear={() => setPasses([])} />
 
       <Card>
         <CardHeader>
