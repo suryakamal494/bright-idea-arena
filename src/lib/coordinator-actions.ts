@@ -219,3 +219,56 @@ export const createStudentAccounts = createServerFn({ method: "POST" })
     }
     return results;
   });
+
+/**
+ * C06: let the coordinator set a new password for one of their students.
+ * The old password stops working immediately; the coordinator prints a fresh
+ * access pass. Restricted to students of the coordinator's own school.
+ */
+export const resetStudentPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { studentId: string; password: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isCoord } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: COORDINATOR,
+    });
+    if (!isCoord) throw new Error("Only school coordinators can reset student passwords.");
+    if (!data.password || data.password.length < 8) {
+      throw new Error("Password must be at least 8 characters.");
+    }
+
+    const { data: coordProfile } = await supabase
+      .from("profiles")
+      .select("school_name")
+      .eq("id", userId)
+      .maybeSingle();
+    const school = coordProfile?.school_name;
+    if (!school) throw new Error("Your coordinator profile has no school set.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: student } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, username, email, grade, school_name")
+      .eq("id", data.studentId)
+      .maybeSingle();
+    const row = student as
+      | { id: string; full_name: string; username: string | null; email: string; grade: number | null; school_name: string | null }
+      | null;
+    if (!row || row.school_name !== school) {
+      throw new Error("Student not found in your school.");
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(row.id, {
+      password: data.password,
+    });
+    if (error) throw new Error(error.message);
+    return {
+      full_name: row.full_name,
+      username: row.username ?? row.email,
+      email: row.email,
+      grade: row.grade,
+      password: data.password,
+    };
+  });

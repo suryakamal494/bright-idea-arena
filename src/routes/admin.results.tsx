@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { StickyNote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/admin/results")({
   head: () => ({
@@ -44,6 +46,7 @@ type Row = {
   avg_score: number | null;
   reviews: number;
   review_status: string;
+  review_notes: string | null;
 };
 
 type DirRes = {
@@ -400,6 +403,24 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                           aria-label="Marked for review"
                           className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-sage align-middle"
                         />
+                      )}
+                      {t.review_notes && (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label="Screening note"
+                                className="mr-1 inline-flex align-middle"
+                              >
+                                <StickyNote className="h-3.5 w-3.5 text-clay" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-64 whitespace-pre-wrap text-left">
+                              {t.review_notes}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                       {t.team_code ?? "—"}
                     </td>

@@ -1,25 +1,26 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardPaste, FileSpreadsheet, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, FileSpreadsheet, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   checkBulkAvailability,
   createStudentAccounts,
-  type CreatedPass,
+  resetStudentPassword,
   type StudentSeed,
 } from "@/lib/coordinator-actions";
 import {
   buildRows,
   parsePastedTable,
+  tableHasSignal,
   COLUMN_KINDS,
   type ColumnKind,
   type ParsedTable,
 } from "@/lib/paste-import";
 import { fetchClusters, fetchCompetitionSettings } from "@/lib/team";
 import { getSessionUser } from "@/lib/auth";
-import { AccessPasses } from "@/components/access-passes";
+import { AccessPasses, type AccessPass } from "@/components/access-passes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +30,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/coordinator/")({
@@ -37,6 +47,21 @@ export const Route = createFileRoute("/coordinator/")({
   }),
   component: CoordinatorPortal,
 });
+
+// Printed passes survive reloads within the same browser session until the
+// coordinator clears them — passwords cannot be recovered afterwards.
+const PASS_KEY = "sii-coordinator-passes";
+
+function readStoredPasses(): AccessPass[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(PASS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as AccessPass[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 type OverviewTeam = {
   team_id: string;
@@ -128,10 +153,20 @@ function CoordinatorPortal() {
 
   const [rows, setRows] = useState<StudentSeed[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
-  const [passes, setPasses] = useState<CreatedPass[]>([]);
+  const [passes, setPasses] = useState<AccessPass[]>(readStoredPasses);
   const [pasteOpen, setPasteOpen] = useState(true);
   const [pasteText, setPasteText] = useState("");
   const [parsed, setParsed] = useState<ParsedTable | null>(null);
+  const [pasteWarning, setPasteWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      if (passes.length) window.sessionStorage.setItem(PASS_KEY, JSON.stringify(passes));
+      else window.sessionStorage.removeItem(PASS_KEY);
+    } catch {
+      /* storage unavailable — passes simply stay in memory */
+    }
+  }, [passes]);
 
   // Inline uniqueness against the platform, refreshed (debounced) as rows change.
   const [taken, setTaken] = useState<{ usernames: string[]; emails: string[] }>({ usernames: [], emails: [] });
@@ -169,9 +204,17 @@ function CoordinatorPortal() {
     setParsed(table);
     const derived = buildRows(table.matrix, table.mapping);
     if (!derived.length) {
+      setPasteWarning(null);
       toast.error("No rows found — paste the table including its header row if it has one.");
       return;
     }
+    if (!tableHasSignal(table)) {
+      setPasteWarning(
+        "This doesn't look like a student table — we couldn't find any emails, class numbers or column headings in it. Nothing was imported. Check what you copied and paste it again.",
+      );
+      return;
+    }
+    setPasteWarning(null);
     setRows(derived);
     toast.info(`${derived.length} row${derived.length === 1 ? "" : "s"} pasted — check the highlighted columns, then press "Create accounts".`);
   }
@@ -182,6 +225,7 @@ function CoordinatorPortal() {
     const table = { ...parsed, mapping };
     setParsed(table);
     setRows(buildRows(table.matrix, table.mapping));
+    setPasteWarning(null);
   }
 
   async function handlePaste() {
@@ -421,7 +465,13 @@ function CoordinatorPortal() {
         </CardContent>
       </Card>
 
-      <AccessPasses passes={passes} />
+      {pasteWarning && (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+          {pasteWarning}
+        </p>
+      )}
+
+      <AccessPasses passes={passes} onClear={() => setPasses([])} />
 
       <Card>
         <CardHeader>
@@ -484,7 +534,8 @@ function CoordinatorPortal() {
                     <th className="py-2 pr-3 font-semibold">Class</th>
                     <th className="py-2 pr-3 font-semibold">Email</th>
                     <th className="py-2 pr-3 font-semibold">Mobile</th>
-                    <th className="py-2 font-semibold">Team ID</th>
+                    <th className="py-2 pr-3 font-semibold">Team ID</th>
+                    <th className="py-2 font-semibold">Password</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -497,12 +548,18 @@ function CoordinatorPortal() {
                       </td>
                       <td className="py-2.5 pr-3 text-xs text-muted-foreground">{s.email}</td>
                       <td className="py-2.5 pr-3 text-xs text-muted-foreground">{s.phone ?? "—"}</td>
-                      <td className="py-2.5 font-mono text-xs font-semibold text-forest">{s.team_code ?? "—"}</td>
+                      <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-forest">{s.team_code ?? "—"}</td>
+                      <td className="py-2.5">
+                        <ResetPasswordDialog
+                          student={s}
+                          onReset={(pass) => setPasses((p) => [...p, pass])}
+                        />
+                      </td>
                     </tr>
                   ))}
                   {students.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-4 text-center text-sm text-muted-foreground">
+                      <td colSpan={7} className="py-4 text-center text-sm text-muted-foreground">
                         No students yet — add your first batch above.
                       </td>
                     </tr>
@@ -523,6 +580,83 @@ function StatusPill({ status }: { status: string | null }) {
   if (status === "draft")
     return <span className="rounded-full bg-ochre/15 px-2.5 py-0.5 text-xs font-semibold text-ochre">Draft</span>;
   return <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Not started</span>;
+}
+
+/** C06: coordinator sets a new password for one student, then prints a pass. */
+function ResetPasswordDialog({
+  student,
+  onReset,
+}: {
+  student: OverviewStudent;
+  onReset: (pass: AccessPass) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [busy, setBusy] = useState(false);
+  const valid = pwd.length >= 8;
+
+  async function submit() {
+    if (!valid || busy) return;
+    setBusy(true);
+    try {
+      const pass = await resetStudentPassword({ data: { studentId: student.id, password: pwd } });
+      onReset({
+        full_name: pass.full_name,
+        username: pass.username,
+        email: pass.email,
+        password: pass.password,
+        grade: pass.grade,
+        school_name: null,
+      });
+      toast.success(`Password reset for ${pass.full_name} — a fresh pass was added above.`);
+      setOpen(false);
+      setPwd("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Password reset failed");
+    }
+    setBusy(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs">
+          <KeyRound className="h-3.5 w-3.5" /> Reset
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-display text-lg text-forest">Reset password</DialogTitle>
+          <DialogDescription>
+            Set a new password for <span className="font-medium text-foreground">{student.full_name}</span>. The old
+            password stops working immediately, and a fresh access pass is added above so you can print it.
+          </DialogDescription>
+        </DialogHeader>
+        <Input
+          type="text"
+          autoComplete="off"
+          aria-label="New password"
+          placeholder="New password (min 8 characters)"
+          value={pwd}
+          onChange={(e) => setPwd(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void submit();
+          }}
+        />
+        {pwd.length > 0 && !valid && (
+          <p className="text-xs text-destructive" role="alert">Password must be at least 8 characters.</p>
+        )}
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)} disabled={busy}>
+            Cancel
+          </Button>
+          <Button size="sm" className="bg-clay hover:bg-clay/90" onClick={() => void submit()} disabled={!valid || busy}>
+            {busy ? "Resetting…" : "Reset password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function ResultPill({ result }: { result: string | null }) {
