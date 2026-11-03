@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRows, parsePastedTable } from "@/lib/paste-import";
+import { buildRows, parsePastedTable, tableHasSignal } from "@/lib/paste-import";
 
 describe("paste-import parser", () => {
   it("maps an Excel tab-paste with a header row", () => {
@@ -56,5 +56,60 @@ describe("paste-import parser", () => {
     const parsed = parsePastedTable("   \n  ");
     expect(parsed.matrix).toHaveLength(0);
     expect(buildRows(parsed.matrix, parsed.mapping)).toHaveLength(0);
+  });
+
+  it("keeps quoted names with commas in one cell (C01)", () => {
+    const text = [
+      '"Kumar, Surya",10,surya.k,secret123,surya@school.in',
+      '"Anand-Rao, Priya M.",9,meena.r,secret456,meena@school.in',
+    ].join("\n");
+    const parsed = parsePastedTable(text);
+    const rows = buildRows(parsed.matrix, parsed.mapping);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.full_name).toBe("Kumar, Surya");
+    expect(rows[0]!.grade).toBe(10);
+    expect(rows[0]!.email).toBe("surya@school.in");
+    expect(rows[0]!.username).toBe("surya.k");
+    expect(rows[1]!.full_name).toBe("Anand-Rao, Priya M.");
+    expect(rows[1]!.email).toBe("meena@school.in");
+  });
+
+  it("keeps a quoted cell that spans multiple lines in one row (C01)", () => {
+    const text = '"Surya\nKumar",10,surya.k,secret123,surya@school.in';
+    const parsed = parsePastedTable(text);
+    expect(parsed.matrix).toHaveLength(1);
+    const rows = buildRows(parsed.matrix, parsed.mapping);
+    expect(rows[0]!.full_name).toBe("Surya\nKumar");
+    expect(rows[0]!.email).toBe("surya@school.in");
+  });
+
+  it("rejects a paste with no recognizable student data (C02)", () => {
+    const parsed = parsePastedTable("apple\nbanana cherry\nmango");
+    expect(parsed.matrix.length).toBeGreaterThan(0);
+    expect(tableHasSignal(parsed)).toBe(false);
+  });
+
+  it("accepts a paste with a real student signal (C02)", () => {
+    const parsed = parsePastedTable("Surya Kumar,surya.k,secret123,10,surya@school.in");
+    expect(tableHasSignal(parsed)).toBe(true);
+  });
+
+  it("maps a single-row headerless paste with no header to detect (C03)", () => {
+    const text = "Surya Kumar\t10\tsurya.k\tsecret123\tsurya@school.in\t9876543210";
+    const parsed = parsePastedTable(text);
+    expect(parsed.headers).toBeNull();
+    expect(parsed.mapping).toEqual(["full_name", "grade", "username", "password", "email", "mobile"]);
+    const rows = buildRows(parsed.matrix, parsed.mapping);
+    expect(rows[0]!.full_name).toBe("Surya Kumar");
+    expect(rows[0]!.grade).toBe(10);
+    expect(rows[0]!.password).toBe("secret123");
+    expect(rows[0]!.email).toBe("surya@school.in");
+    expect(rows[0]!.mobile).toBe("9876543210");
+  });
+
+  it("defaults a headerless 5-column paste to the advertised order (C03)", () => {
+    const parsed = parsePastedTable("Amit Verma\tStd 10\tamit.v\tlongpass1\tamit@x.in");
+    expect(parsed.headers).toBeNull();
+    expect(parsed.mapping).toEqual(["full_name", "grade", "username", "password", "email"]);
   });
 });
