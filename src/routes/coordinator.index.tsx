@@ -53,7 +53,7 @@ export const Route = createFileRoute("/coordinator/")({
 // coordinator clears them — passwords cannot be recovered afterwards.
 const PASS_KEY = "sii-coordinator-passes";
 
-function readStoredPasses(): CreatedPass[] {
+function readStoredPasses(): AccessPass[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.sessionStorage.getItem(PASS_KEY);
@@ -154,7 +154,7 @@ function CoordinatorPortal() {
 
   const [rows, setRows] = useState<StudentSeed[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
-  const [passes, setPasses] = useState<CreatedPass[]>(readStoredPasses);
+  const [passes, setPasses] = useState<AccessPass[]>(readStoredPasses);
   const [pasteOpen, setPasteOpen] = useState(true);
   const [pasteText, setPasteText] = useState("");
   const [parsed, setParsed] = useState<ParsedTable | null>(null);
@@ -589,7 +589,7 @@ function ResetPasswordDialog({
   onReset,
 }: {
   student: OverviewStudent;
-  onReset: (pass: CreatedPass) => void;
+  onReset: (pass: AccessPass) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pwd, setPwd] = useState("");
