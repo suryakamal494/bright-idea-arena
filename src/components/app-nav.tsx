@@ -54,6 +54,7 @@ const NAV: Record<string, NavItem[]> = {
   admin: [
     { to: "/admin", label: "Overview", icon: LayoutDashboard },
     { to: "/admin/deadlines", label: "Deadlines & stages", icon: CalendarClock },
+    { to: "/admin/schools", label: "Schools", icon: Building2 },
     { to: "/admin/registrations", label: "Registrations", icon: Users },
     { to: "/admin/submissions", label: "Submissions", icon: Inbox },
     { to: "/admin/results", label: "Results", icon: Trophy },
