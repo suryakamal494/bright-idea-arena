@@ -696,6 +696,15 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_schools_directory: {
+        Args: {
+          p_cluster_id?: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+        }
+        Returns: Json
+      }
       admin_submission_directory: {
         Args: {
           p_cluster_id?: string

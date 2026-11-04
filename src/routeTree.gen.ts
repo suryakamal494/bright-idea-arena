@@ -28,6 +28,7 @@ import { Route as AdminDeadlinesRouteImport } from './routes/admin.deadlines'
 import { Route as AdminJudgesRouteImport } from './routes/admin.judges'
 import { Route as AdminRegistrationsRouteImport } from './routes/admin.registrations'
 import { Route as AdminResultsRouteImport } from './routes/admin.results'
+import { Route as AdminSchoolsRouteImport } from './routes/admin.schools'
 import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
 import { Route as CoordinatorIndexRouteImport } from './routes/coordinator.index'
 import { Route as JudgeIndexRouteImport } from './routes/judge.index'
@@ -128,6 +129,11 @@ const AdminResultsRoute = AdminResultsRouteImport.update({
   path: '/results',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSchoolsRoute = AdminSchoolsRouteImport.update({
+  id: '/schools',
+  path: '/schools',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
   id: '/submissions',
   path: '/submissions',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/admin/judges': typeof AdminJudgesRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/results': typeof AdminResultsRoute
+  '/admin/schools': typeof AdminSchoolsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/': typeof AdminIndexRoute
   '/coordinator/': typeof CoordinatorIndexRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/admin/judges': typeof AdminJudgesRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/results': typeof AdminResultsRoute
+  '/admin/schools': typeof AdminSchoolsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin': typeof AdminIndexRoute
   '/coordinator': typeof CoordinatorIndexRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/admin/judges': typeof AdminJudgesRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/results': typeof AdminResultsRoute
+  '/admin/schools': typeof AdminSchoolsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/': typeof AdminIndexRoute
   '/coordinator/': typeof CoordinatorIndexRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/judges'
     | '/admin/registrations'
     | '/admin/results'
+    | '/admin/schools'
     | '/admin/submissions'
     | '/admin/'
     | '/coordinator/'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/judges'
     | '/admin/registrations'
     | '/admin/results'
+    | '/admin/schools'
     | '/admin/submissions'
     | '/admin'
     | '/coordinator'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/judges'
     | '/admin/registrations'
     | '/admin/results'
+    | '/admin/schools'
     | '/admin/submissions'
     | '/admin/'
     | '/coordinator/'
@@ -454,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminResultsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/schools': {
+      id: '/admin/schools'
+      path: '/schools'
+      fullPath: '/admin/schools'
+      preLoaderRoute: typeof AdminSchoolsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/submissions': {
       id: '/admin/submissions'
       path: '/submissions'
@@ -515,6 +534,7 @@ interface AdminRouteChildren {
   AdminJudgesRoute: typeof AdminJudgesRoute
   AdminRegistrationsRoute: typeof AdminRegistrationsRoute
   AdminResultsRoute: typeof AdminResultsRoute
+  AdminSchoolsRoute: typeof AdminSchoolsRoute
   AdminSubmissionsRoute: typeof AdminSubmissionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -525,6 +545,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminJudgesRoute: AdminJudgesRoute,
   AdminRegistrationsRoute: AdminRegistrationsRoute,
   AdminResultsRoute: AdminResultsRoute,
+  AdminSchoolsRoute: AdminSchoolsRoute,
   AdminSubmissionsRoute: AdminSubmissionsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
