@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Inbox } from "lucide-react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
+import { fetchCompetitionSettings } from "@/lib/team";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/judge/")({
   head: () => ({
@@ -22,8 +25,15 @@ type QueueRow = {
 };
 
 function JudgeQueue() {
+  const [round, setRound] = useState<1 | 2>(1);
+  const { data: competition } = useQuery({
+    queryKey: ["competition-settings"],
+    queryFn: fetchCompetitionSettings,
+  });
+  const twoStage = (competition?.stage_count ?? 2) === 2;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["judge-queue"],
+    queryKey: ["judge-queue", round],
     queryFn: async () => {
       const user = await getSessionUser();
       if (!user) return { items: [], evaluated: new Set<string>() };
@@ -38,7 +48,7 @@ function JudgeQueue() {
       const { data: subs } = await supabase
         .from("submissions")
         .select("id,team_code,title,status,team:teams(track:tracks(name))")
-        .eq("stage", 2)
+        .eq("stage", round)
         .eq("status", "submitted")
         .in("team.track_id", trackIds)
         .order("team_code");
@@ -61,6 +71,7 @@ function JudgeQueue() {
 
   const items = data?.items ?? [];
   const evaluated = data?.evaluated ?? new Set<string>();
+  const roundLabel = round === 1 ? "Round 1 entries" : "Round 2 finalists";
 
   return (
     <div className="space-y-5">
@@ -73,11 +84,20 @@ function JudgeQueue() {
         </p>
       </header>
 
+      {twoStage && (
+        <Tabs value={String(round)} onValueChange={(v) => setRound(v === "2" ? 2 : 1)}>
+          <TabsList>
+            <TabsTrigger value="1">Round 1 · One-pager</TabsTrigger>
+            <TabsTrigger value="2">Round 2 · Final</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
           <Inbox className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
-            No final submissions in your assigned tracks yet.
+            No submitted {roundLabel} in your assigned themes yet.
           </p>
         </div>
       ) : (

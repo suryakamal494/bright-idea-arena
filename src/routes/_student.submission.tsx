@@ -59,6 +59,14 @@ export const Route = createFileRoute("/_student/submission")({
 
 type SaveState = "idle" | "saving" | "saved" | "error" | "offline";
 
+// System/database failures must never surface raw SQL jargon to students.
+function friendlySaveError(message: string): string {
+  if (/operator does not exist|syntax error|invalid input syntax|violates|duplicate key|does not exist/i.test(message)) {
+    return "Something went wrong while saving. Please try again — if it keeps failing, contact the organisers.";
+  }
+  return message;
+}
+
 function SubmissionPage() {
   const { data: team, isLoading } = useQuery({
     queryKey: ["my-team"],
@@ -302,15 +310,36 @@ function StageEditor({
   const finalized = useRef(false);
   const backupKey = `sii-draft:${team.id}:${stage}`;
 
+  // What a final submit requires — the deadline auto-submitter checks the same.
+  function missingSubmitItems(): string[] {
+    const need: string[] = [];
+    if (!fields.title.trim()) need.push("project title");
+    if (stage === 1) {
+      if (!fields.problem_statement.trim()) need.push("problem statement");
+      if (!fields.methodology.trim()) need.push("proposed solution");
+    } else {
+      if (!fields.technical_reasoning.trim()) need.push("technical reasoning");
+      if (!fields.prototype_status.trim()) need.push("prototype status");
+      if (!fields.test_outcomes.trim()) need.push("test outcomes");
+    }
+    if (files.length === 0) need.push("at least one attachment");
+    return need;
+  }
+
   // Deadline auto-submit: when the deadline has passed and a draft is still open,
-  // finalise it the moment any member opens the form.
+  // finalise it the moment any member opens the form. Incomplete drafts stay
+  // drafts — the student is told exactly what is missing.
   useEffect(() => {
     if (finalized.current || !closedByDeadline || locked || !existing) return;
     finalized.current = true;
     (async () => {
-      const { error } = await supabase.rpc("finalize_due_submission", { p_stage: stage });
+      const { data, error } = await supabase.rpc("finalize_due_submission", { p_stage: stage });
       if (error) { console.error(error); return; }
-      toast.info(`The deadline passed — your ${stage === 1 ? "one-pager" : "final submission"} was auto-submitted.`);
+      if (data) {
+        toast.info(`The deadline passed — your ${stage === 1 ? "one-pager" : "final submission"} was auto-submitted.`);
+      } else {
+        toast.error(`The deadline passed, but your draft is missing: ${missingSubmitItems().join(", ")}. It stays a draft.`);
+      }
       onRefresh();
     })();
   }, [closedByDeadline, locked, existing, stage, onRefresh]);
@@ -351,7 +380,7 @@ function StageEditor({
         return;
       }
       setSaveState("error");
-      toast.error(error.message);
+      toast.error(friendlySaveError(error.message));
       return;
     }
     try { localStorage.removeItem(backupKey); } catch { /* ignore */ }
@@ -814,7 +843,7 @@ function StageEditor({
       {!open && (
         <p className="text-xs text-destructive">
           {closedByDeadline
-            ? "The deadline has passed — your entry was auto-submitted for review."
+            ? `The deadline has passed — your draft is missing: ${missingSubmitItems().join(", ")}. It stays a draft.`
             : "This stage is closed — final submission is disabled."}
         </p>
       )}
