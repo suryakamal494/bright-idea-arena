@@ -3,7 +3,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Inbox } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSessionUser, type Profile } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { fetchCompetitionSettings } from "@/lib/team";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ function JudgeQueue() {
   const { data, isLoading } = useQuery({
     queryKey: ["judge-queue", round],
     queryFn: async () => {
-      const user: User | null = await getSessionUser();
+      const user = await getSessionUser();
       if (!user) return { items: [], evaluated: new Set<string>() };
 
       const { data: assignments } = await supabase
