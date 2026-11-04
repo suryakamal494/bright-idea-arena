@@ -802,6 +802,10 @@ export type Database = {
       request_coordinator_role: { Args: never; Returns: undefined }
       revoke_parent_access: { Args: { p_token: string }; Returns: boolean }
       set_team_cluster: { Args: { p_cluster_id: string }; Returns: undefined }
+      submission_complete_by_id: {
+        Args: { p_id: string; p_stage: number }
+        Returns: boolean
+      }
       transfer_captaincy: { Args: { p_user_id: string }; Returns: undefined }
       upsert_submission: {
         Args: { p_payload: Json; p_stage: number; p_submit?: boolean }

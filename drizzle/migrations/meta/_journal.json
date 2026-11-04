@@ -197,6 +197,13 @@
       "when": 1793173240245,
       "tag": "0027_cluster_submission_export",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793774991057,
+      "tag": "0028_submit_validation_fix",
+      "breakpoints": true
     }
   ]
 }
