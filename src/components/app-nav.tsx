@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BookOpen,
+  Building2,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
