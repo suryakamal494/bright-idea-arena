@@ -215,7 +215,7 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
           </div>
         </div>
       ) : (
-        <Tabs value={activeStage} onValueChange={setActiveStage}>
+        <Tabs value={showStage2 ? activeStage : "1"} onValueChange={setActiveStage}>
           <TabsList className="w-full">
             <TabsTrigger value="1" className="flex-1">
               Stage 1 · One-pager

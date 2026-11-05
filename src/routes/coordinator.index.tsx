@@ -434,7 +434,7 @@ function CoordinatorPortal() {
           })}
           {hasErrors && !busy && (
             <p className="text-sm text-destructive" role="alert">
-              Fix the highlighted rows — every student needs a name, username, password (8+ chars), a fresh email and class 8–12.
+              Fix the highlighted rows — every student needs a name, username, password (8+ chars), a fresh contact email and class 8–12.
             </p>
           )}
           <div className="flex flex-wrap gap-2 pt-1">

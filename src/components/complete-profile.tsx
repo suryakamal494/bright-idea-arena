@@ -43,7 +43,9 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
       .eq("id", profile.id);
     setSaving(false);
     if (err) {
-      setError(err.message);
+      setError(/profiles_username_lower_key|duplicate key/i.test(err.message)
+        ? "That username is already taken. Please choose another."
+        : err.message);
       return;
     }
     onDone();

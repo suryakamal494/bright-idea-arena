@@ -328,11 +328,15 @@ function StageCards({
             ) : (
               <p className="text-sm font-medium text-destructive">Closed</p>
             )}
-            {shortlisted && s2 && (
+            {shortlisted && (s2Open || s2) ? (
               <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
                 <Link to="/submission">Open submission form</Link>
               </Button>
-            )}
+            ) : shortlisted ? (
+              <Button size="sm" variant="outline" className="w-full lg:w-auto" disabled>
+                Stage 2 is closed
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       )}

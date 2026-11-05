@@ -106,7 +106,8 @@ function AdminOverview() {
               <ClipboardCheck className="h-4.5 w-4.5" />
             </span>
             <p className="font-display mt-3 text-3xl font-semibold text-forest">{judgedPct}%</p>
-            <p className="text-xs font-medium text-muted-foreground">Submitted entries evaluated</p>
+            <p className="text-xs font-medium text-muted-foreground">Judging coverage</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{kpis?.judged ?? 0} of {kpis?.judging_total ?? 0} submitted entries have a finalized review.</p>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-forest transition-all" style={{ width: `${judgedPct}%` }} />
             </div>
