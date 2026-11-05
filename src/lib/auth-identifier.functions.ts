@@ -31,17 +31,18 @@ export const loginWithIdentifier = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("email")
+      .select("auth_login_email,email")
       .eq("username", identifier.toLowerCase())
       .maybeSingle();
-    if (!profile?.email) throw new Error("Incorrect email/username or password.");
+    const loginEmail = profile?.auth_login_email ?? profile?.email;
+    if (!loginEmail) throw new Error("Incorrect email/username or password.");
 
     const url = process.env["SUPABASE_URL"]!;
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
     const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: { apikey: key, "content-type": "application/json" },
-      body: JSON.stringify({ email: profile.email, password: data.password }),
+      body: JSON.stringify({ email: loginEmail, password: data.password }),
     });
     if (!res.ok) throw new Error("Incorrect email/username or password.");
     const session = (await res.json()) as {
@@ -79,21 +80,24 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("email")
+      .select("auth_login_email,email")
       .eq("username", identifier.toLowerCase())
       .maybeSingle();
-    if (profile?.email) {
-      if (profile.email.toLowerCase().endsWith("@demo.in")) {
+    const loginEmail = profile?.auth_login_email ?? profile?.email;
+    if (loginEmail) {
+      if (loginEmail.toLowerCase().endsWith("@demo.in")) {
         return { kind: "demo" as const };
       }
-      const url = process.env["SUPABASE_URL"]!;
-      const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-      const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;
-      await fetch(`${url}/auth/v1/recover?redirect_to=${encodeURIComponent(redirect)}`, {
-        method: "POST",
-        headers: { apikey: key, "content-type": "application/json" },
-        body: JSON.stringify({ email: profile.email }),
-      });
+      if (!loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
+        const url = process.env["SUPABASE_URL"]!;
+        const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+        const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;
+        await fetch(`${url}/auth/v1/recover?redirect_to=${encodeURIComponent(redirect)}`, {
+          method: "POST",
+          headers: { apikey: key, "content-type": "application/json" },
+          body: JSON.stringify({ email: loginEmail }),
+        });
+      }
     }
     return { kind: "sent" as const };
   });

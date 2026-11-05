@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, clearAuthContext, getAuthContext, homeFor } from "@/lib/auth";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, USERNAME_RE, clearAuthContext, getAuthContext, homeFor, normalizeUsername, studentAuthEmail } from "@/lib/auth";
 import { loginWithIdentifier, sendResetWithIdentifier } from "@/lib/auth-identifier.functions";
 
 /**
@@ -194,6 +194,7 @@ export function AuthPage() {
 
 function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
   const [identifier, setIdentifier] = useState("");
+  const [loginType, setLoginType] = useState<"student" | "official">("student");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -236,13 +237,19 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
     }
   }
 
-  if (forgot) return <ForgotPasswordForm initialIdentifier={identifier} onBack={() => setForgot(false)} />;
+  if (forgot) return <ForgotPasswordForm initialIdentifier={identifier} loginType={loginType} onBack={() => setForgot(false)} />;
 
   return (
     <form onSubmit={submit} className="mt-4 space-y-4">
+      <Tabs value={loginType} onValueChange={(value) => setLoginType(value as "student" | "official")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="student" className="flex-1">Student</TabsTrigger>
+          <TabsTrigger value="official" className="flex-1">School &amp; evaluator</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <div className="space-y-1.5">
-        <Label>Email or username</Label>
-        <Input autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="you@school.in or username" />
+        <Label>{loginType === "student" ? "Student username" : "Registered email"}</Label>
+        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
@@ -261,7 +268,7 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
   );
 }
 
-function ForgotPasswordForm({ initialIdentifier, onBack }: { initialIdentifier: string; onBack: () => void }) {
+function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialIdentifier: string; loginType: "student" | "official"; onBack: () => void }) {
   const [identifier, setIdentifier] = useState(initialIdentifier);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -324,11 +331,11 @@ function ForgotPasswordForm({ initialIdentifier, onBack }: { initialIdentifier: 
     <form onSubmit={submit} className="mt-4 space-y-4">
       <div>
         <h3 className="font-semibold text-forest">Reset your password</h3>
-        <p className="text-sm text-muted-foreground">Enter your account email or username and we'll send you a reset link.</p>
+        <p className="text-sm text-muted-foreground">{loginType === "student" ? "Enter your student username." : "Enter the email registered to your school or evaluator account."}</p>
       </div>
       <div className="space-y-1.5">
-        <Label>Email or username</Label>
-        <Input autoComplete="username" required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); }} placeholder="you@school.in or username" />
+        <Label>{loginType === "student" ? "Student username" : "Registered email"}</Label>
+        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); }} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
       </div>
       {(isDemo || demoEmail) && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm">
@@ -359,7 +366,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
     city: "",
     phone: "",
     parent_email: "",
-    email: "",
+    username: "",
     password: "",
   });
   const [busy, setBusy] = useState(false);
@@ -374,10 +381,15 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
       setError("Select your class grade (8–12).");
       return;
     }
+    const username = normalizeUsername(form.username);
+    if (!USERNAME_RE.test(username)) {
+      setError("Username must be 3–30 characters: letters, numbers, dots, underscores, or hyphens.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const { data, error: err } = await supabase.auth.signUp({
-      email: form.email,
+      email: studentAuthEmail(username),
       password: form.password,
       options: {
         emailRedirectTo: window.location.origin,
@@ -388,12 +400,15 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
           city: form.city,
           phone: form.phone,
           parent_email: form.parent_email,
+          username,
         },
       },
     });
     if (err) {
       setBusy(false);
-      setError(err.message);
+      setError(/already registered|already exists|database error saving new user/i.test(err.message)
+        ? "That username may already be taken. Please choose another."
+        : err.message);
       return;
     }
     if (data.session) {
@@ -414,8 +429,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
       <div className="mt-4 rounded-lg border border-sage/30 bg-sage/10 p-4 text-sm text-secondary-foreground">
         <p className="font-semibold">Check your email</p>
         <p className="mt-1">
-          We sent a confirmation link to {form.email}. Click it to activate your account, then sign
-          in here.
+          Your account is ready. Sign in with the username you chose.
         </p>
       </div>
     );
@@ -427,6 +441,10 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Full name</Label>
           <Input required value={form.full_name} onChange={set("full_name")} placeholder="Your name" />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Student username</Label>
+          <Input required minLength={3} maxLength={30} autoComplete="username" value={form.username} onChange={set("username")} placeholder="e.g. arjun_sharma09" />
         </div>
         <div className="space-y-1.5">
           <Label>Class grade</Label>
@@ -456,12 +474,8 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
           <Input required value={form.city} onChange={set("city")} placeholder="e.g. Delhi" />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Parent email</Label>
+          <Label>Parent or guardian email</Label>
           <Input type="email" required value={form.parent_email} onChange={set("parent_email")} placeholder="parent@example.com" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Email</Label>
-          <Input type="email" required value={form.email} onChange={set("email")} placeholder="you@school.in" />
         </div>
         <div className="space-y-1.5">
           <Label>Password</Label>
@@ -473,8 +487,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
         {busy ? "Creating your workspace…" : "Create student account"}
       </Button>
       <p className="text-xs text-muted-foreground">
-        You'll be signed in right away — no email confirmation needed. We'll notify your parent or
-        guardian by email with participation details.
+        Use your username to sign in. The parent or guardian email is for contact and is not your login.
       </p>
     </form>
   );
