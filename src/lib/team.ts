@@ -126,3 +126,12 @@ export function stageOpen(settings: StageSettingRow | null, stage: 1 | 2): boole
   if (deadline && new Date(deadline).getTime() < Date.now()) return false;
   return true;
 }
+
+export function shouldShowStage2Tab(twoStage: boolean, roundOnePublished: boolean, shortlisted: boolean): boolean {
+  return twoStage && !(roundOnePublished && !shortlisted);
+}
+
+export function judgingProgressPercent(judged: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((judged / total) * 100)));
+}

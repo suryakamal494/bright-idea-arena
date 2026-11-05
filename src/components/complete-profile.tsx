@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Profile } from "@/lib/auth";
+import { USERNAME_RE, normalizeUsername, type Profile } from "@/lib/auth";
 
 /** Shown when a signed-in student's profile is missing key fields (e.g. social sign-up). */
 export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone: () => void }) {
@@ -19,12 +19,14 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
   const [city, setCity] = useState(profile.city ?? "");
   const [phone, setPhone] = useState(profile.phone ?? "");
   const [parentEmail, setParentEmail] = useState(profile.parent_email ?? "");
+  const [username, setUsername] = useState(profile.username ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
-    if (!grade || !school.trim() || !city.trim()) {
-      setError("Grade, school and city are required.");
+    const cleanUsername = normalizeUsername(username);
+    if (!grade || !school.trim() || !city.trim() || !parentEmail.trim() || !USERNAME_RE.test(cleanUsername)) {
+      setError("Enter a valid username, parent or guardian email, grade, school and city.");
       return;
     }
     setSaving(true);
@@ -36,6 +38,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
         city: city.trim(),
         phone: phone.trim() || null,
         parent_email: parentEmail.trim() || null,
+        username: cleanUsername,
       })
       .eq("id", profile.id);
     setSaving(false);
@@ -53,6 +56,10 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
         A few details so we can place you in the right competition category.
       </p>
       <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-5">
+        <div className="space-y-1.5">
+          <Label>Student username</Label>
+          <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="3–30 characters" autoComplete="username" />
+        </div>
         <div className="space-y-1.5">
           <Label>Class grade (8–12)</Label>
           <Select value={grade} onValueChange={setGrade}>
@@ -81,8 +88,8 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
           <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 …" />
         </div>
         <div className="space-y-1.5">
-          <Label>Parent email (optional)</Label>
-          <Input value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} placeholder="parent@example.com" />
+          <Label>Parent or guardian email</Label>
+          <Input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} placeholder="parent@example.com" />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button className="w-full" onClick={save} disabled={saving}>

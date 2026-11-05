@@ -20,7 +20,18 @@ export type Profile = {
   school_name: string | null;
   city: string | null;
   parent_email: string | null;
+  username: string | null;
 };
+
+export const USERNAME_RE = /^[a-z0-9._-]{3,30}$/;
+
+export function normalizeUsername(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function studentAuthEmail(username: string): string {
+  return `${normalizeUsername(username)}@student.ideathon.local`;
+}
 
 /**
  * Reads the user from the locally cached Supabase session (no network
@@ -146,7 +157,7 @@ export const DEMO_ACCOUNTS: {
   { label: "Administrator", email: "admin@demo.in", blurb: "Full operations hub", home: "/admin" },
   { label: "Evaluator", email: "judge@demo.in", blurb: "Blind scoring queue", home: "/judge" },
   { label: "Coordinator", email: "coordinator@demo.in", blurb: "Sunrise Public School", home: "/coordinator" },
-  { label: "Team captain", email: "arjun@demo.in", blurb: "Verdant Minds · AgriTech", home: "/dashboard" },
+  { label: "Team captain", email: "arjun@demo.in", blurb: "Verdant Minds · Agri-Tech & Farmer Welfare", home: "/dashboard" },
   { label: "Teamless student", email: "zoya@demo.in", blurb: "Test joining a team", home: "/dashboard" },
 ];
 

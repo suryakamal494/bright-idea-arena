@@ -4,6 +4,7 @@ import { ArrowUpRight, ClipboardCheck, FileText, Users, UserSquare2 } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { judgingProgressPercent } from "@/lib/team";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -18,6 +19,7 @@ type AdminOverview = {
   stage1: number;
   stage2: number;
   judged: number;
+  judging_total: number;
   recent: {
     id: string;
     team_code: string | null;
@@ -49,12 +51,12 @@ function AdminOverview() {
         stage1: overview.stage1,
         stage2: overview.stage2,
         judged: overview.judged,
+        judging_total: overview.judging_total,
       }
     : undefined;
   const recent = overview?.recent ?? [];
 
-  const judgedPct =
-    kpis && kpis.stage2 > 0 ? Math.round((kpis.judged / kpis.stage2) * 100) : 0;
+  const judgedPct = kpis ? judgingProgressPercent(kpis.judged, kpis.judging_total) : 0;
 
   return (
     <div className="space-y-6">
@@ -104,7 +106,7 @@ function AdminOverview() {
               <ClipboardCheck className="h-4.5 w-4.5" />
             </span>
             <p className="font-display mt-3 text-3xl font-semibold text-forest">{judgedPct}%</p>
-            <p className="text-xs font-medium text-muted-foreground">Judging complete</p>
+            <p className="text-xs font-medium text-muted-foreground">Submitted entries evaluated</p>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-forest transition-all" style={{ width: `${judgedPct}%` }} />
             </div>

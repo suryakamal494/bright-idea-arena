@@ -84,7 +84,7 @@ function Dashboard() {
         <>
           <TeamSummaryCard team={team} />
           {!team.cluster && <ClusterPrompt team={team} isCaptain={!!me && team.captain_id === me.id} />}
-          <ResultsBanner results={results ?? []} twoStage={twoStage} />
+          <ResultsBanner results={results ?? []} twoStage={twoStage} settings={settings ?? null} />
           <StageCards settings={settings ?? null} team={team} twoStage={twoStage} results={results ?? []} />
         </>
       )}
@@ -112,13 +112,13 @@ function ClusterPrompt({ team, isCaptain }: { team: TeamRow; isCaptain: boolean 
   );
 }
 
-function ResultsBanner({ results, twoStage }: { results: PublishedResultRow[]; twoStage: boolean }) {
+function ResultsBanner({ results, twoStage, settings }: { results: PublishedResultRow[]; twoStage: boolean; settings: StageSettingRow | null }) {
   const r1 = results.find((r) => r.stage === 1);
   const r2 = results.find((r) => r.stage === 2);
   const finalOutcome = twoStage ? r2 : r1;
   const lines: { text: string; tone: "good" | "bad" }[] = [];
   if (twoStage && r1?.published) {
-    if (r1.outcome === "shortlisted") lines.push({ text: "Shortlisted for Round 2 — the final prototype round is open for your team.", tone: "good" });
+    if (r1.outcome === "shortlisted") lines.push({ text: `Shortlisted for Round 2 — Stage 2 is ${stageOpen(settings, 2) ? "open" : "currently closed"}.`, tone: "good" });
     else lines.push({ text: "Round 1 result: not selected for Round 2. Thank you for participating!", tone: "bad" });
   }
   if (finalOutcome?.published) {
@@ -328,7 +328,7 @@ function StageCards({
             ) : (
               <p className="text-sm font-medium text-destructive">Closed</p>
             )}
-            {shortlisted && (
+            {shortlisted && s2 && (
               <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
                 <Link to="/submission">Open submission form</Link>
               </Button>
