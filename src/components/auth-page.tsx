@@ -296,7 +296,7 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
     setError(null);
     setSent(false);
     try {
-      if (looksEmail) {
+      if (loginType === "official") {
         const { error: err } = await supabase.auth.resetPasswordForEmail(clean.toLowerCase(), {
           redirectTo: `${window.location.origin}/reset-password`,
         });
@@ -344,7 +344,9 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
       )}
       {sent && !isDemo && !demoEmail && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm" role="status">
-          If an account exists for this {looksEmail ? "email" : "username"}, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour.
+          {loginType === "student"
+            ? "If your account has an email-based recovery address, a reset link is on its way. Individual username-only accounts do not yet support email recovery; contact your school coordinator or the organisers for a password reset."
+            : "If an account exists for this email, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour."}
         </p>
       )}
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
@@ -384,6 +386,10 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
     const username = normalizeUsername(form.username);
     if (!USERNAME_RE.test(username)) {
       setError("Username must be 3–30 characters: letters, numbers, dots, underscores, or hyphens.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.parent_email.trim())) {
+      setError("Enter a valid parent or guardian email address.");
       return;
     }
     setBusy(true);
@@ -427,9 +433,9 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
   if (needsConfirm) {
     return (
       <div className="mt-4 rounded-lg border border-sage/30 bg-sage/10 p-4 text-sm text-secondary-foreground">
-        <p className="font-semibold">Check your email</p>
+        <p className="font-semibold">Account created</p>
         <p className="mt-1">
-          Your account is ready. Sign in with the username you chose.
+          Your account was created, but automatic sign-in is unavailable right now. Contact the organisers before trying to register again.
         </p>
       </div>
     );

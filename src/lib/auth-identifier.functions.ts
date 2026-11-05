@@ -88,7 +88,9 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
       if (loginEmail.toLowerCase().endsWith("@demo.in")) {
         return { kind: "demo" as const };
       }
-      if (!loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
+      if (loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
+        return { kind: "sent" as const };
+      } else {
         const url = process.env["SUPABASE_URL"]!;
         const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
         const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;

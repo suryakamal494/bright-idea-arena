@@ -25,7 +25,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
 
   async function save() {
     const cleanUsername = normalizeUsername(username);
-    if (!grade || !school.trim() || !city.trim() || !parentEmail.trim() || !USERNAME_RE.test(cleanUsername)) {
+    if (!grade || !school.trim() || !city.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail.trim()) || !USERNAME_RE.test(cleanUsername)) {
       setError("Enter a valid username, parent or guardian email, grade, school and city.");
       return;
     }
