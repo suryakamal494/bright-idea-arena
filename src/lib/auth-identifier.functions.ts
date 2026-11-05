@@ -89,7 +89,7 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
         return { kind: "demo" as const };
       }
       if (loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
-        return { kind: "sent" as const };
+        return { kind: "manual" as const };
       } else {
         const url = process.env["SUPABASE_URL"]!;
         const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;

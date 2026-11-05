@@ -29,6 +29,11 @@ function EvaluationSheet() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "submitted">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedId = useRef<string | null>(null);
+  const latestScores = useRef<Record<string, number>>({});
+  const latestFeedback = useRef("");
+  const saveRef = useRef<((submit: boolean) => Promise<void>) | null>(null);
+  const dirtyRef = useRef(false);
+  const editVersion = useRef(0);
 
   const { data, isLoading } = useQuery({
     queryKey: ["judge-eval", submissionId],
@@ -69,19 +74,24 @@ function EvaluationSheet() {
   useEffect(() => {
     if (!data?.existing || loadedId.current === submissionId) return;
     loadedId.current = submissionId;
-    setScores((data.existing.criterion_scores as Record<string, number>) ?? {});
-    setFeedback(data.existing.feedback ?? "");
+    const initialScores = (data.existing.criterion_scores as Record<string, number>) ?? {};
+    const initialFeedback = data.existing.feedback ?? "";
+    latestScores.current = initialScores;
+    latestFeedback.current = initialFeedback;
+    setScores(initialScores);
+    setFeedback(initialFeedback);
     setSaveState(data.existing.submitted ? "submitted" : "saved");
   }, [data, submissionId]);
 
   async function persist(submit: boolean) {
     if (!data) return;
+    const versionAtSave = editVersion.current;
     setSaveState("saving");
     const payload = {
       submission_id: submissionId,
       judge_id: data.judgeId,
-      criterion_scores: scores,
-      feedback: feedback.trim() || null,
+      criterion_scores: latestScores.current,
+      feedback: latestFeedback.current.trim() || null,
       submitted: submit,
     };
     const { error } = await supabase
@@ -92,18 +102,46 @@ function EvaluationSheet() {
       setSaveState("idle");
       return;
     }
-    setSaveState(submit ? "submitted" : "saved");
+    if (versionAtSave === editVersion.current) dirtyRef.current = false;
+    setSaveState(submit ? "submitted" : dirtyRef.current ? "idle" : "saved");
     if (submit) {
       toast.success("Score submitted");
       queryClient.invalidateQueries({ queryKey: ["judge-queue"] });
     }
   }
 
+  useEffect(() => {
+    saveRef.current = persist;
+  });
+
+  useEffect(() => {
+    const flush = () => {
+      if (!dirtyRef.current) return;
+      if (timer.current) clearTimeout(timer.current);
+      void (saveRef.current ?? (() => Promise.resolve()))(false);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (timer.current) clearTimeout(timer.current);
+      flush();
+    };
+  }, []);
+
   function onScoreChange(id: string, value: number) {
-    setScores((s) => ({ ...s, [id]: value }));
     if (saveState === "submitted") return; // locked after submit
+    const nextScores = { ...latestScores.current, [id]: value };
+    latestScores.current = nextScores;
+    setScores(nextScores);
+    dirtyRef.current = true;
+    editVersion.current += 1;
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => persist(false).catch(console.error), 1200);
+    timer.current = setTimeout(() => (saveRef.current ?? persist)(false).catch(console.error), 1200);
   }
 
   if (isLoading || !data?.submission) {
@@ -196,8 +234,11 @@ function EvaluationSheet() {
               disabled={locked}
               onChange={(e) => {
                 setFeedback(e.target.value);
+                latestFeedback.current = e.target.value;
+                dirtyRef.current = true;
+                editVersion.current += 1;
                 if (timer.current) clearTimeout(timer.current);
-                timer.current = setTimeout(() => persist(false).catch(console.error), 1200);
+                timer.current = setTimeout(() => (saveRef.current ?? persist)(false).catch(console.error), 1200);
               }}
               placeholder="What impressed you? What should the team improve?"
             />
@@ -208,7 +249,8 @@ function EvaluationSheet() {
             disabled={locked || Object.keys(scores).length < data.criteria.length}
             onClick={() => {
               if (window.confirm("Submit final scores? The entry is marked evaluated.")) {
-                persist(true);
+                if (timer.current) clearTimeout(timer.current);
+                (saveRef.current ?? persist)(true).catch(console.error);
               }
             }}
           >
