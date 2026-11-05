@@ -55,7 +55,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
     <div className="mx-auto max-w-md px-4 py-10">
       <h1 className="font-display text-2xl font-semibold text-forest">Complete your profile</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        A few details so we can place you in the right competition category.
+        Add the details needed for your student workspace. Students sign in with a username; the parent email is for contact only.
       </p>
       <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-5">
         <div className="space-y-1.5">
