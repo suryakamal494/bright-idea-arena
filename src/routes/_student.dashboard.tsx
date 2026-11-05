@@ -330,7 +330,7 @@ function StageCards({
             ) : (
               <p className="text-sm font-medium text-muted-foreground">Loading stage settings…</p>
             )}
-            {shortlisted && (s2Open || s2) ? (
+            {shortlisted && s2 ? (
               <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
                 <Link to="/submission">Open submission form</Link>
               </Button>

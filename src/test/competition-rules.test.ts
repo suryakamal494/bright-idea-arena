@@ -34,7 +34,7 @@ describe("competition rules", () => {
   });
 
   it("honors a configured Stage 2 toggle and deadline", () => {
-    expect(stageOpen({ stage1_open: true, stage1_deadline: null, stage2_open: false, stage2_deadline: null }, 2)).toBe(false);
-    expect(stageOpen({ stage1_open: true, stage1_deadline: null, stage2_open: true, stage2_deadline: "2000-01-01T00:00:00Z" }, 2)).toBe(false);
+    expect(stageOpen({ id: "global", track_id: null, stage1_open: true, stage1_deadline: null, stage2_open: false, stage2_deadline: null }, 2)).toBe(false);
+    expect(stageOpen({ id: "global", track_id: null, stage1_open: true, stage1_deadline: null, stage2_open: true, stage2_deadline: "2000-01-01T00:00:00Z" }, 2)).toBe(false);
   });
 });
