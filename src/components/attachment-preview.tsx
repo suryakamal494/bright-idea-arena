@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { ExternalLink, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,8 +44,10 @@ export function AttachmentPreviewGrid({ files }: { files: AttachmentRow[] }) {
                 <img src={url} alt={f.title || f.name} className="h-36 w-full object-cover" />
               ) : (
                 <div className="flex h-36 items-center justify-center bg-muted">
-                  {pdf ? (
+                  {pdf && url ? (
                     <FileText className="h-8 w-8 text-clay" />
+                  ) : Object.hasOwn(resolved, f.url) ? (
+                    <p className="px-4 text-center text-xs text-muted-foreground">Preview unavailable for this file.</p>
                   ) : url ? (
                     <img src={url} alt={f.title || f.name} className="h-36 w-full object-cover" />
                   ) : (
@@ -88,11 +90,22 @@ export function AttachmentPreviewGrid({ files }: { files: AttachmentRow[] }) {
           </DialogHeader>
           {preview &&
             (isPdfFile(preview.url) ? (
-              <iframe
-                src={resolved[preview.url] ?? ""}
-                title={preview.title || preview.name}
-                className="h-[70vh] w-full rounded-lg border border-border"
-              />
+              <div className="space-y-3">
+                <object
+                  data={resolved[preview.url] ?? ""}
+                  type="application/pdf"
+                  aria-label={preview.title || preview.name}
+                  className="h-[65vh] w-full rounded-lg border border-border"
+                >
+                  <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
+                    PDF preview is unavailable in this browser.
+                    <a href={resolved[preview.url] ?? ""} target="_blank" rel="noreferrer" className="text-clay underline underline-offset-2">Open PDF in a new tab</a>
+                  </div>
+                </object>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={resolved[preview.url] ?? ""} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-4 w-4" /> Open PDF in a new tab</a>
+                </Button>
+              </div>
             ) : (
               <img
                 src={resolved[preview.url] ?? ""}

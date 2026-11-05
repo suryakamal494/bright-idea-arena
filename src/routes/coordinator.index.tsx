@@ -434,7 +434,7 @@ function CoordinatorPortal() {
           })}
           {hasErrors && !busy && (
             <p className="text-sm text-destructive" role="alert">
-              Fix the highlighted rows — every student needs a name, username, password (8+ chars), a fresh email and class 8–12.
+              Fix the highlighted rows — every student needs a name, username, password (8+ chars), a fresh contact email and class 8–12.
             </p>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
@@ -459,8 +459,8 @@ function CoordinatorPortal() {
               Choose your school's cluster above before registering students.
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
-            Usernames and contact emails must be new on the platform. Students sign in with their username; passwords show on the passes below.
+            <p className="text-xs text-muted-foreground">
+              Usernames and contact emails must be new on the platform. Students sign in with their username; contact emails do not need to be login addresses. Passwords show on the passes below.
           </p>
         </CardContent>
       </Card>

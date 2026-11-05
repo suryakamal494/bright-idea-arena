@@ -43,7 +43,7 @@ type Row = {
   status: string;
   outcome: string | null;
   published: boolean;
-  avg_score: number | null;
+  judge_scores: { judge_name: string; score: number }[];
   reviews: number;
   review_status: string;
   review_notes: string | null;
@@ -375,7 +375,7 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                   <th className="py-2 pr-3 font-semibold">School</th>
                   <th className="py-2 pr-3 font-semibold">Cluster</th>
                   <th className="py-2 pr-3 font-semibold">Theme</th>
-                  <th className="py-2 pr-3 font-semibold">Judge score</th>
+                  <th className="py-2 pr-3 font-semibold">Evaluator score</th>
                   <th className="py-2 pr-3 font-semibold">Submission</th>
                   <th className="py-2 font-semibold">{stage === 1 && twoStage ? "Round 1 outcome" : "Final outcome"}</th>
                 </tr>
@@ -432,16 +432,16 @@ function RoundPanel({ stage, twoStage }: { stage: 1 | 2; twoStage: boolean }) {
                     <td className="py-2.5 pr-3 text-xs text-muted-foreground">{t.cluster_name ?? "—"}</td>
                     <td className="py-2.5 pr-3 text-xs">{t.track_name ?? "—"}</td>
                     <td className="py-2.5 pr-3">
-                      {t.avg_score != null ? (
-                        <>
-                          <p className="font-semibold text-forest">
-                            {Number(t.avg_score).toFixed(1)}
-                            <span className="text-xs font-normal text-muted-foreground"> / {max}</span>
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {t.reviews} review{t.reviews === 1 ? "" : "s"}
-                          </p>
-                        </>
+                      {t.judge_scores?.length ? (
+                        <div className="space-y-1">
+                          {t.judge_scores.map((score, index) => (
+                            <p key={`${score.judge_name}-${index}`} className="font-semibold text-forest">
+                              <span className="text-xs font-medium">{score.judge_name}</span>{" "}
+                              {Number(score.score).toFixed(1)}
+                              <span className="text-xs font-normal text-muted-foreground"> / {max}</span>
+                            </p>
+                          ))}
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">Not scored</span>
                       )}

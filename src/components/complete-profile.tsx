@@ -25,7 +25,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
 
   async function save() {
     const cleanUsername = normalizeUsername(username);
-    if (!grade || !school.trim() || !city.trim() || !parentEmail.trim() || !USERNAME_RE.test(cleanUsername)) {
+    if (!grade || !school.trim() || !city.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail.trim()) || !USERNAME_RE.test(cleanUsername)) {
       setError("Enter a valid username, parent or guardian email, grade, school and city.");
       return;
     }
@@ -37,13 +37,15 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
         school_name: school.trim(),
         city: city.trim(),
         phone: phone.trim() || null,
-        parent_email: parentEmail.trim() || null,
+        parent_email: parentEmail.trim(),
         username: cleanUsername,
       })
       .eq("id", profile.id);
     setSaving(false);
     if (err) {
-      setError(err.message);
+      setError(/profiles_username_lower_key|duplicate key/i.test(err.message)
+        ? "That username is already taken. Please choose another."
+        : err.message);
       return;
     }
     onDone();
@@ -53,7 +55,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
     <div className="mx-auto max-w-md px-4 py-10">
       <h1 className="font-display text-2xl font-semibold text-forest">Complete your profile</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        A few details so we can place you in the right competition category.
+        Add the details needed for your student workspace. Students sign in with a username; the parent email is for contact only.
       </p>
       <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-5">
         <div className="space-y-1.5">

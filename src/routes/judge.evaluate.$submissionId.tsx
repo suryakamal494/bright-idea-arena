@@ -27,8 +27,15 @@ function EvaluationSheet() {
   const [scores, setScores] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "submitted">("idle");
+  const [submitRequested, setSubmitRequested] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedId = useRef<string | null>(null);
+  const latestScores = useRef<Record<string, number>>({});
+  const latestFeedback = useRef("");
+  const saveRef = useRef<((submit: boolean) => Promise<void>) | null>(null);
+  const dirtyRef = useRef(false);
+  const editVersion = useRef(0);
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
 
   const { data, isLoading } = useQuery({
     queryKey: ["judge-eval", submissionId],
@@ -69,41 +76,85 @@ function EvaluationSheet() {
   useEffect(() => {
     if (!data?.existing || loadedId.current === submissionId) return;
     loadedId.current = submissionId;
-    setScores((data.existing.criterion_scores as Record<string, number>) ?? {});
-    setFeedback(data.existing.feedback ?? "");
+    const initialScores = (data.existing.criterion_scores as Record<string, number>) ?? {};
+    const initialFeedback = data.existing.feedback ?? "";
+    latestScores.current = initialScores;
+    latestFeedback.current = initialFeedback;
+    setScores(initialScores);
+    setFeedback(initialFeedback);
     setSaveState(data.existing.submitted ? "submitted" : "saved");
   }, [data, submissionId]);
 
-  async function persist(submit: boolean) {
-    if (!data) return;
-    setSaveState("saving");
-    const payload = {
-      submission_id: submissionId,
-      judge_id: data.judgeId,
-      criterion_scores: scores,
-      feedback: feedback.trim() || null,
-      submitted: submit,
-    };
-    const { error } = await supabase
-      .from("scores")
-      .upsert(payload, { onConflict: "submission_id,judge_id" });
-    if (error) {
-      toast.error(error.message);
-      setSaveState("idle");
-      return;
-    }
-    setSaveState(submit ? "submitted" : "saved");
-    if (submit) {
-      toast.success("Score submitted");
-      queryClient.invalidateQueries({ queryKey: ["judge-queue"] });
-    }
+  function persist(submit: boolean): Promise<void> {
+    if (!data) return Promise.resolve();
+    const operation = saveChain.current.catch(() => undefined).then(async () => {
+      const versionAtSave = editVersion.current;
+      setSaveState("saving");
+      const payload = {
+        submission_id: submissionId,
+        judge_id: data.judgeId,
+        criterion_scores: latestScores.current,
+        feedback: latestFeedback.current.trim() || null,
+        submitted: submit,
+      };
+      const { error } = await supabase
+        .from("scores")
+        .upsert(payload, { onConflict: "submission_id,judge_id" });
+      if (error) {
+        toast.error(error.message);
+        setSaveState("idle");
+        if (submit) setSubmitRequested(false);
+        return;
+      }
+      if (versionAtSave === editVersion.current) dirtyRef.current = false;
+      setSaveState(submit ? "submitted" : dirtyRef.current ? "idle" : "saved");
+      if (submit) {
+        toast.success("Score submitted");
+        queryClient.invalidateQueries({ queryKey: ["judge-queue"] });
+      }
+    });
+    saveChain.current = operation;
+    return operation;
   }
 
+  useEffect(() => {
+    saveRef.current = persist;
+  });
+
+  useEffect(() => {
+    const flush = () => {
+      if (!dirtyRef.current) return;
+      if (timer.current) clearTimeout(timer.current);
+      void (saveRef.current ?? (() => Promise.resolve()))(false);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (timer.current) clearTimeout(timer.current);
+      flush();
+    };
+  }, []);
+
   function onScoreChange(id: string, value: number) {
-    setScores((s) => ({ ...s, [id]: value }));
-    if (saveState === "submitted") return; // locked after submit
+    if (saveState === "submitted" || submitRequested) return; // locked after final submission starts
+    const nextScores = { ...latestScores.current, [id]: value };
+    latestScores.current = nextScores;
+    setScores(nextScores);
+    dirtyRef.current = true;
+    editVersion.current += 1;
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => persist(false).catch(console.error), 1200);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      void (saveRef.current ?? persist)(false).catch(() => {
+        setSaveState("idle");
+        toast.error("Your evaluation could not be saved. Please try again.");
+      });
+    }, 1200);
   }
 
   if (isLoading || !data?.submission) {
@@ -181,7 +232,7 @@ function EvaluationSheet() {
                   min={0}
                   max={c.max_score}
                   step={0.25}
-                  disabled={locked}
+                  disabled={locked || submitRequested}
                   onValueChange={(vals) => onScoreChange(c.id, vals[0] ?? 0)}
                 />
               </div>
@@ -193,11 +244,20 @@ function EvaluationSheet() {
             <Textarea
               rows={4}
               value={feedback}
-              disabled={locked}
+              disabled={locked || submitRequested}
               onChange={(e) => {
                 setFeedback(e.target.value);
+                latestFeedback.current = e.target.value;
+                dirtyRef.current = true;
+                editVersion.current += 1;
                 if (timer.current) clearTimeout(timer.current);
-                timer.current = setTimeout(() => persist(false).catch(console.error), 1200);
+                timer.current = setTimeout(() => {
+                  timer.current = null;
+                  void (saveRef.current ?? persist)(false).catch(() => {
+                    setSaveState("idle");
+                    toast.error("Your evaluation could not be saved. Please try again.");
+                  });
+                }, 1200);
               }}
               placeholder="What impressed you? What should the team improve?"
             />
@@ -205,10 +265,12 @@ function EvaluationSheet() {
 
           <Button
             className="mt-5 w-full bg-clay hover:bg-clay/90"
-            disabled={locked || Object.keys(scores).length < data.criteria.length}
+            disabled={locked || submitRequested || Object.keys(scores).length < data.criteria.length}
             onClick={() => {
               if (window.confirm("Submit final scores? The entry is marked evaluated.")) {
-                persist(true);
+                if (timer.current) clearTimeout(timer.current);
+                setSubmitRequested(true);
+                (saveRef.current ?? persist)(true).catch(console.error);
               }
             }}
           >

@@ -22,7 +22,7 @@ function downloadCredentialsCsv(passes: AccessPass[]) {
   const ok = passes.filter((p) => !p.error && p.password);
   if (!ok.length) return;
   const lines = [
-    ["Student Name", "Grade", "Username", "Password", "Email", "School"],
+    ["Student Name", "Grade", "Username", "Password", "Contact Email", "School"],
     ...ok.map((p) => [p.full_name, p.grade ?? "", p.username, p.password, p.email, p.school_name ?? ""]),
   ];
   const csv = "\ufeff" + lines.map((l) => l.map(csvCell).join(",")).join("\r\n");

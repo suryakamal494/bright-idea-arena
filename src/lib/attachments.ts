@@ -25,7 +25,13 @@ export function useResolvedAttachments(urls: string[]) {
     (async () => {
       // Parallel resolution: one roundtrip per file, all in flight together.
       const entries = await Promise.all(
-        urls.map(async (u) => [u, await resolveAttachmentUrl(u)] as const),
+        urls.map(async (u) => {
+          try {
+            return [u, await resolveAttachmentUrl(u)] as const;
+          } catch {
+            return [u, ""] as const;
+          }
+        }),
       );
       if (alive) setResolved(Object.fromEntries(entries));
     })();

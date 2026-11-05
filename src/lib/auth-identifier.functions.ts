@@ -11,11 +11,9 @@ export type ClientSession = {
 };
 
 /**
- * Sign-in accepts an email or a username. Emails are verified client-side by
- * the normal Supabase client. For a username, the email is resolved
- * server-side and the password is verified by the auth service itself — the
- * password check is never bypassed and the resolved email never reaches the
- * browser.
+ * Student username sign-in resolves the Auth email server-side and lets the
+ * Auth service verify the password; the resolved address never reaches the
+ * browser. Official email sign-in stays on the browser client.
  */
 export const loginWithIdentifier = createServerFn({ method: "POST" })
   .validator((input: { identifier: string; password: string }) => input)
@@ -63,9 +61,9 @@ export const loginWithIdentifier = createServerFn({ method: "POST" })
   });
 
 /**
- * Password reset accepts an email or a username. For a username the reset
- * email is sent server-side to the resolved address — the response is the
- * same whether or not the account exists, so usernames can't be probed.
+ * Username recovery resolves server-side without disclosing whether a
+ * username exists. Internal-address accounts need a coordinator reset;
+ * deliverable email accounts receive the normal Auth recovery message.
  */
 export const sendResetWithIdentifier = createServerFn({ method: "POST" })
   .validator((input: { identifier: string; origin: string }) => input)
@@ -88,7 +86,9 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
       if (loginEmail.toLowerCase().endsWith("@demo.in")) {
         return { kind: "demo" as const };
       }
-      if (!loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
+      if (loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
+        return { kind: "manual" as const };
+      } else {
         const url = process.env["SUPABASE_URL"]!;
         const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
         const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;

@@ -202,9 +202,13 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const id = identifier.trim();
+    if (loginType === "student" && id.includes("@")) {
+      setError("Enter your student username, not an email address.");
+      return;
+    }
     setBusy(true);
     setError(null);
-    const id = identifier.trim();
     try {
       if (id.includes("@")) {
         const { error: err } = await supabase.auth.signInWithPassword({ email: id, password });
@@ -273,6 +277,7 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
+  const [manualReset, setManualReset] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -284,10 +289,14 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
 
   const clean = identifier.trim();
   const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean);
-  const demoEmail = looksEmail && clean.toLowerCase().endsWith("@demo.in");
+  const demoEmail = loginType === "official" && looksEmail && clean.toLowerCase().endsWith("@demo.in");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (loginType === "student" && looksEmail) {
+      setError("Enter your student username, not an email address.");
+      return;
+    }
     if (demoEmail) {
       setIsDemo(true);
       return;
@@ -295,8 +304,9 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
     setBusy(true);
     setError(null);
     setSent(false);
+    setManualReset(false);
     try {
-      if (looksEmail) {
+      if (loginType === "official") {
         const { error: err } = await supabase.auth.resetPasswordForEmail(clean.toLowerCase(), {
           redirectTo: `${window.location.origin}/reset-password`,
         });
@@ -314,6 +324,8 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
         });
         if (res.kind === "demo") {
           setIsDemo(true);
+        } else if (res.kind === "manual") {
+          setManualReset(true);
         } else {
           setSent(true);
           setIsDemo(false);
@@ -335,16 +347,28 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
       </div>
       <div className="space-y-1.5">
         <Label>{loginType === "student" ? "Student username" : "Registered email"}</Label>
-        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); }} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
+        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); setManualReset(false); }} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
       </div>
       {(isDemo || demoEmail) && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm">
           Demo accounts can't be reset. Their password is <span className="font-mono">{DEMO_PASSWORD}</span>.
         </p>
       )}
+      {manualReset && (
+        <p className="rounded-lg border border-ochre/30 bg-ochre/10 p-3 text-sm" role="status">
+          Username-only student accounts do not yet receive reset emails. Ask your school coordinator or the organisers to set a new password.
+        </p>
+      )}
+      {loginType === "student" && !manualReset && !isDemo && !sent && (
+        <p className="rounded-lg border border-ochre/30 bg-ochre/10 p-3 text-sm" role="status">
+          Email recovery is not available for username-only individual accounts yet. Ask your school coordinator or the organisers to reset the password.
+        </p>
+      )}
       {sent && !isDemo && !demoEmail && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm" role="status">
-          If an account exists for this {looksEmail ? "email" : "username"}, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour.
+          {loginType === "student"
+            ? "If your account has an email-based recovery address, a reset link is on its way. Individual username-only accounts do not yet support email recovery; contact your school coordinator or the organisers for a password reset."
+            : "If an account exists for this email, a reset link is on its way. Check your inbox and spam folder. The link works once and expires in 1 hour."}
         </p>
       )}
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
@@ -386,6 +410,10 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
       setError("Username must be 3–30 characters: letters, numbers, dots, underscores, or hyphens.");
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.parent_email.trim())) {
+      setError("Enter a valid parent or guardian email address.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const { data, error: err } = await supabase.auth.signUp({
@@ -406,7 +434,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
     });
     if (err) {
       setBusy(false);
-      setError(/already registered|already exists|database error saving new user/i.test(err.message)
+      setError(/already registered|already exists|database error saving new user|duplicate key|profiles_username_lower_key/i.test(err.message)
         ? "That username may already be taken. Please choose another."
         : err.message);
       return;
@@ -427,9 +455,9 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
   if (needsConfirm) {
     return (
       <div className="mt-4 rounded-lg border border-sage/30 bg-sage/10 p-4 text-sm text-secondary-foreground">
-        <p className="font-semibold">Check your email</p>
+        <p className="font-semibold">Account created</p>
         <p className="mt-1">
-          Your account is ready. Sign in with the username you chose.
+          This username may already be registered or need organiser activation. Contact the organisers before trying to register again.
         </p>
       </div>
     );
@@ -487,7 +515,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
         {busy ? "Creating your workspace…" : "Create student account"}
       </Button>
       <p className="text-xs text-muted-foreground">
-        Use your username to sign in. The parent or guardian email is for contact and is not your login.
+        Use your username to sign in. The parent or guardian email is a contact address; email verification and notifications are not configured yet.
       </p>
     </form>
   );
