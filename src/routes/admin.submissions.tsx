@@ -501,14 +501,6 @@ function TeamEntryInspector({ team }: { team: Row }) {
       <section className="space-y-5">
         {entries.map((s) => {
           const subScores = scores.filter((sc) => sc.submission_id === s.id);
-          const evaluated = subScores.find((sc) => sc.submitted);
-          const total =
-            evaluated
-              ? Object.values(evaluated.criterion_scores ?? {}).reduce(
-                  (a, b) => a + (typeof b === "number" ? b : 0),
-                  0,
-                )
-              : 0;
           return (
             <div key={s.id} className="space-y-3">
               <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
@@ -537,14 +529,16 @@ function TeamEntryInspector({ team }: { team: Row }) {
                 <div className="space-y-2">
                   {subScores.map((sc) => (
                     <div key={sc.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="font-medium">{sc.judge?.full_name ?? "Judge"}</span>
+                      <span className="font-medium">{sc.judge?.full_name ?? "Evaluator"}</span>
                       <span
                         className={
                           "rounded-full px-2 py-0.5 text-xs font-semibold " +
                           (sc.submitted ? "bg-sage/15 text-sage" : "bg-ochre/15 text-ochre")
                         }
                       >
-                        {sc.submitted ? `Evaluated · ${total.toFixed(2)}` : "In progress"}
+                        {sc.submitted
+                          ? `Evaluated · ${Object.values(sc.criterion_scores ?? {}).reduce((total, value) => total + (typeof value === "number" ? value : 0), 0).toFixed(2)}`
+                          : "In progress"}
                       </span>
                     </div>
                   ))}

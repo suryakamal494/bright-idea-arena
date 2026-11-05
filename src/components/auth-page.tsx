@@ -457,7 +457,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
       <div className="mt-4 rounded-lg border border-sage/30 bg-sage/10 p-4 text-sm text-secondary-foreground">
         <p className="font-semibold">Account created</p>
         <p className="mt-1">
-          Your account was created, but automatic sign-in is unavailable right now. Contact the organisers before trying to register again.
+          This username may already be registered or need organiser activation. Contact the organisers before trying to register again.
         </p>
       </div>
     );
