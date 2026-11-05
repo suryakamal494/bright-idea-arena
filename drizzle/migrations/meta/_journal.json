@@ -232,6 +232,13 @@
       "when": 1793886472400,
       "tag": "0032_keep_judge_scores_separate",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793886506451,
+      "tag": "0033_qualify_evidence_storage_policy",
+      "breakpoints": true
     }
   ]
 }
