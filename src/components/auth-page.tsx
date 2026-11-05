@@ -277,7 +277,6 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
-  const [manualReset, setManualReset] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -304,7 +303,6 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
     setBusy(true);
     setError(null);
     setSent(false);
-    setManualReset(false);
     try {
       if (loginType === "official") {
         const { error: err } = await supabase.auth.resetPasswordForEmail(clean.toLowerCase(), {
@@ -324,8 +322,6 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
         });
         if (res.kind === "demo") {
           setIsDemo(true);
-        } else if (res.kind === "manual") {
-          setManualReset(true);
         } else {
           setSent(true);
           setIsDemo(false);
@@ -347,19 +343,14 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
       </div>
       <div className="space-y-1.5">
         <Label>{loginType === "student" ? "Student username" : "Registered email"}</Label>
-        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); setManualReset(false); }} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
+        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => { setIdentifier(e.target.value); setSent(false); setIsDemo(false); }} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
       </div>
       {(isDemo || demoEmail) && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm">
           Demo accounts can't be reset. Their password is <span className="font-mono">{DEMO_PASSWORD}</span>.
         </p>
       )}
-      {manualReset && (
-        <p className="rounded-lg border border-ochre/30 bg-ochre/10 p-3 text-sm" role="status">
-          Username-only student accounts do not yet receive reset emails. Ask your school coordinator or the organisers to set a new password.
-        </p>
-      )}
-      {loginType === "student" && !manualReset && !isDemo && !sent && (
+      {loginType === "student" && !isDemo && !sent && (
         <p className="rounded-lg border border-ochre/30 bg-ochre/10 p-3 text-sm" role="status">
           Email recovery is not available for username-only individual accounts yet. Ask your school coordinator or the organisers to reset the password.
         </p>

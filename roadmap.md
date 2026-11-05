@@ -1,6 +1,6 @@
 # Roadmap
 
-- [x] Resolve 5 Nov bug report: username-only individual signup with parent contact, stage-two visibility and read-only closed drafts, serialized judge autosave, stage-aware judging KPI, individually named evaluator scores, robust PDF preview, corrected evidence access, and current demo theme label. Parent-email OTP and new synthetic-email sign-up remain unverified until email/auth settings are confirmed.
+- [x] Resolve 5 Nov bug report: username-only student login with parent contact, private login identity storage, stage-two visibility and read-only closed drafts, serialized judge autosave, stage-aware judging KPI, separately named evaluator scores, robust PDF preview, corrected evidence access, and current demo theme label. Parent-email OTP is not implemented; new student registration was not end-to-end tested.
 
 - [x] Cloud backend, schema/RLS/RPCs, demo seed, all role flows, perf fixes, login-first homepage
 - [x] ICORG logo asset + brand lockup in headers + "Organized by ICORG" footers

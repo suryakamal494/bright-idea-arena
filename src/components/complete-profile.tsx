@@ -40,7 +40,8 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
         parent_email: parentEmail.trim(),
         username: cleanUsername,
       })
-      .eq("id", profile.id);
+      .eq("id", profile.id)
+      .select("id");
     setSaving(false);
     if (err || !updatedRows) {
       setError(err && /profiles_username_lower_key|duplicate key/i.test(err.message)

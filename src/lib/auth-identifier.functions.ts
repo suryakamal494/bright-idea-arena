@@ -27,12 +27,11 @@ export const loginWithIdentifier = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("auth_login_email,email")
-      .eq("username", identifier.toLowerCase())
-      .maybeSingle();
-    const loginEmail = profile?.auth_login_email ?? profile?.email;
+    const { data: identities, error: identityError } = await supabaseAdmin.rpc("get_student_login_identity", {
+      p_username: identifier.toLowerCase(),
+    });
+    if (identityError) throw new Error("Sign-in is temporarily unavailable. Please try again.");
+    const loginEmail = identities?.[0]?.auth_email;
     if (!loginEmail) throw new Error("Incorrect email/username or password.");
 
     const url = process.env["SUPABASE_URL"]!;
@@ -76,28 +75,21 @@ export const sendResetWithIdentifier = createServerFn({ method: "POST" })
       return { kind: "email" as const, email: identifier };
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("auth_login_email,email")
-      .eq("username", identifier.toLowerCase())
-      .maybeSingle();
-    const loginEmail = profile?.auth_login_email ?? profile?.email;
-    if (loginEmail) {
-      if (loginEmail.toLowerCase().endsWith("@demo.in")) {
-        return { kind: "demo" as const };
-      }
-      if (loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
-        return { kind: "manual" as const };
-      } else {
-        const url = process.env["SUPABASE_URL"]!;
-        const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-        const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;
-        await fetch(`${url}/auth/v1/recover?redirect_to=${encodeURIComponent(redirect)}`, {
-          method: "POST",
-          headers: { apikey: key, "content-type": "application/json" },
-          body: JSON.stringify({ email: loginEmail }),
-        });
-      }
+    const { data: identities, error: identityError } = await supabaseAdmin.rpc("get_student_login_identity", {
+      p_username: identifier.toLowerCase(),
+    });
+    if (identityError) throw new Error("Password reset is temporarily unavailable. Please try again.");
+    const loginEmail = identities?.[0]?.auth_email;
+    if (loginEmail?.toLowerCase().endsWith("@demo.in")) return { kind: "demo" as const };
+    if (loginEmail && !loginEmail.toLowerCase().endsWith("@student.ideathon.local")) {
+      const url = process.env["SUPABASE_URL"]!;
+      const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+      const redirect = `${data.origin.replace(/\/+$/, "")}/reset-password`;
+      await fetch(`${url}/auth/v1/recover?redirect_to=${encodeURIComponent(redirect)}`, {
+        method: "POST",
+        headers: { apikey: key, "content-type": "application/json" },
+        body: JSON.stringify({ email: loginEmail }),
+      });
     }
     return { kind: "sent" as const };
   });

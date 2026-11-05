@@ -772,6 +772,12 @@ export type Database = {
       finalize_due_submission: { Args: { p_stage: number }; Returns: boolean }
       generate_team_code: { Args: { p_slug: string }; Returns: string }
       get_auth_context: { Args: never; Returns: Json }
+      get_student_login_identity: {
+        Args: { p_username: string }
+        Returns: {
+          auth_email: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
