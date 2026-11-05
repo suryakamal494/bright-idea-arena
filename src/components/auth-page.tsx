@@ -202,6 +202,10 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (loginType === "student" && clean.includes("@")) {
+      setError("Enter your student username, not an email address.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const id = identifier.trim();
