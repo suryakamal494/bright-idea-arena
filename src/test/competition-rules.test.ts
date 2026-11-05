@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { judgingProgressPercent, shouldShowStage2Tab } from "@/lib/team";
 import { normalizeUsername, studentAuthEmail, USERNAME_RE } from "@/lib/auth";
+import { stageOpen } from "@/lib/team";
 
 describe("student login identity", () => {
   it("normalizes a username and derives its internal sign-in address", () => {
@@ -30,5 +31,10 @@ describe("competition rules", () => {
     expect(judgingProgressPercent(3, 10)).toBe(30);
     expect(judgingProgressPercent(12, 10)).toBe(100);
     expect(judgingProgressPercent(0, 0)).toBe(0);
+  });
+
+  it("honors a configured Stage 2 toggle and deadline", () => {
+    expect(stageOpen({ stage1_open: true, stage1_deadline: null, stage2_open: false, stage2_deadline: null }, 2)).toBe(false);
+    expect(stageOpen({ stage1_open: true, stage1_deadline: null, stage2_open: true, stage2_deadline: "2000-01-01T00:00:00Z" }, 2)).toBe(false);
   });
 });

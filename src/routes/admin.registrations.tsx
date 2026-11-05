@@ -160,7 +160,7 @@ function Registrations() {
           Registered students <span className="text-lg font-normal text-muted-foreground">({total})</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Every student who signed up, with contact details and the team they joined. New sign-ups
+          Every student who signed up, with the contact details provided and the team they joined. New sign-ups
           appear here automatically.
         </p>
       </header>

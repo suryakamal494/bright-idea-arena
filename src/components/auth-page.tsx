@@ -359,6 +359,11 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
           Username-only student accounts do not yet receive reset emails. Ask your school coordinator or the organisers to set a new password.
         </p>
       )}
+      {loginType === "student" && !manualReset && !isDemo && !sent && (
+        <p className="rounded-lg border border-ochre/30 bg-ochre/10 p-3 text-sm" role="status">
+          Email recovery is not available for username-only individual accounts yet. Ask your school coordinator or the organisers to reset the password.
+        </p>
+      )}
       {sent && !isDemo && !demoEmail && (
         <p className="rounded-lg border border-border bg-muted p-3 text-sm" role="status">
           {loginType === "student"
@@ -429,7 +434,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
     });
     if (err) {
       setBusy(false);
-      setError(/already registered|already exists|database error saving new user/i.test(err.message)
+      setError(/already registered|already exists|database error saving new user|duplicate key|profiles_username_lower_key/i.test(err.message)
         ? "That username may already be taken. Please choose another."
         : err.message);
       return;
@@ -510,7 +515,7 @@ function StudentSignUpForm({ onSignedUp }: { onSignedUp: () => Promise<void> }) 
         {busy ? "Creating your workspace…" : "Create student account"}
       </Button>
       <p className="text-xs text-muted-foreground">
-        Use your username to sign in. The parent or guardian email is for contact and is not your login.
+        Use your username to sign in. The parent or guardian email is a contact address; email verification and notifications are not configured yet.
       </p>
     </form>
   );

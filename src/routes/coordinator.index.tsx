@@ -459,8 +459,8 @@ function CoordinatorPortal() {
               Choose your school's cluster above before registering students.
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
-            Usernames and contact emails must be new on the platform. Students sign in with their username; passwords show on the passes below.
+            <p className="text-xs text-muted-foreground">
+              Usernames and contact emails must be new on the platform. Students sign in with their username; contact emails do not need to be login addresses. Passwords show on the passes below.
           </p>
         </CardContent>
       </Card>
