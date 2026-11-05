@@ -37,7 +37,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
         school_name: school.trim(),
         city: city.trim(),
         phone: phone.trim() || null,
-        parent_email: parentEmail.trim() || null,
+        parent_email: parentEmail.trim(),
         username: cleanUsername,
       })
       .eq("id", profile.id);

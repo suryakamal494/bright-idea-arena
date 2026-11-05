@@ -325,8 +325,10 @@ function StageCards({
               <p className="text-sm font-medium text-destructive">Your team was not selected for Round 2</p>
             ) : s2 ? (
               <Countdown deadline={settings?.stage2_deadline ?? null} />
-            ) : (
+            ) : settings ? (
               <p className="text-sm font-medium text-destructive">Closed</p>
+            ) : (
+              <p className="text-sm font-medium text-muted-foreground">Loading stage settings…</p>
             )}
             {shortlisted && (s2Open || s2) ? (
               <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">

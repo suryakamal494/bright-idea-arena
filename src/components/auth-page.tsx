@@ -202,18 +202,14 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (loginType === "student" && clean.includes("@")) {
+    const id = identifier.trim();
+    if (loginType === "student" && id.includes("@")) {
       setError("Enter your student username, not an email address.");
       return;
     }
     setBusy(true);
     setError(null);
-    const id = identifier.trim();
     try {
-      if (loginType === "student" && id.includes("@")) {
-        setError("Students sign in with a username. Choose School & evaluator to use an email address.");
-        return;
-      }
       if (id.includes("@")) {
         const { error: err } = await supabase.auth.signInWithPassword({ email: id, password });
         if (err) {
@@ -293,10 +289,14 @@ function ForgotPasswordForm({ initialIdentifier, loginType, onBack }: { initialI
 
   const clean = identifier.trim();
   const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean);
-  const demoEmail = looksEmail && clean.toLowerCase().endsWith("@demo.in");
+  const demoEmail = loginType === "official" && looksEmail && clean.toLowerCase().endsWith("@demo.in");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (loginType === "student" && looksEmail) {
+      setError("Enter your student username, not an email address.");
+      return;
+    }
     if (demoEmail) {
       setIsDemo(true);
       return;
