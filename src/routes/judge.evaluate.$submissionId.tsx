@@ -141,7 +141,13 @@ function EvaluationSheet() {
     dirtyRef.current = true;
     editVersion.current += 1;
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => (saveRef.current ?? persist)(false).catch(console.error), 1200);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      void (saveRef.current ?? persist)(false).catch(() => {
+        setSaveState("idle");
+        toast.error("Your evaluation could not be saved. Please try again.");
+      });
+    }, 1200);
   }
 
   if (isLoading || !data?.submission) {
@@ -238,7 +244,13 @@ function EvaluationSheet() {
                 dirtyRef.current = true;
                 editVersion.current += 1;
                 if (timer.current) clearTimeout(timer.current);
-                timer.current = setTimeout(() => (saveRef.current ?? persist)(false).catch(console.error), 1200);
+                timer.current = setTimeout(() => {
+                  timer.current = null;
+                  void (saveRef.current ?? persist)(false).catch(() => {
+                    setSaveState("idle");
+                    toast.error("Your evaluation could not be saved. Please try again.");
+                  });
+                }, 1200);
               }}
               placeholder="What impressed you? What should the team improve?"
             />
