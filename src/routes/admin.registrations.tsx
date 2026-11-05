@@ -73,7 +73,7 @@ function Registrations() {
         if (res.rows.length < pageSize || all.length >= res.total || all.length >= 5000) break;
         p++;
       }
-      const header = ["student_name", "class_grade", "school", "city", "student_email", "phone", "parent_email", "team_id", "team_name", "registered_at"];
+      const header = ["student_name", "class_grade", "school", "city", "contact_email", "phone", "parent_email", "team_id", "team_name", "registered_at"];
       const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const csv = [
         header.join(","),
@@ -261,7 +261,7 @@ function Registrations() {
                 <span>Class</span>
                 <span>School · city</span>
                 <span>Cluster</span>
-                <span>Email</span>
+                <span>Contact email</span>
                 <span>Phone</span>
                 <span>Parent email</span>
                 <span>Team</span>

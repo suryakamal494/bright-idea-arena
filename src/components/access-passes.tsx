@@ -102,9 +102,9 @@ export function AccessPasses({
             <div className="mt-3 space-y-1.5 text-sm">
               <p className="font-semibold text-foreground">{p.full_name}</p>
               <p className="text-xs text-muted-foreground">
-                Login: <span className="font-mono font-medium text-foreground">{p.username}</span> or{" "}
-                <span className="font-mono">{p.email}</span>
+                Username: <span className="font-mono font-medium text-foreground">{p.username}</span>
               </p>
+              <p className="truncate text-xs text-muted-foreground">Contact email: <span className="font-mono">{p.email}</span></p>
               {p.school_name && <p className="text-xs text-muted-foreground">{p.school_name}</p>}
               <div className="mt-2 rounded-md bg-muted px-2.5 py-1.5">
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Password</span>

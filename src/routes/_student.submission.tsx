@@ -35,6 +35,7 @@ import {
   fetchSutras,
   fetchTeamMembers,
   stageOpen,
+  shouldShowStage2Tab,
   type PublishedResultRow,
   type StageSettingRow,
   type SubmissionRow,
@@ -170,6 +171,12 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
   });
   const r1 = (results ?? []).find((r) => r.stage === 1);
   const shortlisted = !!r1?.published && r1.outcome === "shortlisted";
+  const showStage2 = shouldShowStage2Tab(twoStage, !!r1?.published, shortlisted);
+  const [activeStage, setActiveStage] = useState("1");
+
+  useEffect(() => {
+    if (r1?.published && !shortlisted) setActiveStage("1");
+  }, [r1?.published, shortlisted]);
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["team-submissions", team.id] });
@@ -208,12 +215,12 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
           </div>
         </div>
       ) : (
-        <Tabs defaultValue="1">
+        <Tabs value={activeStage} onValueChange={setActiveStage}>
           <TabsList className="w-full">
             <TabsTrigger value="1" className="flex-1">
               Stage 1 · One-pager
             </TabsTrigger>
-            {twoStage && (
+            {showStage2 && (
               <TabsTrigger value="2" className="flex-1" disabled={!s2Open && !s2}>
                 Stage 2 · Final
               </TabsTrigger>
@@ -230,7 +237,7 @@ function SubmissionWorkspace({ team }: { team: TeamRow }) {
               onRefresh={refresh}
             />
           </TabsContent>
-          {twoStage && (
+          {showStage2 && (
             <TabsContent value="2">
               {s1?.status !== "submitted" ? (
                 <div className="rounded-xl border border-ochre/40 bg-ochre/10 p-4 text-sm text-ochre">

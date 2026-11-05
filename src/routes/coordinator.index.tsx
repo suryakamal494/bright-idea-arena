@@ -460,7 +460,7 @@ function CoordinatorPortal() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            Usernames and emails must be new on the platform. Passwords show on the printable passes below.
+            Usernames and contact emails must be new on the platform. Students sign in with their username; passwords show on the passes below.
           </p>
         </CardContent>
       </Card>
@@ -532,7 +532,7 @@ function CoordinatorPortal() {
                     <th className="py-2 pr-3 font-semibold">Name</th>
                     <th className="py-2 pr-3 font-semibold">Username</th>
                     <th className="py-2 pr-3 font-semibold">Class</th>
-                    <th className="py-2 pr-3 font-semibold">Email</th>
+                    <th className="py-2 pr-3 font-semibold">Contact email</th>
                     <th className="py-2 pr-3 font-semibold">Mobile</th>
                     <th className="py-2 pr-3 font-semibold">Team ID</th>
                     <th className="py-2 font-semibold">Password</th>
