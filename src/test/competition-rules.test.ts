@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { judgingProgressPercent, shouldShowStage2Tab } from "@/lib/team";
+import { canOpenStage2Workspace, judgingProgressPercent, shouldShowStage2Tab, stageOpen } from "@/lib/team";
 import { normalizeUsername, studentAuthEmail, USERNAME_RE } from "@/lib/auth";
-import { stageOpen } from "@/lib/team";
 
 describe("student login identity", () => {
   it("normalizes a username and derives its internal sign-in address", () => {
@@ -25,6 +24,13 @@ describe("competition rules", () => {
     expect(shouldShowStage2Tab(true, false, false)).toBe(true);
     expect(shouldShowStage2Tab(true, true, true)).toBe(true);
     expect(shouldShowStage2Tab(false, true, true)).toBe(false);
+  });
+
+  it("keeps a shortlisted team's saved Stage 2 draft viewable after close", () => {
+    expect(canOpenStage2Workspace(true, false, true)).toBe(true);
+    expect(canOpenStage2Workspace(true, false, false)).toBe(false);
+    expect(canOpenStage2Workspace(true, true, false)).toBe(true);
+    expect(canOpenStage2Workspace(false, true, true)).toBe(false);
   });
 
   it("calculates judging coverage over eligible entries and never exceeds 100 percent", () => {

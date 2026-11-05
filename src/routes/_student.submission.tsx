@@ -53,7 +53,14 @@ import { SubmissionDetails } from "@/components/submission-details";
 
 export const Route = createFileRoute("/_student/submission")({
   head: () => ({
-    meta: [{ title: "Submission form — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Submission form — Social Innovation Ideathon" },
+      { name: "description", content: "Complete and manage your team's Social Innovation Ideathon project submission." },
+      { property: "og:title", content: "Submission form — Social Innovation Ideathon" },
+      { property: "og:description", content: "Complete and manage your team's Social Innovation Ideathon project submission." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: SubmissionPage,
 });
@@ -462,6 +469,7 @@ function StageEditor({
 
   // Restore an unsent on-device copy (e.g. the network dropped before it saved).
   useEffect(() => {
+    if (!open) return;
     try {
       const raw = localStorage.getItem(backupKey);
       if (!raw) return;
@@ -569,7 +577,7 @@ function StageEditor({
   );
 
   return (
-    <div className="space-y-6 rounded-2xl border border-border bg-card p-5">
+    <fieldset disabled={!open} className="min-w-0 space-y-6 rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-display text-xl font-semibold text-forest">
@@ -849,12 +857,14 @@ function StageEditor({
       </div>
       {!open && (
         <p className="text-xs text-destructive">
-          {closedByDeadline
-            ? `The deadline has passed — your draft is missing: ${missingSubmitItems().join(", ")}. It stays a draft.`
-            : "This stage is closed — final submission is disabled."}
+          {closedByDeadline && existing
+            ? `The deadline has passed — this saved draft is view-only and was not submitted because it is missing: ${missingSubmitItems().join(", ")}.`
+            : closedByDeadline
+              ? `The deadline has passed — your draft is missing: ${missingSubmitItems().join(", ")}. It stays a draft.`
+              : "This stage is closed — saved work is view-only."}
         </p>
       )}
-    </div>
+    </fieldset>
   );
 }
 

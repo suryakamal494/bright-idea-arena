@@ -92,17 +92,25 @@ export const checkBulkAvailability = createServerFn({ method: "POST" })
     if (!usernames.length && !emails.length) return { usernames: [], emails: [] };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [uRes, eRes] = await Promise.all([
+    const [uRes, eRes, loginEmailsRes] = await Promise.all([
       usernames.length
         ? supabaseAdmin.from("profiles").select("username").in("username", usernames)
         : Promise.resolve({ data: [] as { username: string }[] }),
       emails.length
         ? supabaseAdmin.from("profiles").select("email").in("email", emails)
         : Promise.resolve({ data: [] as { email: string }[] }),
+      emails.length
+        ? supabaseAdmin.from("profiles").select("auth_login_email").in("auth_login_email", emails)
+        : Promise.resolve({ data: [] as { auth_login_email: string | null }[] }),
     ]);
     return {
       usernames: ((uRes.data ?? []) as { username: string }[]).map((r) => r.username),
-      emails: ((eRes.data ?? []) as { email: string }[]).map((r) => r.email),
+      emails: [
+        ...((eRes.data ?? []) as { email: string }[]).map((r) => r.email),
+        ...((loginEmailsRes.data ?? []) as { auth_login_email: string | null }[])
+          .map((r) => r.auth_login_email)
+          .filter((email): email is string => Boolean(email)),
+      ],
     } satisfies BulkAvailability;
   });
 
@@ -131,12 +139,18 @@ export const createStudentAccounts = createServerFn({ method: "POST" })
     // Global uniqueness: every username and email must be new on the platform.
     const usernames = data.students.map((s) => s.username.trim().toLowerCase());
     const emails = data.students.map((s) => s.email.trim().toLowerCase());
-    const [existingUsers, existingEmails] = await Promise.all([
+    const [existingUsers, existingEmails, existingLoginEmails] = await Promise.all([
       supabaseAdmin.from("profiles").select("username").in("username", usernames),
       supabaseAdmin.from("profiles").select("email").in("email", emails),
+      supabaseAdmin.from("profiles").select("auth_login_email").in("auth_login_email", emails),
     ]);
     const takenUsers = new Set(((existingUsers.data ?? []) as { username: string }[]).map((r) => r.username));
-    const takenEmails = new Set(((existingEmails.data ?? []) as { email: string }[]).map((r) => r.email));
+    const takenEmails = new Set([
+      ...((existingEmails.data ?? []) as { email: string }[]).map((r) => r.email),
+      ...((existingLoginEmails.data ?? []) as { auth_login_email: string | null }[])
+        .map((r) => r.auth_login_email)
+        .filter((email): email is string => Boolean(email)),
+    ]);
 
     for (const [index, student] of data.students.entries()) {
       const username = student.username.trim().toLowerCase();

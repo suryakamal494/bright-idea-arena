@@ -8,7 +8,14 @@ import { judgingProgressPercent } from "@/lib/team";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
-    meta: [{ title: "Operations overview — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Operations overview — Social Innovation Ideathon" },
+      { name: "description", content: "Monitor registrations, competition submissions, and evaluation progress." },
+      { property: "og:title", content: "Operations overview — Social Innovation Ideathon" },
+      { property: "og:description", content: "Monitor registrations, competition submissions, and evaluation progress." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: AdminOverview,
 });

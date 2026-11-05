@@ -30,7 +30,7 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
       return;
     }
     setSaving(true);
-    const { error: err } = await supabase
+    const { data: updatedRows, error: err } = await supabase
       .from("profiles")
       .update({
         grade: Number(grade),
@@ -42,10 +42,10 @@ export function CompleteProfile({ profile, onDone }: { profile: Profile; onDone:
       })
       .eq("id", profile.id);
     setSaving(false);
-    if (err) {
-      setError(/profiles_username_lower_key|duplicate key/i.test(err.message)
+    if (err || !updatedRows) {
+      setError(err && /profiles_username_lower_key|duplicate key/i.test(err.message)
         ? "That username is already taken. Please choose another."
-        : err.message);
+        : err?.message ?? "Your profile could not be saved. Please try again.");
       return;
     }
     onDone();

@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.get_auth_context() TO authenticated, service_role;

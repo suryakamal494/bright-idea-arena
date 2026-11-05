@@ -21,6 +21,8 @@ export type Profile = {
   city: string | null;
   parent_email: string | null;
   username: string | null;
+  cluster_id?: string | null;
+  designation?: string | null;
 };
 
 export const USERNAME_RE = /^[a-z0-9._-]{3,30}$/;
@@ -65,8 +67,8 @@ async function fetchContextFor(
         .eq("user_id", userId)
         .then(({ data }) => (data ?? []).map((r) => r.role as AppRole)),
       supabase
-        .from("profiles")
-        .select("*")
+      .from("profiles")
+        .select("id,full_name,email,phone,grade,school_name,city,parent_email,username,cluster_id,designation")
         .eq("id", userId)
         .maybeSingle()
         .then(({ data }) => (data as Profile) ?? null),

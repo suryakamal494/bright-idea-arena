@@ -239,6 +239,27 @@
       "when": 1793886506451,
       "tag": "0033_qualify_evidence_storage_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793898850226,
+      "tag": "0034_protect_internal_login_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793898869033,
+      "tag": "0035_hide_internal_email_from_registrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793898951814,
+      "tag": "0036_restore_auth_context_access",
+      "breakpoints": true
     }
   ]
 }

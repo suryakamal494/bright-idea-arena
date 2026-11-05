@@ -131,6 +131,10 @@ export function shouldShowStage2Tab(twoStage: boolean, roundOnePublished: boolea
   return twoStage && !(roundOnePublished && !shortlisted);
 }
 
+export function canOpenStage2Workspace(shortlisted: boolean, stageOpenNow: boolean, hasSavedDraft: boolean): boolean {
+  return shortlisted && (stageOpenNow || hasSavedDraft);
+}
+
 export function judgingProgressPercent(judged: number, total: number): number {
   if (total <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((judged / total) * 100)));

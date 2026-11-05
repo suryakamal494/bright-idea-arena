@@ -5,14 +5,21 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionUser } from "@/lib/auth";
-import { fetchCompetitionSettings, fetchGlobalStageSettings, fetchMyTeam, stageOpen, type PublishedResultRow, type StageSettingRow, type TeamRow } from "@/lib/team";
+import { canOpenStage2Workspace, fetchCompetitionSettings, fetchGlobalStageSettings, fetchMyTeam, stageOpen, type PublishedResultRow, type StageSettingRow, type TeamRow } from "@/lib/team";
 import { Countdown } from "@/components/countdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_student/dashboard")({
   head: () => ({
-    meta: [{ title: "My ideathon — Social Innovation Ideathon" }],
+    meta: [
+      { title: "My ideathon — Social Innovation Ideathon" },
+      { name: "description", content: "View your team's competition progress, deadlines, and published results." },
+      { property: "og:title", content: "My ideathon — Social Innovation Ideathon" },
+      { property: "og:description", content: "View your team's competition progress, deadlines, and published results." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: Dashboard,
 });
@@ -66,6 +73,21 @@ function Dashboard() {
       return (data ?? []) as PublishedResultRow[];
     },
   });
+  const { data: hasStage2Draft = false } = useQuery({
+    queryKey: ["stage-two-draft-exists", team?.id],
+    enabled: !!team && twoStage,
+    queryFn: async () => {
+      if (!team) return false;
+      const { data, error } = await supabase
+        .from("submissions")
+        .select("id")
+        .eq("team_id", team.id)
+        .eq("stage", 2)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data;
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -85,7 +107,7 @@ function Dashboard() {
           <TeamSummaryCard team={team} />
           {!team.cluster && <ClusterPrompt team={team} isCaptain={!!me && team.captain_id === me.id} />}
           <ResultsBanner results={results ?? []} twoStage={twoStage} settings={settings ?? null} />
-          <StageCards settings={settings ?? null} team={team} twoStage={twoStage} results={results ?? []} />
+          <StageCards settings={settings ?? null} team={team} twoStage={twoStage} results={results ?? []} hasStage2Draft={hasStage2Draft} />
         </>
       )}
 
@@ -278,11 +300,13 @@ function StageCards({
   team,
   twoStage,
   results,
+  hasStage2Draft,
 }: {
   settings: StageSettingRow | null;
   team: TeamRow;
   twoStage: boolean;
   results: PublishedResultRow[];
+  hasStage2Draft: boolean;
 }) {
   const s1 = stageOpen(settings, 1);
   const s2 = stageOpen(settings, 2);
@@ -330,9 +354,9 @@ function StageCards({
             ) : (
               <p className="text-sm font-medium text-muted-foreground">Loading stage settings…</p>
             )}
-            {shortlisted && s2 ? (
+            {canOpenStage2Workspace(!!shortlisted, s2, hasStage2Draft) ? (
               <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
-                <Link to="/submission">Open submission form</Link>
+                <Link to="/submission">{s2 ? "Open submission form" : "View saved draft"}</Link>
               </Button>
             ) : shortlisted ? (
               <Button size="sm" variant="outline" className="w-full lg:w-auto" disabled>
