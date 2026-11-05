@@ -158,6 +158,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_login_email: string | null
           city: string | null
           cluster_id: string | null
           created_at: string
@@ -172,6 +173,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          auth_login_email?: string | null
           city?: string | null
           cluster_id?: string | null
           created_at?: string
@@ -186,6 +188,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          auth_login_email?: string | null
           city?: string | null
           cluster_id?: string | null
           created_at?: string
