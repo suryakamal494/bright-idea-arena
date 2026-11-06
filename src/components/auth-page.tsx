@@ -248,7 +248,7 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
       <Tabs value={loginType} onValueChange={(value) => setLoginType(value as "student" | "official")}>
         <TabsList className="w-full">
           <TabsTrigger value="student" className="flex-1">Student</TabsTrigger>
-          <TabsTrigger value="official" className="flex-1">School &amp; evaluator</TabsTrigger>
+          <TabsTrigger value="official" className="flex-1">School</TabsTrigger>
         </TabsList>
       </Tabs>
       <div className="space-y-1.5">
