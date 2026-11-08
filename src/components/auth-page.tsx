@@ -91,8 +91,8 @@ export function AuthPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-linen">
-      <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-linen lg:h-dvh lg:min-h-[700px]">
+      <header className="relative z-10 mx-auto flex w-full max-w-7xl shrink-0 items-center justify-between gap-3 px-5 py-5 lg:py-3">
         <Brand logoClassName="h-9 sm:h-10" />
         {/* TEMPORARY: remove before launch by setting SHOW_DEMO_LOGINS = false. */}
         {SHOW_DEMO_LOGINS && (
@@ -139,7 +139,7 @@ export function AuthPage() {
           </Dialog>
         )}
       </header>
-      <main className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-4 pb-12 pt-2 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:pb-16">
+      <main className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-4 pb-12 pt-2 sm:px-6 lg:min-h-0 lg:grid-cols-2 lg:items-center lg:gap-12 lg:pb-6 lg:pt-0">
         <section className="order-2 min-w-0 lg:order-1">
           <h2 className="hidden font-display text-5xl font-bold leading-[1.05] text-forest lg:block xl:text-6xl">
             Social Innovation Ideathon
@@ -148,10 +148,10 @@ export function AuthPage() {
           <p className="mt-5 max-w-md text-center text-base text-muted-foreground lg:text-left lg:text-lg">
             A platform for students to identify real problems, create solutions, and showcase their ideas for a better society.
           </p>
-          <img src={studentsArt} alt="Students looking ahead with optimism" width={1024} height={1024} loading="lazy" className="mx-auto mt-6 w-full max-w-sm mix-blend-multiply [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_75%)] lg:mx-0 lg:max-w-lg" />
+          <img src={studentsArt} alt="Students looking ahead with optimism" width={1024} height={1024} loading="lazy" className="mx-auto mt-6 w-full max-w-sm mix-blend-multiply [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_75%)] lg:mx-0 lg:mt-4 lg:h-64 lg:w-64 lg:max-w-full lg:object-contain" />
         </section>
         <div className="order-1 mx-auto w-full max-w-lg lg:order-2">
-          <div className="relative mt-2 rounded-2xl border border-border/60 bg-card px-5 pb-5 pt-6 shadow-[0_16px_44px_-28px_color-mix(in_oklab,var(--clay)_35%,transparent)] sm:px-10 sm:pb-7">
+          <div className="relative mt-2 rounded-2xl border border-border/60 bg-card px-5 pb-5 pt-6 shadow-[0_16px_44px_-28px_color-mix(in_oklab,var(--clay)_35%,transparent)] sm:px-10 sm:pb-7 lg:mt-0 lg:px-8 lg:py-5">
           <div className="mb-4 text-center">
             <h1 className="font-display text-2xl font-bold text-forest sm:text-3xl">Welcome</h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -200,7 +200,9 @@ export function AuthPage() {
         </div>
         </div>
       </main>
-      <OrgFooter />
+      <div className="shrink-0 lg:[&>footer]:py-3">
+        <OrgFooter />
+      </div>
     </div>
   );
 }

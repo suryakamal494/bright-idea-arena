@@ -22,7 +22,7 @@ import {
   UserCog,
   Users,
 } from "lucide-react";
-import icorgLogo from "@/assets/icorg-logo.png.asset.json";
+import icorgLogo from "@/assets/icorg-logo-transparent.png";
 import { cn } from "@/lib/utils";
 import {
   DEMO_ACCOUNTS,
@@ -73,7 +73,7 @@ export function Brand({ compact = false, logoClassName }: { compact?: boolean; l
       aria-label="Social Innovation Ideathon, organized by ICORG"
       className="flex items-center gap-3"
     >
-      <img src={icorgLogo.url} alt="ICORG" className={cn("h-6 w-auto shrink-0", logoClassName)} />
+      <img src={icorgLogo} alt="ICORG" className={cn("h-6 w-auto shrink-0", logoClassName)} />
       {!compact && (
         <>
           <span className="h-7 w-px bg-border" aria-hidden />
@@ -200,7 +200,7 @@ export function AppNav({ role, name }: { role: AppRole; name: string }) {
           )}
         >
           <img
-            src={icorgLogo.url}
+            src={icorgLogo}
             alt="ICORG"
             className={cn("w-auto", collapsed ? "h-5" : "h-9")}
           />

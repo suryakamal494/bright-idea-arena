@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { MIN_PASSWORD, friendlyAuthError, validateNewPassword } from "@/components/change-password-dialog";
 import { clearAuthContext, getAuthContext, homeFor } from "@/lib/auth";
-import icorgLogo from "@/assets/icorg-logo.png.asset.json";
+import icorgLogo from "@/assets/icorg-logo-transparent.png";
 import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/reset-password")({
@@ -87,7 +87,7 @@ function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-linen px-4 py-10">
       <Card className="w-full max-w-md">
         <CardContent className="space-y-5 p-6">
-          <img src={icorgLogo.url} alt="ICORG" className="h-9 w-auto" />
+          <img src={icorgLogo} alt="ICORG" className="h-9 w-auto" />
           <div>
             <h1 className="font-display text-2xl font-semibold text-forest">Set a new password</h1>
             <p className="mt-1 text-sm text-muted-foreground">Social Innovation Ideathon</p>
