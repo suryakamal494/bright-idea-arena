@@ -4,6 +4,7 @@
 
 - [x] Cloud backend, schema/RLS/RPCs, demo seed, all role flows, perf fixes, login-first homepage
 - [x] ICORG logo asset + brand lockup in headers + "Organized by ICORG" footers
+- [x] ICORG public metadata and 1200×630 share card; replaced starter README and updated route titles/descriptions. The hosted badge remains blocked by plan eligibility; custom domain deferred by user.
 - [x] Team size rule (migration 0018): teams are strictly 2–3 members — join_team rejects a 4th member, the submission workspace unlocks only at 2+ members (upsert_submission gate), MIN_TEAM_SIZE=2 / MAX_TEAM_SIZE=3 in src/lib/team.ts, and a full team shows a "Team is full" state instead of the invite card
 - [x] Auth page: Google-only social sign-in, "School registration" link
 - [x] Instant student signup (email auto-confirm on) — lands on dashboard immediately

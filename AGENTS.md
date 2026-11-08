@@ -33,3 +33,4 @@
 - Resource guide links point at hosted CDN PDFs (src/assets/*.asset.json pointers) until the official documents arrive — swap `announcements.link` then; never restore example.com placeholders.
 - Sign-out navigates first and clears query cache + auth context synchronously; the remote `signOut()` runs in background; failures toast, never silent success.
 - Unreferenced `evidence`-bucket objects are deleted daily by the HTTP cron schedule `reconcile-evidence-files` → `/api/public/cron/reconcile-files` (bearer-secret auth, 24h grace period); keep the grace period when editing.
+- Per-page ICORG title, description, and share-preview metadata is centralized in `src/lib/brand-meta.ts` to keep public page branding consistent.
