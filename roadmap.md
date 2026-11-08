@@ -46,3 +46,4 @@
 - [ ] Hide "Edit with Lovable" badge on the published site: BLOCKED — badge hiding requires a Pro (or higher) plan; either upgrade or move to a custom domain (badge is not shown there). Until then the badge overlaps the mobile bottom navigation on the lovable.app URL.
 - [ ] Replace starter guide PDFs with the official documents once the user shares them (swap `announcements.link` values).
 - [x] Login screen refinements: larger ICORG logo, simplified Welcome heading, school registration directly below Welcome, discreet mobile demo access, single-screen desktop layout where viewport height permits, and transparent ICORG logo art.
+- [ ] Login desktop spacing: enlarge the student photo and tighten the hero-to-card layout without adding desktop scrolling.
