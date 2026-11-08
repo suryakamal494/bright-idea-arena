@@ -14,10 +14,10 @@ import { SubmissionDetails } from "@/components/submission-details";
 export const Route = createFileRoute("/judge/evaluate/$submissionId")({
   head: () => ({
     meta: [
-      { title: "Evaluation sheet — Social Innovation Ideathon" },
-      { name: "description", content: "Review a Social Innovation Ideathon entry and save an evaluation." },
-      { property: "og:title", content: "Evaluation sheet — Social Innovation Ideathon" },
-      { property: "og:description", content: "Review a Social Innovation Ideathon entry and save an evaluation." },
+      { title: "Evaluation sheet | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Review an anonymous team entry and save an evaluation." },
+      { property: "og:title", content: "Evaluation sheet | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Review an anonymous team entry and save an evaluation." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

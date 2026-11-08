@@ -39,9 +39,6 @@ export function reportLovableError(error: unknown, context: Record<string, unkno
       severity: "error",
     },
   );
-  // Prod React does not rethrow boundary-caught errors to window.onerror, so the
-  // editor's telemetry never sees them. Forward to lovable.js's reporting hook,
-  // which is present only inside the editor preview.
   const stack = error instanceof Error ? error.stack : undefined;
   window.__lovableReportRuntimeError?.({
     message: describeThrown(error),
@@ -52,8 +49,6 @@ export function reportLovableError(error: unknown, context: Record<string, unkno
 
 const MAX_SERIALIZED_LENGTH = 2000;
 
-// Loaders and server fns throw raw Responses and plain objects (a Supabase
-// `{ message, code, details }`), which String() reduces to "[object ...]".
 function describeThrown(error: unknown): string {
   if (error instanceof Response) {
     return `Response ${error.status}${error.url ? ` at ${error.url}` : ""}`;

@@ -13,8 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const Route = createFileRoute("/admin/deadlines")({
   head: () => ({
     meta: [
-      { title: "Deadlines & stages — Social Innovation Ideathon" },
-      { name: "description", content: "Set stage deadlines and manage competition themes." },
+      { title: "Deadlines and stages | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Set competition deadlines, themes, and clusters." },
+      { property: "og:title", content: "Deadlines and stages | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Set competition deadlines, themes, and clusters." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DeadlineManager,

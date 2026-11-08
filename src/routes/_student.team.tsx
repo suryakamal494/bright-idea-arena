@@ -29,11 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/_student/team")({
-  head: () => ({
-    meta: [{ title: "My team — Social Innovation Ideathon" }],
-  }),
+  head: () => createPageHead("Team workspace", "Create a student team, join with a code, and manage your team's members."),
   // ?tab=join deep-links the formation tabs (e.g. the dashboard "Join a team"
   // button); anything else defaults to the create tab.
   validateSearch: (search: Record<string, unknown>) => ({

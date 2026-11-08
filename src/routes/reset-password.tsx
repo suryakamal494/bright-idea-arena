@@ -9,20 +9,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MIN_PASSWORD, friendlyAuthError, validateNewPassword } from "@/components/change-password-dialog";
 import { clearAuthContext, getAuthContext, homeFor } from "@/lib/auth";
 import icorgLogo from "@/assets/icorg-logo.png.asset.json";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
-  head: () => ({
-    meta: [
-      { title: "Reset password — Social Innovation Ideathon" },
-      { name: "description", content: "Choose a new password for your Social Innovation Ideathon account." },
-      { property: "og:title", content: "Reset password — Social Innovation Ideathon" },
-      { property: "og:description", content: "Choose a new password for your Social Innovation Ideathon account." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () => {
+    const pageHead = createPageHead(
+      "Reset password",
+      "Choose a new password for your ICORG Social Innovation Ideathon account.",
+    );
+    return { ...pageHead, meta: [...pageHead.meta, { name: "robots", content: "noindex" }] };
+  },
   component: ResetPasswordPage,
 });
 

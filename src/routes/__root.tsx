@@ -79,18 +79,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Social Innovation Ideathon" },
+      { title: "Social Innovation Ideathon | ICORG" },
       {
         name: "description",
         content:
-          "A national ideathon and competition platform for student innovators in grades 8–12 — team formation, two-stage submissions, blind judging and school coordination.",
+          "An innovation platform empowering students to design impactful community solutions through creative problem-solving and teamwork.",
       },
-      { name: "author", content: "Social Innovation Ideathon" },
-      { property: "og:title", content: "Social Innovation Ideathon" },
+      { name: "author", content: "ICORG" },
+      { property: "og:site_name", content: "ICORG — Social Innovation Ideathon" },
       {
         property: "og:description",
         content:
-          "Form a team, choose a track, and take your social innovation from concept note to final prototype.",
+          "An innovation platform empowering students to design impactful community solutions through creative problem-solving and teamwork.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

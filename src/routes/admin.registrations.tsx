@@ -19,7 +19,14 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/admin/registrations")({
   head: () => ({
-    meta: [{ title: "Registrations — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Student registrations | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Review student registration details, schools, classes, and team assignments." },
+      { property: "og:title", content: "Student registrations | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Review student registration details, schools, classes, and team assignments." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: Registrations,
 });

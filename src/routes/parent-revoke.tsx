@@ -4,22 +4,17 @@ import { ArrowLeft, Loader2, ShieldAlert, ShieldCheck, ShieldX } from "lucide-re
 import { supabase } from "@/integrations/supabase/client";
 import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/parent-revoke")({
   validateSearch: (search: Record<string, unknown>) => ({
     token: typeof search["token"] === "string" ? search["token"] : undefined,
   }),
-  head: () => ({
-    meta: [
-      { title: "Parent consent — withdraw participation — Social Innovation Ideathon" },
-      {
-        name: "description",
-        content: "Parents: review your child's participation details and withdraw consent, sent to you by email link.",
-      },
-      { property: "og:title", content: "Parent consent — Social Innovation Ideathon" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    createPageHead(
+      "Parent consent",
+      "Parents can review their child's participation details and withdraw consent using the secure link provided.",
+    ),
   component: ParentRevoke,
 });
 

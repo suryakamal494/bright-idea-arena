@@ -50,18 +50,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Countdown } from "@/components/countdown";
 import { SubmissionDetails } from "@/components/submission-details";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/_student/submission")({
-  head: () => ({
-    meta: [
-      { title: "Submission form — Social Innovation Ideathon" },
-      { name: "description", content: "Complete and manage your team's Social Innovation Ideathon project submission." },
-      { property: "og:title", content: "Submission form — Social Innovation Ideathon" },
-      { property: "og:description", content: "Complete and manage your team's Social Innovation Ideathon project submission." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () => createPageHead("Team submission", "Complete and manage your team's project submission for the Social Innovation Ideathon."),
   component: SubmissionPage,
 });
 

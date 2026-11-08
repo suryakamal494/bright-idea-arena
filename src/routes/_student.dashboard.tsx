@@ -9,18 +9,10 @@ import { canOpenStage2Workspace, fetchCompetitionSettings, fetchGlobalStageSetti
 import { Countdown } from "@/components/countdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/_student/dashboard")({
-  head: () => ({
-    meta: [
-      { title: "My ideathon — Social Innovation Ideathon" },
-      { name: "description", content: "View your team's competition progress, deadlines, and published results." },
-      { property: "og:title", content: "My ideathon — Social Innovation Ideathon" },
-      { property: "og:description", content: "View your team's competition progress, deadlines, and published results." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () => createPageHead("Student dashboard", "View your team's progress, deadlines, and published results."),
   component: Dashboard,
 });
 

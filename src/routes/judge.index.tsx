@@ -11,7 +11,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/judge/")({
   head: () => ({
-    meta: [{ title: "Evaluation queue — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Blind evaluation queue | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Review anonymous student team entries assigned to your themes." },
+      { property: "og:title", content: "Blind evaluation queue | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Review anonymous student team entries assigned to your themes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: JudgeQueue,
 });

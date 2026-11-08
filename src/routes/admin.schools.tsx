@@ -15,11 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/admin/schools")({
-  head: () => ({
-    meta: [{ title: "Schools — Social Innovation Ideathon" }],
-  }),
+  head: () => createPageHead("Registered schools", "View registered schools, coordinator contacts, student counts, and submission progress."),
   component: Schools,
 });
 

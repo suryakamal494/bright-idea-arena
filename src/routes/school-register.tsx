@@ -8,25 +8,14 @@ import { Brand, OrgFooter } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/school-register")({
-  head: () => ({
-    meta: [
-      { title: "School Registration — Social Innovation Ideathon" },
-      {
-        name: "description",
-        content:
-          "Teachers: register your school, add students in bulk or via CSV, and print student access passes.",
-      },
-      { property: "og:title", content: "School Registration — Social Innovation Ideathon" },
-      {
-        property: "og:description",
-        content: "Register your school, bulk-register students, generate printable access passes and manage your roster.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    createPageHead(
+      "School registration",
+      "Register your school to help students join the Social Innovation Ideathon and manage their participation.",
+    ),
   component: SchoolRegister,
 });
 

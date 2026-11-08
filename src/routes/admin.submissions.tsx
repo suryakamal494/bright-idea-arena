@@ -28,7 +28,14 @@ import { ReviewButtons, ReviewNotes, type ReviewStatus } from "@/components/revi
 
 export const Route = createFileRoute("/admin/submissions")({
   head: () => ({
-    meta: [{ title: "Submissions — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Team submissions | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Review team entries, stage progress, screening notes, and attachments." },
+      { property: "og:title", content: "Team submissions | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Review team entries, stage progress, screening notes, and attachments." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: SubmissionsManager,
 });

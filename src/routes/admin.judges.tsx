@@ -16,7 +16,14 @@ import {
 
 export const Route = createFileRoute("/admin/judges")({
   head: () => ({
-    meta: [{ title: "Judge assignment — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Evaluator assignments | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Assign evaluators to competition themes and review current assignments." },
+      { property: "og:title", content: "Evaluator assignments | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Assign evaluators to competition themes and review current assignments." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: JudgeAssignment,
 });

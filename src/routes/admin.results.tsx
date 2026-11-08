@@ -17,18 +17,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/admin/results")({
-  head: () => ({
-    meta: [
-      { title: "Results — Social Innovation Ideathon" },
-      { name: "description", content: "Shortlist teams round by round and publish results." },
-      { property: "og:title", content: "Results — Social Innovation Ideathon" },
-      { property: "og:description", content: "Shortlist teams round by round and publish results." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () => createPageHead("Shortlisting and results", "Review team outcomes and publish results for the competition."),
   component: ResultsManager,
 });
 

@@ -43,7 +43,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/coordinator/")({
   head: () => ({
-    meta: [{ title: "My portal — Social Innovation Ideathon" }],
+    meta: [
+      { title: "School coordinator portal | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Register students, view teams, and follow submission progress and results." },
+      { property: "og:title", content: "School coordinator portal | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Register students, view teams, and follow submission progress and results." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: CoordinatorPortal,
 });

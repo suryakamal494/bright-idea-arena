@@ -2,11 +2,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, FileDown, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { createPageHead } from "@/lib/brand-meta";
 
 export const Route = createFileRoute("/_student/learning")({
-  head: () => ({
-    meta: [{ title: "Resources — Social Innovation Ideathon" }],
-  }),
+  head: () => createPageHead("Student resources", "Explore guides, toolkits, and learning sessions for young innovators."),
   component: LearningCenter,
 });
 

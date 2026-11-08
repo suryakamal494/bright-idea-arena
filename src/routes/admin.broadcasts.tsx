@@ -20,7 +20,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/admin/broadcasts")({
   head: () => ({
-    meta: [{ title: "Broadcasts & resources — Social Innovation Ideathon" }],
+    meta: [
+      { title: "Announcements and resources | Social Innovation Ideathon | ICORG" },
+      { name: "description", content: "Publish announcements, learning guides, and resources for students." },
+      { property: "og:title", content: "Announcements and resources | Social Innovation Ideathon | ICORG" },
+      { property: "og:description", content: "Publish announcements, learning guides, and resources for students." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: Broadcasts,
 });
