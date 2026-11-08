@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, FlaskConical, Lightbulb, Loader2, Lock, LogIn, User } from "lucide-react";
+import { ArrowRight, FlaskConical, Loader2, Lock, LogIn, User } from "lucide-react";
 import studentsArt from "@/assets/login-students.jpg";
 import {
   Dialog,
@@ -92,15 +92,18 @@ export function AuthPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-linen">
-      <div aria-hidden className="pointer-events-none absolute -right-40 top-1/3 h-[32rem] w-[32rem] rounded-full bg-clay/10 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -left-40 bottom-0 h-[28rem] w-[28rem] rounded-full bg-clay/10 blur-3xl" />
       <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5">
-        <Brand />
+        <Brand logoClassName="h-9 sm:h-10" />
         {/* TEMPORARY: remove before launch by setting SHOW_DEMO_LOGINS = false. */}
         {SHOW_DEMO_LOGINS && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-full border-clay/60 bg-card text-clay hover:bg-clay/5">
+              <Button variant="outline" size="icon" className="h-9 w-9 border-clay/60 bg-card text-clay hover:bg-clay/5 sm:hidden" aria-label="Demo logins" title="Demo logins">
+                <FlaskConical className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden rounded-full border-clay/60 bg-card text-clay hover:bg-clay/5 sm:inline-flex">
                 <FlaskConical className="mr-1.5 h-4 w-4" /> Demo logins
               </Button>
             </DialogTrigger>
@@ -148,13 +151,13 @@ export function AuthPage() {
           <img src={studentsArt} alt="Students looking ahead with optimism" width={1024} height={1024} loading="lazy" className="mx-auto mt-6 w-full max-w-sm mix-blend-multiply [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_75%)] lg:mx-0 lg:max-w-lg" />
         </section>
         <div className="order-1 mx-auto w-full max-w-lg lg:order-2">
-        <div className="relative mt-8 rounded-3xl border border-border/60 bg-card px-5 pb-6 pt-12 shadow-[0_24px_60px_-24px_color-mix(in_oklab,var(--clay)_35%,transparent)] sm:px-10 sm:pb-8">
-          <div className="absolute -top-8 left-1/2 grid h-16 w-16 -translate-x-1/2 place-items-center rounded-full bg-clay/15 ring-8 ring-card">
-            <Lightbulb className="h-8 w-8 text-clay" />
-          </div>
-          <div className="mb-6 text-center">
-            <h1 className="font-display text-2xl font-bold text-forest sm:text-3xl">Welcome to the Portal</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">Sign in to continue, or create a student account.</p>
+          <div className="relative mt-2 rounded-2xl border border-border/60 bg-card px-5 pb-5 pt-6 shadow-[0_16px_44px_-28px_color-mix(in_oklab,var(--clay)_35%,transparent)] sm:px-10 sm:pb-7">
+          <div className="mb-4 text-center">
+            <h1 className="font-display text-2xl font-bold text-forest sm:text-3xl">Welcome</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              School coordinator?{" "}
+              <a href="/school-register" className="font-semibold text-clay underline underline-offset-2">Register your school <ArrowRight className="inline h-3.5 w-3.5" aria-hidden="true" /></a>
+            </p>
           </div>
           <Tabs defaultValue="signin">
             <TabsList className="h-11 w-full rounded-full p-1">
@@ -195,12 +198,6 @@ export function AuthPage() {
             Continue with Google
           </Button>
         </div>
-        <p className="mt-5 text-center text-sm text-muted-foreground">
-          Registering a school?{" "}
-          <a href="/school-register" className="font-medium text-clay underline underline-offset-2">
-            School registration
-          </a>
-        </p>
         </div>
       </main>
       <OrgFooter />

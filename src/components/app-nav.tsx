@@ -66,14 +66,14 @@ const NAV: Record<string, NavItem[]> = {
   coordinator: [{ to: "/coordinator", label: "My portal", icon: Users }],
 };
 
-export function Brand({ compact = false }: { compact?: boolean }) {
+export function Brand({ compact = false, logoClassName }: { compact?: boolean; logoClassName?: string }) {
   return (
     <Link
       to="/"
       aria-label="Social Innovation Ideathon, organized by ICORG"
       className="flex items-center gap-3"
     >
-      <img src={icorgLogo.url} alt="ICORG" className="h-6 w-auto shrink-0" />
+      <img src={icorgLogo.url} alt="ICORG" className={cn("h-6 w-auto shrink-0", logoClassName)} />
       {!compact && (
         <>
           <span className="h-7 w-px bg-border" aria-hidden />
