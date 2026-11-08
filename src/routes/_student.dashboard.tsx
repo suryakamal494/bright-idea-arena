@@ -256,15 +256,15 @@ function TeamSummaryCard({ team }: { team: TeamRow }) {
   );
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0">
-        <div>
+      <CardHeader className="grid grid-cols-[minmax(0,1fr)] items-start gap-3 sm:flex sm:flex-row sm:justify-between sm:space-y-0">
+        <div className="min-w-0">
           <CardTitle className="font-display text-2xl text-forest">{team.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Theme · {team.track?.name ?? "Not set"}
             {team.cluster ? ` · Cluster · ${team.cluster.name}` : " · Cluster not set"}
           </p>
         </div>
-        <span className="rounded-full bg-forest px-3 py-1 font-mono text-xs font-semibold text-linen">
+        <span className="w-fit shrink-0 whitespace-nowrap rounded-full bg-forest px-3 py-1 font-mono text-xs font-semibold text-linen">
           {team.team_code ?? "TEAM"}
         </span>
       </CardHeader>
