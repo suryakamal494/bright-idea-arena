@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { FlaskConical, Loader2, LogIn } from "lucide-react";
+import { ArrowRight, FlaskConical, Lightbulb, Loader2, Lock, LogIn, User } from "lucide-react";
+import studentsArt from "@/assets/login-students.jpg";
 import {
   Dialog,
   DialogContent,
@@ -90,14 +91,16 @@ export function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-linen">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-5">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-linen">
+      <div aria-hidden className="pointer-events-none absolute -right-40 top-1/3 h-[32rem] w-[32rem] rounded-full bg-clay/10 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -left-40 bottom-0 h-[28rem] w-[28rem] rounded-full bg-clay/10 blur-3xl" />
+      <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5">
         <Brand />
         {/* TEMPORARY: remove before launch by setting SHOW_DEMO_LOGINS = false. */}
         {SHOW_DEMO_LOGINS && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="border-dashed border-clay/50 text-clay hover:bg-clay/5">
+              <Button variant="outline" size="sm" className="rounded-full border-clay/60 bg-card text-clay hover:bg-clay/5">
                 <FlaskConical className="mr-1.5 h-4 w-4" /> Demo logins
               </Button>
             </DialogTrigger>
@@ -133,20 +136,32 @@ export function AuthPage() {
           </Dialog>
         )}
       </header>
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16 pt-4 sm:pt-10">
-        <div className="mb-6 text-center">
-          <h1 className="font-display text-2xl font-semibold text-forest sm:text-3xl">Welcome to the portal</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Sign in to continue, or create a student account.
+      <main className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-4 pb-12 pt-2 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:pb-16">
+        <section className="order-2 min-w-0 lg:order-1">
+          <h2 className="hidden font-display text-5xl font-bold leading-[1.05] text-forest lg:block xl:text-6xl">
+            Social Innovation Ideathon
+          </h2>
+          <span className="mt-5 hidden h-1 w-20 rounded-full bg-clay lg:block" />
+          <p className="mt-5 max-w-md text-center text-base text-muted-foreground lg:text-left lg:text-lg">
+            A platform for students to identify real problems, create solutions, and showcase their ideas for a better society.
           </p>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          <img src={studentsArt} alt="Students looking ahead with optimism" width={1024} height={1024} loading="lazy" className="mx-auto mt-6 w-full max-w-sm mix-blend-multiply [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_75%)] lg:mx-0 lg:max-w-lg" />
+        </section>
+        <div className="order-1 mx-auto w-full max-w-lg lg:order-2">
+        <div className="relative mt-8 rounded-3xl border border-border/60 bg-card px-5 pb-6 pt-12 shadow-[0_24px_60px_-24px_color-mix(in_oklab,var(--clay)_35%,transparent)] sm:px-10 sm:pb-8">
+          <div className="absolute -top-8 left-1/2 grid h-16 w-16 -translate-x-1/2 place-items-center rounded-full bg-clay/15 ring-8 ring-card">
+            <Lightbulb className="h-8 w-8 text-clay" />
+          </div>
+          <div className="mb-6 text-center">
+            <h1 className="font-display text-2xl font-bold text-forest sm:text-3xl">Welcome to the Portal</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">Sign in to continue, or create a student account.</p>
+          </div>
           <Tabs defaultValue="signin">
-            <TabsList className="w-full">
-              <TabsTrigger value="signin" className="flex-1">
+            <TabsList className="h-11 w-full rounded-full p-1">
+              <TabsTrigger value="signin" className="flex-1 rounded-full data-[state=active]:bg-clay data-[state=active]:text-primary-foreground">
                 Sign in
               </TabsTrigger>
-              <TabsTrigger value="signup" className="flex-1">
+              <TabsTrigger value="signup" className="flex-1 rounded-full">
                 Student sign up
               </TabsTrigger>
             </TabsList>
@@ -161,7 +176,7 @@ export function AuthPage() {
             <span className="h-px flex-1 bg-border" /> or continue with{" "}
             <span className="h-px flex-1 bg-border" />
           </div>
-          <Button variant="outline" className="w-full" onClick={googleSignIn}>
+          <Button variant="outline" className="h-11 w-full rounded-xl" onClick={googleSignIn}>
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -186,6 +201,7 @@ export function AuthPage() {
             School registration
           </a>
         </p>
+        </div>
       </main>
       <OrgFooter />
     </div>
@@ -246,14 +262,14 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
   return (
     <form onSubmit={submit} className="mt-4 space-y-4">
       <Tabs value={loginType} onValueChange={(value) => setLoginType(value as "student" | "official")}>
-        <TabsList className="w-full">
-          <TabsTrigger value="student" className="flex-1">Student</TabsTrigger>
-          <TabsTrigger value="official" className="flex-1">School</TabsTrigger>
+        <TabsList className="h-11 w-full rounded-full p-1">
+          <TabsTrigger value="student" className="flex-1 rounded-full data-[state=active]:bg-clay/15 data-[state=active]:text-forest">Student</TabsTrigger>
+          <TabsTrigger value="official" className="flex-1 rounded-full data-[state=active]:bg-clay/15 data-[state=active]:text-forest">School</TabsTrigger>
         </TabsList>
       </Tabs>
       <div className="space-y-1.5">
         <Label>{loginType === "student" ? "Student username" : "Registered email"}</Label>
-        <Input type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder={loginType === "official" ? "name@school.org" : "Your username"} />
+        <div className="relative"><User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input className="h-11 rounded-xl pl-10" type={loginType === "official" ? "email" : "text"} autoComplete={loginType === "official" ? "email" : "username"} required value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder={loginType === "official" ? "name@school.org" : "Your username"} /></div>
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
@@ -262,11 +278,11 @@ function SignInForm({ onDone }: { onDone: () => Promise<void> }) {
             Forgot password?
           </button>
         </div>
-        <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+        <div className="relative"><Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input className="h-11 rounded-xl pl-10" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full bg-clay hover:bg-clay/90" disabled={busy}>
-        {busy ? "Signing in…" : "Sign in"}
+      <Button type="submit" className="h-11 w-full rounded-xl bg-clay text-base hover:bg-clay/90" disabled={busy}>
+        {busy ? "Signing in…" : <>Sign in <ArrowRight className="ml-1.5 h-4 w-4" /></>}
       </Button>
     </form>
   );
